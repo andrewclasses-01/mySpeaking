@@ -115,11 +115,18 @@
   }
 
   // — Drive phát trực tiếp, tự fallback sang iframe + đồng hồ —
+  // Lưu ý: file >100MB bị Google chặn bằng trang "Virus scan warning" (chỉ chặn
+  // trình duyệt — Google nhận diện qua User-Agent), nên 2 endpoint download chỉ
+  // chạy được với file nhỏ. Drive API + key là đường chính thống cho file lớn.
   function initDriveDirect(box, id) {
-    const candidates = [
+    const candidates = [];
+    if (CFG.DRIVE_API_KEY) {
+      candidates.push('https://www.googleapis.com/drive/v3/files/' + id + '?alt=media&key=' + CFG.DRIVE_API_KEY);
+    }
+    candidates.push(
       'https://drive.usercontent.google.com/download?id=' + id + '&export=download&confirm=t',
-      'https://drive.google.com/uc?export=download&id=' + id,
-    ];
+      'https://drive.google.com/uc?export=download&id=' + id
+    );
     setVideoStatus('<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i> Đang thử phát trực tiếp từ Drive…');
     refreshIcons();
     initHtml5(box, candidates, () => initDriveIframe(box, id));

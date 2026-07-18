@@ -20,7 +20,7 @@ apps-script/Code.gs — code Google Apps Script nhận bài nộp, ghi vào Goog
 - **Config buổi check** truyền qua URL `index.html?d=<base64url(JSON)>`: `{v: videoUrl, t: chủ đề, team: đội được check, members: [tên...], s: scriptUrl override (tùy chọn)}`. Không có `?d` → học sinh tự dán link video (chế độ thủ công).
 - **Video 3 chế độ** (tự nhận diện từ link):
   1. `youtube` — YouTube IFrame API, `getCurrentTime()` chính xác. KHUYÊN DÙNG (video để "Không công khai").
-  2. `html5` — Drive phát trực tiếp qua `drive.usercontent.google.com/download?id=X&export=download&confirm=t` (fallback `uc?export=download`); lấy `video.currentTime`. Endpoint không chính thức, có thể bị Google đổi.
+  2. `html5` — Drive phát trực tiếp: ưu tiên Drive API `googleapis.com/drive/v3/files/ID?alt=media&key=<DRIVE_API_KEY>` (chính thống, chạy được file lớn), rồi mới thử `drive.usercontent.google.com/download?...&confirm=t` và `uc?export=download` (chỉ chạy với file ≤100MB); lấy `video.currentTime`.
   3. `stopwatch` — nếu Drive chặn phát trực tiếp: nhúng iframe `/preview` + đồng hồ bấm giờ song song (có nút Chỉnh giờ). App TỰ fallback theo thứ tự 2→3, có guard timeout 15s.
 - **Nộp bài**: POST JSON với `Content-Type: text/plain` (tránh CORS preflight; Apps Script trả CORS `*` cho simple request). Payload: student, myTeam, checkedTeam, topic, videoUrl, errors[], timers[].
 - **Autosave**: localStorage theo key `mystcheck_<60 ký tự cuối videoUrl>`, debounce 300ms; vào lại cùng link + cùng tên → khôi phục bài đang làm dở.
@@ -28,6 +28,8 @@ apps-script/Code.gs — code Google Apps Script nhận bài nộp, ghi vào Goog
 
 ## Khám phá kỹ thuật quan trọng
 - Iframe preview của Google Drive KHÔNG cho JS đọc thời gian phát (cross-origin) → mới phải có 3 chế độ video như trên.
+- **Drive UA-sniffing (18/07/2026)**: với file >100MB, endpoint `drive.usercontent.google.com/download?...&confirm=t` trả **video/mp4 thật cho curl** nhưng trả trang HTML "Virus scan warning" cho **User-Agent trình duyệt** (kể cả có confirm=t) → thẻ video lỗi code 4 "Format error". Token "Download anyway" sinh theo request, JS không đọc được vì CORS → KHÔNG THỂ bypass thuần client. Đường chính thống duy nhất: Drive API v3 `alt=media` + API key (file phải public "anyone with link").
+- `fetch` tới drive.usercontent bị CORS chặn, nhưng thẻ `<video>` không cần CORS nên vẫn phát được nếu server trả đúng video.
 - Drive trả file gốc nguyên bitrate, không adaptive → cả lớp (~15 máy) cùng xem dễ nghẽn Wi-Fi; YouTube tự hạ chất lượng nên mượt hơn. Đã tư vấn thầy ưu tiên YouTube unlisted.
 - Dropdown LOẠI LỖI trong file mẫu: `NGỮ PHÁP, PHÁT ÂM, THÔNG TIN` (data validation cột E sheet FORM).
 

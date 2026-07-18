@@ -14,6 +14,16 @@
 
 > Mỗi bài HS nộp sẽ thành các dòng trong sheet **FORM** (mỗi dòng 1 lỗi, kèm ngày giờ + người check) và sheet **TIMER** (mỗi dòng 1 bạn). Muốn ra đúng file mẫu từng HS thì HS bấm thêm nút **Xuất Excel** trong app.
 
+## Bước 1b (tùy chọn) — Drive API key để phát trực tiếp video Drive lớn
+Video Drive **>100MB** bị Google chặn phát trực tiếp trên trình duyệt (trang "Virus scan warning") → app sẽ tự chuyển sang chế độ iframe + đồng hồ bấm giờ (vẫn dùng được, nhưng mốc thời gian phải canh tay). Muốn phát trực tiếp + lấy mốc thời gian chính xác với video Drive lớn:
+1. Vào https://console.cloud.google.com → tạo project (hoặc dùng project có sẵn).
+2. **APIs & Services → Library** → tìm **Google Drive API** → Enable.
+3. **APIs & Services → Credentials → Create credentials → API key** → copy key.
+4. (Nên làm) Bấm vào key → **Application restrictions: Websites** → thêm `https://andrewclasses-code.github.io/*` và `http://localhost:8123/*`; **API restrictions** → chỉ chọn Google Drive API.
+5. Dán key vào `DRIVE_API_KEY` trong `config.js`, push lên GitHub.
+
+> Nếu dùng YouTube thì KHÔNG cần bước này. Video Drive phải share "Bất kỳ ai có link".
+
 ## Bước 2 — Đưa lên GitHub Pages
 ```
 cd "D:\APP AND DATA\mySTCheck"
