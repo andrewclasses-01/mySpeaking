@@ -78,6 +78,34 @@ Thầy đưa folder Drive thật: 4 video speaking `C0400/02/03/04_CUT.mp4` (~44
 - Font hiện vẫn Be Vietnam Pro (render tiếng Anh tốt) — chưa đổi, chờ ý thầy nếu muốn font Anh chuẩn (vd Inter).
 - Chờ thầy xem tổng thể rồi báo phần cần chỉnh (thầy nói "cần xử lý giao diện và tính năng khá nhiều").
 
+## CHẶNG 5 — 19/07/2026: CHỐT TẦM NHÌN LỚN + fix giao diện điện thoại
+
+### Tầm nhìn thầy chốt (QUAN TRỌNG — định hướng cả dự án)
+Thầy muốn nâng mySTCheck từ "web nhỏ cho HS bắt lỗi" thành **hệ thống lo trọn buổi speaking test**, gồm 5 việc: (1) thay khâu tay của skill sapxepspeaking (dọn/tạo thư mục, sao chép & tạo file từ mẫu), (2) trang web cho HS bắt lỗi, (3) push GitHub, (4) thu thập + phân tích dữ liệu, (5) [ĐÍCH CUỐI] trình chiếu video OFFLINE kèm sub + đánh dấu vị trí lỗi.
+
+**Kiến trúc đã chốt (thầy đồng ý):** app gồm 2 phần dùng chung 1 kho dữ liệu:
+- **① Phần THẦY = app máy tính (Electron, giống myBoard/myActivity)** — vì chỉ app cài máy mới: dọn/tạo thư mục trên ổ D:, và mở/trình chiếu video 400-600MB offline mượt + chèn sub + đánh dấu lỗi. (Trình duyệt web KHÔNG được phép sờ file local + tải video nặng qua mạng thì lag.)
+- **② Phần HỌC SINH = trang web (GitHub Pages)** — chính app hiện tại; HS mở điện thoại bắt lỗi, nộp về Google Sheet.
+
+**Thu dữ liệu (thầy chọn):** Online tự gom — HS bấm Nộp → tự đổ vào 1 Google Sheet (cần deploy Apps Script 1 lần).
+
+**Lộ trình chốt (làm tuần tự 1→2→3→4, mỗi chặng xong xài được ngay):**
+- Chặng 1: hoàn thiện phần HS + nối Google Sheet (đang làm).
+- Chặng 2: app máy tính — nút "sắp xếp folder + tạo file chấm chéo" (thay khâu tay sapxepspeaking).
+- Chặng 3: thu + xem + phân tích dữ liệu HS trong app.
+- Chặng 4: trình chiếu video offline + sub + đánh dấu lỗi.
+
+> ⚠ Khi bắt đầu Chặng 2 (app Electron): gọi skill `kienthucbuildapp` + theo quy ước hệ sinh thái (code trên E:\LAP TRINH APP\mySTCheck, bare repo + dữ liệu trên D:\APP AND DATA\mySTCheck, runtime Electron chung). Phần web HS có thể là repo/thư mục con publish GitHub Pages.
+
+### Việc đã làm chặng này (phần web HS — "chuẩn đẹp")
+- **Fix giao diện điện thoại**: nút loại lỗi "🔊 Pronunciation" (chữ Anh dài) bị TRÀN trong cột hẹp 1/3 màn 375px (rộng 99px > ô 95px). Sửa class nút loại lỗi → `px-1 text-xs sm:text-sm leading-tight` (điện thoại 12px, desktop ≥640px 14px). Sửa Ở CẢ 2 CHỖ: HTML gốc trong index.html VÀ chuỗi className trong `renderTypeBtns()` của app.js (nếu chỉ sửa 1 chỗ thì bấm chọn loại lỗi sẽ reset về cỡ cũ). Verify: mobile 12px scrollW 91≤95 không tràn; desktop 14px không tràn; không lỗi console; không tràn ngang toàn trang.
+- **Cache-busting**: gắn `?v=2` vào `config.js`/`app.js` trong index.html. Lý do: server test (python http.server) + GitHub Pages đều cache JS → sau khi sửa, trình duyệt HS có thể chạy bản CŨ. **MỖI lần sửa app.js/config.js phải TĂNG số v này** (đã ghi comment nhắc trong index.html). (Bẫy đã gặp: force-reload trong preview browser vẫn không nạp app.js mới cho tới khi thêm ?v.)
+
+### Còn treo (phần thầy làm — Chặng 1)
+- Thầy deploy Apps Script → lấy SCRIPT_URL điền vào config.js (em đã soạn hướng dẫn từng bước dễ hiểu trong chat + HUONG DAN TRIEN KHAI.md Bước 1). Chưa có URL thì nút Nộp báo dùng Xuất Excel (đúng thiết kế).
+- Push GitHub Pages (gh đã login `andrewclasses-code` máy 1) — chờ thầy chốt tên repo + public.
+- Gợi ý CHƯA làm (chờ thầy duyệt khi review UI): header trên điện thoại cao 148px (3 dòng wrap) — chưa vỡ nhưng hơi chiếm màn, có thể gọn lại sau.
+
 ## DỮ LIỆU TEST THẬT (buổi speaking lớp B1AH, 18/07/2026)
 - Folder Drive (public): https://drive.google.com/drive/folders/1eLoEVKvqNGWMAsYkk1U2NtfUfQ_Rmiqe
 - 4 video (~440–580MB, MP4 H.264, đều >100MB nên dính chặn UA — xem chặng 2), kèm file SRT cùng tên:

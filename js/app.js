@@ -250,7 +250,7 @@
   function renderTypeBtns() {
     document.querySelectorAll('.errType').forEach((b) => {
       const t = b.dataset.type;
-      b.className = 'errType rounded-xl border-2 py-2.5 text-sm font-bold transition ' + (fType === t ? TYPE_STYLE[t].on : TYPE_STYLE[t].off);
+      b.className = 'errType rounded-xl border-2 px-1 py-2.5 text-xs sm:text-sm font-bold leading-tight transition ' + (fType === t ? TYPE_STYLE[t].on : TYPE_STYLE[t].off);
     });
   }
 
