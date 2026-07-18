@@ -79,14 +79,14 @@
     const box = $('videoContainer');
     const p = parseVideoUrl(state.videoUrl);
     if (!p) {
-      box.innerHTML = '<div class="w-full h-full flex items-center justify-center text-slate-400 text-sm bg-slate-900 rounded-2xl">No video yet</div>';
+      box.innerHTML = '<div class="w-full h-full flex items-center justify-center text-slate-400 text-sm bg-slate-900 rounded-2xl">Chưa có video</div>';
       return;
     }
     if (p.type === 'youtube') initYouTube(box, p.id);
     else if (p.type === 'drive') initDriveDirect(box, p.id);
     else if (p.type === 'direct') initHtml5(box, [p.url], null);
     else {
-      box.innerHTML = '<div class="w-full h-full flex items-center justify-center text-slate-400 text-sm bg-slate-900 rounded-2xl px-6 text-center">Couldn\'t recognise the video link. Please use a YouTube or Google Drive link.</div>';
+      box.innerHTML = '<div class="w-full h-full flex items-center justify-center text-slate-400 text-sm bg-slate-900 rounded-2xl px-6 text-center">Không nhận diện được link video. Hãy dùng link YouTube hoặc Google Drive.</div>';
     }
   }
 
@@ -94,7 +94,7 @@
   function initYouTube(box, id) {
     video.mode = 'youtube';
     box.innerHTML = '<div id="ytPlayer"></div>';
-    setVideoStatus('<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i> Loading YouTube…');
+    setVideoStatus('<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i> Đang tải YouTube…');
     refreshIcons();
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
@@ -106,7 +106,7 @@
         events: {
           onReady: () => {
             video.ready = true;
-            setVideoStatus('<i data-lucide="badge-check" class="w-3.5 h-3.5 text-emerald-500"></i> YouTube — precise timestamps');
+            setVideoStatus('<i data-lucide="badge-check" class="w-3.5 h-3.5 text-emerald-500"></i> YouTube — lấy mốc thời gian chính xác');
             refreshIcons();
           },
         },
@@ -127,7 +127,7 @@
       'https://drive.usercontent.google.com/download?id=' + id + '&export=download&confirm=t',
       'https://drive.google.com/uc?export=download&id=' + id
     );
-    setVideoStatus('<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i> Trying to play directly from Drive…');
+    setVideoStatus('<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i> Đang thử phát trực tiếp từ Drive…');
     refreshIcons();
     initHtml5(box, candidates, () => initDriveIframe(box, id));
   }
@@ -162,7 +162,7 @@
       settled = true;
       clearTimeout(guard);
       video.ready = true;
-      setVideoStatus('<i data-lucide="badge-check" class="w-3.5 h-3.5 text-emerald-500"></i> Direct playback — precise timestamps');
+      setVideoStatus('<i data-lucide="badge-check" class="w-3.5 h-3.5 text-emerald-500"></i> Phát trực tiếp — lấy mốc thời gian chính xác');
       refreshIcons();
     });
     tryNext();
@@ -174,7 +174,7 @@
     video.el = null;
     box.innerHTML = '<iframe src="https://drive.google.com/file/d/' + id + '/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>';
     $('stopwatchWrap').classList.remove('hidden');
-    setVideoStatus('<i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-500"></i> Backup mode: use the timer below for timestamps');
+    setVideoStatus('<i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-500"></i> Chế độ dự phòng: dùng đồng hồ bên dưới để lấy mốc thời gian');
     refreshIcons();
   }
 
@@ -189,11 +189,11 @@
     if (sw.running) {
       sw.elapsed = swNow(); sw.running = false;
       clearInterval(sw.tick);
-      $('swToggle').innerHTML = '<i data-lucide="play" class="w-4 h-4"></i><span>Start</span>';
+      $('swToggle').innerHTML = '<i data-lucide="play" class="w-4 h-4"></i><span>Chạy</span>';
     } else {
       sw.running = true; sw.startedAt = Date.now();
       sw.tick = setInterval(swRender, 250);
-      $('swToggle').innerHTML = '<i data-lucide="pause" class="w-4 h-4"></i><span>Pause</span>';
+      $('swToggle').innerHTML = '<i data-lucide="pause" class="w-4 h-4"></i><span>Dừng</span>';
     }
     refreshIcons();
   }
@@ -212,16 +212,16 @@
     const wrap = $('fStudentWrap');
     if (state.members.length) {
       let html = '<select id="fWho" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">';
-      html += '<option value="">— Select the student —</option>';
+      html += '<option value="">— Chọn bạn có lỗi —</option>';
       state.members.forEach((m) => { html += '<option>' + escapeHtml(m) + '</option>'; });
-      html += '<option value="Whole team">Whole team</option><option value="__other">Someone else…</option></select>';
-      html += '<input id="fWhoOther" type="text" placeholder="Name of the student" class="hidden mt-2 w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">';
+      html += '<option value="CẢ ĐỘI">CẢ ĐỘI</option><option value="__other">Bạn khác…</option></select>';
+      html += '<input id="fWhoOther" type="text" placeholder="Tên bạn có lỗi" class="hidden mt-2 w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">';
       wrap.innerHTML = html;
       $('fWho').addEventListener('change', () => {
         $('fWhoOther').classList.toggle('hidden', $('fWho').value !== '__other');
       });
     } else {
-      wrap.innerHTML = '<input id="fWho" type="text" placeholder="Name of the student" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">';
+      wrap.innerHTML = '<input id="fWho" type="text" placeholder="Tên bạn có lỗi" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">';
     }
   }
   function getWho() {
@@ -244,9 +244,6 @@
     'PHÁT ÂM': { on: 'border-emerald-600 bg-emerald-600 text-white', off: 'border-emerald-200 bg-emerald-50 text-emerald-700', badge: 'bg-emerald-100 text-emerald-700' },
     'THÔNG TIN': { on: 'border-amber-500 bg-amber-500 text-white', off: 'border-amber-200 bg-amber-50 text-amber-700', badge: 'bg-amber-100 text-amber-700' },
   };
-  // English display labels for the mistake types (stored values stay Vietnamese to match the Excel template)
-  const TYPE_LABEL = { 'NGỮ PHÁP': 'Grammar', 'PHÁT ÂM': 'Pronunciation', 'THÔNG TIN': 'Information' };
-  const typeLabel = (t) => TYPE_LABEL[t] || t;
   function renderTypeBtns() {
     document.querySelectorAll('.errType').forEach((b) => {
       const t = b.dataset.type;
@@ -259,14 +256,14 @@
     $('fDetail').value = ''; $('fExplain').value = '';
     fType = ''; renderTypeBtns();
     editingIndex = -1;
-    $('btnAddErrLabel').textContent = 'Add this mistake';
+    $('btnAddErrLabel').textContent = 'Thêm lỗi này';
     $('btnCancelEdit').classList.add('hidden');
   }
 
   function addOrUpdateError() {
     const detail = $('fDetail').value.trim();
-    if (!fType) { toast('Please choose a MISTAKE TYPE!', 'err'); return; }
-    if (!detail) { toast('Please describe THE MISTAKE!', 'err'); $('fDetail').focus(); return; }
+    if (!fType) { toast('Em hãy chọn LOẠI LỖI nhé!', 'err'); return; }
+    if (!detail) { toast('Em hãy ghi LỖI CỤ THỂ nhé!', 'err'); $('fDetail').focus(); return; }
     const err = {
       min: $('fMin').value === '' ? '' : Math.max(0, parseInt($('fMin').value, 10) || 0),
       sec: $('fSec').value === '' ? '' : Math.max(0, parseInt($('fSec').value, 10) || 0),
@@ -276,8 +273,8 @@
       detail: detail,
       explain: $('fExplain').value.trim(),
     };
-    if (editingIndex >= 0) { state.errors[editingIndex] = err; toast('Mistake updated ✓'); }
-    else { state.errors.push(err); toast('Mistake added ✓ (' + state.errors.length + ' total)'); }
+    if (editingIndex >= 0) { state.errors[editingIndex] = err; toast('Đã cập nhật lỗi ✓'); }
+    else { state.errors.push(err); toast('Đã thêm lỗi ✓ (' + state.errors.length + ' lỗi)'); }
     clearErrForm();
     renderErrors();
     autosave();
@@ -292,8 +289,8 @@
       return '<div class="slidein rounded-2xl border border-slate-200 p-3.5 hover:border-indigo-300 transition group">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
         '<span class="font-mono font-bold text-sm bg-slate-900 text-white rounded-lg px-2 py-0.5">' + fmtTime(e) + '</span>' +
-        (e.section ? '<span class="text-xs font-bold text-slate-500">Section ' + escapeHtml(e.section) + '</span>' : '') +
-        '<span class="text-xs font-bold rounded-full px-2.5 py-1 ' + st.badge + '">' + typeLabel(e.type) + '</span>' +
+        (e.section ? '<span class="text-xs font-bold text-slate-500">Đoạn ' + escapeHtml(e.section) + '</span>' : '') +
+        '<span class="text-xs font-bold rounded-full px-2.5 py-1 ' + st.badge + '">' + e.type + '</span>' +
         (e.who ? '<span class="text-xs font-semibold text-slate-600 flex items-center gap-1">👤 ' + escapeHtml(e.who) + '</span>' : '') +
         '<span class="ml-auto flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition">' +
         '<button data-edit="' + i + '" class="p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-600"><i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i></button>' +
@@ -313,7 +310,7 @@
     state.errors.forEach((e) => { counts[e.type] = (counts[e.type] || 0) + 1; });
     $('errStats').innerHTML = Object.keys(TYPE_STYLE)
       .filter((t) => counts[t])
-      .map((t) => '<span class="rounded-full px-2.5 py-1 ' + TYPE_STYLE[t].badge + '">' + typeLabel(t) + ': ' + counts[t] + '</span>').join('');
+      .map((t) => '<span class="rounded-full px-2.5 py-1 ' + TYPE_STYLE[t].badge + '">' + t + ': ' + counts[t] + '</span>').join('');
     refreshIcons();
   }
   function tSec(e) { return (parseInt(e.min, 10) || 0) * 60 + (parseInt(e.sec, 10) || 0); }
@@ -336,11 +333,11 @@
       '<div class="rounded-2xl border border-slate-200 p-3">' +
       '<div class="flex items-center gap-2 mb-2">' +
       '<span class="w-6 h-6 rounded-full bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center shrink-0">' + (i + 1) + '</span>' +
-      '<input data-tname="' + i + '" value="' + escapeHtml(t.name) + '" placeholder="Student ' + (i + 1) + '" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-violet-500">' +
+      '<input data-tname="' + i + '" value="' + escapeHtml(t.name) + '" placeholder="Tên bạn ' + (i + 1) + '" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-violet-500">' +
       '<button data-tdel="' + i + '" class="p-1.5 rounded-lg hover:bg-rose-100 text-rose-400"><i data-lucide="x" class="w-4 h-4 pointer-events-none"></i></button>' +
       '</div>' +
       '<div class="grid grid-cols-2 gap-2">' +
-      timerHalf(i, 'START', 's') + timerHalf(i, 'END', 'e') +
+      timerHalf(i, 'BẮT ĐẦU', 's') + timerHalf(i, 'KẾT THÚC', 'e') +
       '</div></div>'
     ).join('');
     refreshIcons();
@@ -350,10 +347,10 @@
     return '<div class="rounded-xl bg-slate-50 p-2">' +
       '<div class="text-[10px] font-bold text-slate-400 mb-1">' + label + '</div>' +
       '<div class="flex items-center gap-1">' +
-      '<input data-tf="' + i + ':' + p + 'Min" type="number" min="0" value="' + t[p + 'Min'] + '" placeholder="min" class="w-full rounded-lg border border-slate-300 px-1 py-1 text-center font-mono text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">' +
+      '<input data-tf="' + i + ':' + p + 'Min" type="number" min="0" value="' + t[p + 'Min'] + '" placeholder="ph" class="w-full rounded-lg border border-slate-300 px-1 py-1 text-center font-mono text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">' +
       '<span class="text-slate-400 font-bold">:</span>' +
-      '<input data-tf="' + i + ':' + p + 'Sec" type="number" min="0" max="59" value="' + t[p + 'Sec'] + '" placeholder="sec" class="w-full rounded-lg border border-slate-300 px-1 py-1 text-center font-mono text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">' +
-      '<button data-tgrab="' + i + ':' + p + '" title="Grab from video time" class="shrink-0 bg-violet-600 hover:bg-violet-700 text-white rounded-lg px-2 py-1 text-xs font-bold">⏱ Mark</button>' +
+      '<input data-tf="' + i + ':' + p + 'Sec" type="number" min="0" max="59" value="' + t[p + 'Sec'] + '" placeholder="gi" class="w-full rounded-lg border border-slate-300 px-1 py-1 text-center font-mono text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">' +
+      '<button data-tgrab="' + i + ':' + p + '" title="Lấy theo thời gian video" class="shrink-0 bg-violet-600 hover:bg-violet-700 text-white rounded-lg px-2 py-1 text-xs font-bold">⏱ Chốt</button>' +
       '</div></div>';
   }
 
@@ -363,14 +360,14 @@
   }
 
   function openSubmitModal() {
-    if (!state.errors.length) { toast('No mistakes to submit yet. Watch the video closely!', 'err'); return; }
+    if (!state.errors.length) { toast('Chưa có lỗi nào để nộp. Em soi kỹ video nhé!', 'err'); return; }
     const s = $('submitSummary');
     s.innerHTML =
-      '<div>👤 Checked by: <b>' + escapeHtml(state.student) + '</b>' + (state.myTeam ? ' (' + escapeHtml(state.myTeam) + ')' : '') + '</div>' +
-      (state.checkedTeam ? '<div>🎯 Team checked: <b>' + escapeHtml(state.checkedTeam) + '</b></div>' : '') +
-      '<div>🚩 Mistakes found: <b>' + state.errors.length + '</b></div>' +
-      '<div>⏱ Students timed: <b>' + cleanTimers().filter((t) => t.name.trim()).length + '</b></div>' +
-      (state.submitted ? '<div class="text-amber-600 font-semibold">⚠ You\'ve already submitted once — submitting again creates a new copy.</div>' : '');
+      '<div>👤 Người check: <b>' + escapeHtml(state.student) + '</b>' + (state.myTeam ? ' (' + escapeHtml(state.myTeam) + ')' : '') + '</div>' +
+      (state.checkedTeam ? '<div>🎯 Đội được check: <b>' + escapeHtml(state.checkedTeam) + '</b></div>' : '') +
+      '<div>🚩 Số lỗi đã bắt: <b>' + state.errors.length + '</b></div>' +
+      '<div>⏱ Số bạn có thời gian nói: <b>' + cleanTimers().filter((t) => t.name.trim()).length + '</b></div>' +
+      (state.submitted ? '<div class="text-amber-600 font-semibold">⚠ Em đã nộp 1 lần rồi — nộp lại sẽ tạo bản mới.</div>' : '');
     $('submitModal').classList.remove('hidden');
     $('submitModal').classList.add('flex');
   }
@@ -382,12 +379,12 @@
   async function submit() {
     closeSubmitModal();
     if (!SCRIPT_URL) {
-      toast('The app isn\'t connected to Google Sheets yet — please tap "Export Excel" and send the file to your teacher!', 'err');
+      toast('App chưa nối Google Sheets — em hãy bấm "Xuất Excel" rồi gửi file cho thầy nhé!', 'err');
       return;
     }
     const btn = $('btnSubmit');
     btn.disabled = true;
-    btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Submitting…';
+    btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Đang nộp…';
     refreshIcons();
     try {
       const payload = {
@@ -405,19 +402,17 @@
       if (!out.ok) throw new Error(out.error || 'unknown');
       state.submitted = true;
       autosave();
-      toast('🎉 Submitted successfully! Thank you.');
+      toast('🎉 Nộp bài thành công! Cảm ơn em.');
     } catch (e) {
-      toast('Submission failed (' + e.message + '). Try again or tap Export Excel to send to your teacher.', 'err');
+      toast('Nộp chưa được (' + e.message + '). Em thử lại hoặc bấm Xuất Excel gửi thầy.', 'err');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Submit';
+      btn.innerHTML = '<i data-lucide="send" class="w-4 h-4"></i> Nộp bài';
       refreshIcons();
     }
   }
 
-  // ═══════════════ EXPORT EXCEL (matches the SPEAKING TEAM CHECK FORM template) ═══════════════
-  // NOTE: sheet names, column headers and the reminder note stay in Vietnamese on purpose,
-  // so the exported file lines up 1:1 with the teacher's template and Google Sheet.
+  // ═══════════════ XUẤT EXCEL (đúng mẫu SPEAKING TEAM CHECK FORM) ═══════════════
   function exportExcel() {
     const wb = XLSX.utils.book_new();
 
@@ -455,9 +450,9 @@
 
     const name = 'SPEAKING CHECK' +
       (state.checkedTeam ? ' - ' + state.checkedTeam : '') +
-      ' - ' + (state.student || 'Student') + '.xlsx';
+      ' - ' + (state.student || 'HS') + '.xlsx';
     XLSX.writeFile(wb, name.replace(/[\\/:*?"<>|]/g, ''));
-    toast('Excel file exported ✓');
+    toast('Đã xuất file Excel ✓');
   }
   function num(v) { return v === '' || v == null ? null : (parseInt(v, 10) || 0); }
 
@@ -471,9 +466,9 @@
   function initSetupScreen() {
     const info = $('setupInfo');
     const parts = [];
-    if (state.topic) parts.push('<div>📚 Topic: <b>' + escapeHtml(state.topic) + '</b></div>');
-    if (state.checkedTeam) parts.push('<div>🎯 Team being checked: <b>' + escapeHtml(state.checkedTeam) + '</b></div>');
-    if (state.members.length) parts.push('<div>👥 Members: ' + state.members.map(escapeHtml).join(', ') + '</div>');
+    if (state.topic) parts.push('<div>📚 Chủ đề: <b>' + escapeHtml(state.topic) + '</b></div>');
+    if (state.checkedTeam) parts.push('<div>🎯 Đội được check: <b>' + escapeHtml(state.checkedTeam) + '</b></div>');
+    if (state.members.length) parts.push('<div>👥 Thành viên: ' + state.members.map(escapeHtml).join(', ') + '</div>');
     if (parts.length) { info.innerHTML = parts.join(''); info.classList.remove('hidden'); }
     if (!state.videoUrl) $('manualVideoWrap').classList.remove('hidden');
 
@@ -482,17 +477,17 @@
       $('inpStudent').value = saved.student;
       $('inpMyTeam').value = saved.myTeam || '';
       const hint = $('resumeHint');
-      hint.textContent = '💾 Found unfinished work by "' + saved.student + '" (' + saved.errors.length + ' mistakes) — it will resume when you tap Start.';
+      hint.textContent = '💾 Tìm thấy bài đang làm dở của "' + saved.student + '" (' + saved.errors.length + ' lỗi) — sẽ tiếp tục khi bấm Bắt đầu.';
       hint.classList.remove('hidden');
     }
   }
 
   function start() {
     const name = $('inpStudent').value.trim();
-    if (!name) { toast('Please enter your name!', 'err'); $('inpStudent').focus(); return; }
+    if (!name) { toast('Em hãy nhập tên của mình nhé!', 'err'); $('inpStudent').focus(); return; }
     if (!state.videoUrl) {
       const u = $('inpVideoUrl').value.trim();
-      if (!u) { toast('Please paste the video link!', 'err'); $('inpVideoUrl').focus(); return; }
+      if (!u) { toast('Em hãy dán link video nhé!', 'err'); $('inpVideoUrl').focus(); return; }
       state.videoUrl = u;
       state.checkedTeam = $('inpCheckedTeam').value.trim() || state.checkedTeam;
     }
@@ -506,12 +501,12 @@
       state.errors = saved.errors || [];
       savedTimers = saved.timers;
       state.submitted = !!saved.submitted;
-      if (state.errors.length) toast('Restored ' + state.errors.length + ' mistakes you logged earlier ✓', 'info');
+      if (state.errors.length) toast('Đã khôi phục ' + state.errors.length + ' lỗi em ghi trước đó ✓', 'info');
     }
 
     // dựng UI chính
     $('hdStudentName').textContent = state.student;
-    $('hdTopic').textContent = state.topic || 'Watch · spot mistakes · improve together';
+    $('hdTopic').textContent = state.topic || 'Soi video · bắt lỗi · cùng tiến bộ';
     if (state.checkedTeam) {
       $('hdChecked').textContent = '🎯 ' + state.checkedTeam;
       $('hdChecked').classList.remove('hidden');
@@ -552,11 +547,11 @@
 
     $('btnGrabTime').addEventListener('click', () => {
       const t = getVideoTime();
-      if (t == null) { toast('Couldn\'t read the video time. Press play first!', 'err'); return; }
+      if (t == null) { toast('Chưa đọc được thời gian video. Em bấm play video trước nhé!', 'err'); return; }
       const s = Math.floor(t);
       $('fMin').value = Math.floor(s / 60);
       $('fSec').value = s % 60;
-      toast('⏱ Grabbed ' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'), 'info');
+      toast('⏱ Đã lấy mốc ' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'), 'info');
     });
 
     $('btnAddErr').addEventListener('click', addOrUpdateError);
@@ -572,7 +567,7 @@
         setWho(e.who); fType = e.type; renderTypeBtns();
         $('fDetail').value = e.detail; $('fExplain').value = e.explain;
         editingIndex = i;
-        $('btnAddErrLabel').textContent = 'Save changes';
+        $('btnAddErrLabel').textContent = 'Lưu thay đổi';
         $('btnCancelEdit').classList.remove('hidden');
         $('fDetail').focus();
       }
@@ -581,7 +576,7 @@
         state.errors.splice(i, 1);
         if (editingIndex === i) clearErrForm();
         renderErrors(); autosave();
-        toast('Mistake deleted', 'info');
+        toast('Đã xóa lỗi', 'info');
       }
     });
 
@@ -601,7 +596,7 @@
       if (grab) {
         const [i, p] = grab.dataset.tgrab.split(':');
         const t = getVideoTime();
-        if (t == null) { toast('Couldn\'t read the video time. Press play first!', 'err'); return; }
+        if (t == null) { toast('Chưa đọc được thời gian video. Em bấm play video trước nhé!', 'err'); return; }
         const s = Math.floor(t);
         state.timers[+i][p + 'Min'] = Math.floor(s / 60);
         state.timers[+i][p + 'Sec'] = s % 60;
@@ -621,10 +616,10 @@
     $('swToggle').addEventListener('click', swToggle);
     $('swReset').addEventListener('click', () => { sw.elapsed = 0; sw.startedAt = Date.now(); swRender(); });
     $('swSet').addEventListener('click', () => {
-      const v = prompt('Enter the video\'s current time (min:sec), e.g. 3:25');
+      const v = prompt('Nhập thời gian hiện tại của video (phút:giây), ví dụ 3:25');
       if (!v) return;
       const m = v.match(/^(\d+)[:.](\d{1,2})$/);
-      if (!m) { toast('Wrong format, correct example: 3:25', 'err'); return; }
+      if (!m) { toast('Định dạng chưa đúng, ví dụ đúng: 3:25', 'err'); return; }
       sw.elapsed = (+m[1]) * 60 + (+m[2]);
       sw.startedAt = Date.now();
       swRender();

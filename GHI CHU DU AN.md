@@ -53,6 +53,31 @@ Thầy đưa folder Drive thật: 4 video speaking `C0400/02/03/04_CUT.mp4` (~44
 - Chép file mẫu gốc vào repo: `mau/SPEAKING TEAM CHECK FORM.xlsx` — máy nào cũng có chuẩn đối chiếu khi sửa phần xuất Excel.
 - Ghi mục DỮ LIỆU TEST THẬT và mục TIẾP TỤC CÔNG VIỆC (bên dưới) để máy khác/session mới tự đứng dậy làm tiếp không cần hỏi lại.
 
+## CHẶNG 4 — 18/07/2026: Chuyển toàn bộ giao diện sang TIẾNG ANH (English-only)
+
+### Yêu cầu của thầy
+"Chuyển toàn bộ giao diện sang tiếng Anh và mặc định chỉ tiếng Anh. Sau đó hiển thị lên để tôi xem và điều chỉnh tiếp." → đây là bước 1, thầy sẽ review rồi chỉnh tiếp.
+
+### Quyết định (hỏi thầy bằng AskUserQuestion, thầy chọn "UI Anh, dữ liệu giữ mẫu cũ")
+- Mọi chữ HIỂN THỊ → tiếng Anh (index.html, teacher.html, mọi toast/placeholder/prompt trong app.js).
+- **GIỮ tiếng Việt** cho phần DỮ LIỆU khớp mẫu Excel/Google Sheet: giá trị loại lỗi lưu (`NGỮ PHÁP/PHÁT ÂM/THÔNG TIN`), sheet names TIMER/FORM, header (STT, BẠN, PHÚT, GIÂY, LOẠI LỖI...), lời dặn A10.
+
+### Việc đã làm
+- `index.html`: `lang="vi"→en`, toàn bộ nhãn/nút/placeholder/màn hình vào/header/tabs/form/modal → tiếng Anh. Loại lỗi hiển thị "✏️ Grammar / 🔊 Pronunciation / 📋 Information" nhưng `data-type` GIỮ tiếng Việt. Xóa CSS class chết `.err-badge-NGỮPHÁP`.
+- `js/app.js`: thêm `TYPE_LABEL` + `typeLabel()` để badge/thống kê hiển thị tiếng Anh trong khi `state.errors[].type` vẫn lưu tiếng Việt. Dịch mọi chuỗi UI (status video, toast, prompt đồng hồ, "Section", nút timer "⏱ Mark", START/END, "Whole team"/"Someone else…"). Hàm `exportExcel` thêm comment CẢNH BÁO giữ nguyên tiếng Việt; đổi fallback tên file `HS→Student`.
+- `teacher.html`: `lang=en`, toàn bộ tiếng Anh (tiêu đề, nhãn, placeholder, alert, nút Copy/Open, mô tả QR).
+- Backup bản trước khi dịch: `Backup/pre-english/` (index.html, teacher.html, app.js).
+
+### Verify (preview browser port 8123 — screenshot vẫn timeout do iframe, dùng read_page + javascript_tool)
+- Màn hình vào + app chính: 100% tiếng Anh (read_page liệt kê đủ nhãn Anh).
+- Thêm 1 lỗi loại Grammar → badge hiển thị "Grammar", thống kê "Grammar: 1".
+- **Monkeypatch XLSX.writeFile bắt workbook**: header TIMER = STT/BẠN/TGIAN BẮT ĐẦU/Phút/Giây; header FORM = PHÚT/GIÂY/ĐOẠN/HS CÓ LỖI/LOẠI LỖI/LỖI CỤ THỂ/GIẢI THÍCH LỖI; dòng lỗi cột LOẠI LỖI = "NGỮ PHÁP" → khớp mẫu 100% dù UI tiếng Anh ✓. Console không lỗi.
+- teacher.html: read_page xác nhận toàn tiếng Anh.
+
+### CHỜ THẦY REVIEW & CHỈNH TIẾP (thầy nói "điều chỉnh tiếp")
+- Font hiện vẫn Be Vietnam Pro (render tiếng Anh tốt) — chưa đổi, chờ ý thầy nếu muốn font Anh chuẩn (vd Inter).
+- Chờ thầy xem tổng thể rồi báo phần cần chỉnh (thầy nói "cần xử lý giao diện và tính năng khá nhiều").
+
 ## DỮ LIỆU TEST THẬT (buổi speaking lớp B1AH, 18/07/2026)
 - Folder Drive (public): https://drive.google.com/drive/folders/1eLoEVKvqNGWMAsYkk1U2NtfUfQ_Rmiqe
 - 4 video (~440–580MB, MP4 H.264, đều >100MB nên dính chặn UA — xem chặng 2), kèm file SRT cùng tên:

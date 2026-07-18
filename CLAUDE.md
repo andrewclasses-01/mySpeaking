@@ -1,7 +1,13 @@
 # mySTCheck — SPEAKING TEAM CHECK
 
 ## Mục đích
-App web tĩnh (GitHub Pages) cho học sinh xem video thuyết trình speaking của đội bạn và **bắt lỗi** (NGỮ PHÁP / PHÁT ÂM / THÔNG TIN) + ghi **thời gian nói** của từng bạn. Dữ liệu nộp về Google Sheet của thầy, đồng thời có nút xuất file Excel đúng mẫu `SPEAKING TEAM CHECK FORM.xlsx` (2 sheet TIMER + FORM).
+App web tĩnh (GitHub Pages) cho học sinh xem video thuyết trình speaking của đội bạn và **bắt lỗi** (Grammar / Pronunciation / Information) + ghi **thời gian nói** của từng bạn. Dữ liệu nộp về Google Sheet của thầy, đồng thời có nút xuất file Excel đúng mẫu `SPEAKING TEAM CHECK FORM.xlsx` (2 sheet TIMER + FORM).
+
+## Ngôn ngữ giao diện (QUAN TRỌNG)
+- **Toàn bộ UI là TIẾNG ANH, mặc định chỉ tiếng Anh** (từ chặng 4, 18/07/2026). `<html lang="en">`, mọi nhãn/nút/placeholder/toast/prompt tiếng Anh.
+- **Tách biệt HIỂN THỊ vs DỮ LIỆU**: loại lỗi hiển thị tiếng Anh (Grammar / Pronunciation / Information) nhưng **giá trị lưu + xuất Excel giữ tiếng Việt** (`NGỮ PHÁP / PHÁT ÂM / THÔNG TIN`) để khớp 100% file mẫu và dropdown validation cột E. Bản đồ này ở `js/app.js`: `TYPE_LABEL` + hàm `typeLabel()` (button giữ `data-type` tiếng Việt, chỉ đổi text hiển thị).
+- **Excel export GIỮ NGUYÊN tiếng Việt**: sheet names (TIMER/FORM), header (STT, BẠN, PHÚT, GIÂY, LOẠI LỖI, LỖI CỤ THỂ...), lời dặn A10 — tất cả tiếng Việt khớp mẫu. Khi sửa UI TUYỆT ĐỐI không đụng các chuỗi này (đã đánh dấu comment trong hàm `exportExcel`).
+- Option "HS CÓ LỖI" là free-text (không validation) nên đã đổi sang English: "Whole team" / "Someone else…".
 
 ## Cách chạy / test (mọi máy)
 - Là web tĩnh thuần, không cần build, không cần node. Test local: `python -m http.server 8123 --directory "D:\APP AND DATA\mySTCheck"` rồi mở `http://localhost:8123`.
