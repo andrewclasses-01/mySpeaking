@@ -1,4 +1,4 @@
-# mySTCheck — SPEAKING TEAM CHECK
+# mySpeaking — SPEAKING TEAM CHECK
 
 ## Mục đích
 App web tĩnh (GitHub Pages) cho học sinh xem video thuyết trình speaking của đội bạn và **bắt lỗi** (Grammar / Pronunciation / Information) + ghi **thời gian nói** của từng bạn. Dữ liệu nộp về Google Sheet của thầy, đồng thời có nút xuất file Excel đúng mẫu `SPEAKING TEAM CHECK FORM.xlsx` (2 sheet TIMER + FORM).
@@ -10,8 +10,8 @@ App web tĩnh (GitHub Pages) cho học sinh xem video thuyết trình speaking c
 - Option "HS CÓ LỖI" là free-text (không validation) nên đã đổi sang English: "Whole team" / "Someone else…".
 
 ## Cách chạy / test (mọi máy)
-- Là web tĩnh thuần, không cần build, không cần node. Test local: `python -m http.server 8123 --directory "D:\APP AND DATA\mySTCheck"` rồi mở `http://localhost:8123`.
-- Cấu hình preview tên `mystcheck` nằm trong `D:\OTHERS\CLAUDE\.claude\launch.json` — file này KHÔNG đồng bộ theo app; máy khác thì tự chạy lệnh python ở trên (hoặc thêm config tương tự).
+- Là web tĩnh thuần, không cần build, không cần node. Test local: `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking"` rồi mở `http://localhost:8123`.
+- Cấu hình preview tên `myspeaking` nằm trong `D:\OTHERS\CLAUDE\.claude\launch.json` — file này KHÔNG đồng bộ theo app; máy khác thì tự chạy lệnh python ở trên (hoặc thêm config tương tự).
 - YouTube IFrame API chỉ chạy trên http/https (localhost hoặc GitHub Pages), KHÔNG chạy qua file://.
 - File mẫu gốc của thầy đã chép vào repo: `mau/SPEAKING TEAM CHECK FORM.xlsx` (bản gốc ở `D:\OTHERS\CLAUDE\FORM SITE\` của máy 1) — cấu trúc xuất Excel phải luôn khớp file này.
 
@@ -36,7 +36,7 @@ teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo
   2. `html5` — Drive phát trực tiếp: ưu tiên Drive API `googleapis.com/drive/v3/files/ID?alt=media&key=<DRIVE_API_KEY>` (chính thống, chạy được file lớn), rồi mới thử `drive.usercontent.google.com/download?...&confirm=t` và `uc?export=download` (chỉ chạy với file ≤100MB); lấy `video.currentTime`.
   3. `stopwatch` — nếu Drive chặn phát trực tiếp: nhúng iframe `/preview` + đồng hồ bấm giờ song song (có nút Chỉnh giờ). App TỰ fallback theo thứ tự 2→3, có guard timeout 15s.
 - **Nộp bài**: POST JSON với `Content-Type: text/plain` (tránh CORS preflight; Apps Script trả CORS `*` cho simple request). Payload: className, student, myTeam, checkedTeam, topic, videoUrl, errors[], timers[]. Code.gs ghi thêm cột LỚP vào FORM + TIMER.
-- **Autosave**: localStorage theo key `mystcheck_<60 ký tự cuối videoUrl>`, debounce 300ms; vào lại cùng video + cùng tên → khôi phục bài đang làm dở. (`saveKey` là `let`, đặt lại ở bước chọn tên khi biết videoUrl.)
+- **Autosave**: localStorage theo key `myspeaking_<60 ký tự cuối videoUrl>`, debounce 300ms; vào lại cùng video + cùng tên → khôi phục bài đang làm dở. (`saveKey` là `let`, đặt lại ở bước chọn tên khi biết videoUrl.)
 - **Xuất Excel**: SheetJS dựng đúng cấu trúc file mẫu — sheet TIMER (merge A1:A2, B1:B2, C1:D1, E1:F1, dòng dặn dò merge 6 cột) + sheet FORM (7 cột như form gốc).
 
 ## Khám phá kỹ thuật quan trọng

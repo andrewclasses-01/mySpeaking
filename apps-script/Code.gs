@@ -1,5 +1,5 @@
 /**
- * mySTCheck — Google Apps Script nhận bài nộp từ app SPEAKING TEAM CHECK
+ * mySpeaking — Google Apps Script nhận bài nộp từ app SPEAKING TEAM CHECK
  *
  * CÁCH TRIỂN KHAI (làm 1 lần, ~5 phút):
  * 1. Tạo 1 Google Sheet mới (VD tên "SPEAKING CHECK - BÀI NỘP"), copy ID của Sheet
@@ -15,7 +15,7 @@
 var SS_ID = 'DAN_ID_GOOGLE_SHEET_VAO_DAY';
 
 function doGet() {
-  return ContentService.createTextOutput(JSON.stringify({ ok: true, app: 'mySTCheck' }))
+  return ContentService.createTextOutput(JSON.stringify({ ok: true, app: 'mySpeaking' }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 

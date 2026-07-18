@@ -1,4 +1,4 @@
-# GHI CHÚ DỰ ÁN — mySTCheck (SPEAKING TEAM CHECK)
+# GHI CHÚ DỰ ÁN — mySpeaking (SPEAKING TEAM CHECK)
 
 ## CHẶNG 1 — 18/07/2026: Khởi tạo app từ file mẫu Excel
 
@@ -13,14 +13,14 @@ Thầy Andrew muốn 1 app chạy trên trình duyệt, nhiều học sinh dùng
 
 ### Việc đã làm
 - Đọc file mẫu bằng openpyxl (đã pip install), lấy đủ: cấu trúc 2 sheet, merged cells, dropdown validation, nguyên văn lời dặn dò A10.
-- Dựng app tĩnh tại `D:\APP AND DATA\mySTCheck`:
+- Dựng app tĩnh tại `D:\APP AND DATA\mySpeaking`:
   - `index.html` — màn hình vào (tên HS, đội; nếu không có link cấu hình thì tự dán link video) → app chính 2 cột: video (sticky) | tabs "Bắt lỗi" và "Thời gian nói". Form lỗi có nút **⏱ Lấy mốc thời gian** tự điền PHÚT/GIÂY theo video; 3 nút LOẠI LỖI 3 màu; danh sách lỗi sửa/xóa được, sắp theo mốc thời gian, đếm theo loại. Tab TIMER: 6 dòng (hoặc theo danh sách thành viên), nút ⏱ Chốt cho bắt đầu/kết thúc từng bạn. Modal xác nhận trước khi nộp. Card DẶN DÒ CỦA THẦY.
   - `js/app.js` — logic thuần JS (IIFE): parse link video, 3 chế độ phát (youtube/html5-drive/stopwatch fallback), autosave localStorage + khôi phục bài dở, nộp bài POST text/plain, xuất Excel SheetJS đúng mẫu (merge y hệt file gốc).
   - `teacher.html` — trang thầy tạo link buổi check: điền link video + chủ đề + đội được check + thành viên → ra link `?d=<base64url>` + QR 160px + nút copy/mở thử.
   - `config.js` — chỗ điền SCRIPT_URL (đang rỗng, chờ thầy deploy Apps Script).
   - `apps-script/Code.gs` — doPost ghi 2 sheet FORM/TIMER trong Google Sheet (tự tạo sheet + header lần đầu), doGet để test; kèm hướng dẫn deploy ngay đầu file.
 - UI: Tailwind CDN, font Be Vietnam Pro, icon Lucide, tông indigo/violet gradient, bo góc 2xl/3xl.
-- Test trên preview browser (server `mystcheck` port 8123 trong launch.json của D:\OTHERS\CLAUDE):
+- Test trên preview browser (server `myspeaking` port 8123 trong launch.json của D:\OTHERS\CLAUDE):
   - Luồng thủ công: nhập tên + link YouTube → app hiện, player YouTube ready, status "lấy mốc thời gian chính xác" ✓
   - Thêm lỗi → hiện card đúng định dạng, thống kê NGỮ PHÁP: 1, autosave localStorage đủ trường ✓
   - Nút Lấy mốc thời gian → điền 0:00 từ getCurrentTime ✓
@@ -81,7 +81,7 @@ Thầy đưa folder Drive thật: 4 video speaking `C0400/02/03/04_CUT.mp4` (~44
 ## CHẶNG 5 — 19/07/2026: CHỐT TẦM NHÌN LỚN + fix giao diện điện thoại
 
 ### Tầm nhìn thầy chốt (QUAN TRỌNG — định hướng cả dự án)
-Thầy muốn nâng mySTCheck từ "web nhỏ cho HS bắt lỗi" thành **hệ thống lo trọn buổi speaking test**, gồm 5 việc: (1) thay khâu tay của skill sapxepspeaking (dọn/tạo thư mục, sao chép & tạo file từ mẫu), (2) trang web cho HS bắt lỗi, (3) push GitHub, (4) thu thập + phân tích dữ liệu, (5) [ĐÍCH CUỐI] trình chiếu video OFFLINE kèm sub + đánh dấu vị trí lỗi.
+Thầy muốn nâng mySpeaking từ "web nhỏ cho HS bắt lỗi" thành **hệ thống lo trọn buổi speaking test**, gồm 5 việc: (1) thay khâu tay của skill sapxepspeaking (dọn/tạo thư mục, sao chép & tạo file từ mẫu), (2) trang web cho HS bắt lỗi, (3) push GitHub, (4) thu thập + phân tích dữ liệu, (5) [ĐÍCH CUỐI] trình chiếu video OFFLINE kèm sub + đánh dấu vị trí lỗi.
 
 **Kiến trúc đã chốt (thầy đồng ý):** app gồm 2 phần dùng chung 1 kho dữ liệu:
 - **① Phần THẦY = app máy tính (Electron, giống myBoard/myActivity)** — vì chỉ app cài máy mới: dọn/tạo thư mục trên ổ D:, và mở/trình chiếu video 400-600MB offline mượt + chèn sub + đánh dấu lỗi. (Trình duyệt web KHÔNG được phép sờ file local + tải video nặng qua mạng thì lag.)
@@ -95,7 +95,7 @@ Thầy muốn nâng mySTCheck từ "web nhỏ cho HS bắt lỗi" thành **hệ 
 - Chặng 3: thu + xem + phân tích dữ liệu HS trong app.
 - Chặng 4: trình chiếu video offline + sub + đánh dấu lỗi.
 
-> ⚠ Khi bắt đầu Chặng 2 (app Electron): gọi skill `kienthucbuildapp` + theo quy ước hệ sinh thái (code trên E:\LAP TRINH APP\mySTCheck, bare repo + dữ liệu trên D:\APP AND DATA\mySTCheck, runtime Electron chung). Phần web HS có thể là repo/thư mục con publish GitHub Pages.
+> ⚠ Khi bắt đầu Chặng 2 (app Electron): gọi skill `kienthucbuildapp` + theo quy ước hệ sinh thái (code trên E:\LAP TRINH APP\mySpeaking, bare repo + dữ liệu trên D:\APP AND DATA\mySpeaking, runtime Electron chung). Phần web HS có thể là repo/thư mục con publish GitHub Pages.
 
 ### Việc đã làm chặng này (phần web HS — "chuẩn đẹp")
 - **Fix giao diện điện thoại**: nút loại lỗi "🔊 Pronunciation" (chữ Anh dài) bị TRÀN trong cột hẹp 1/3 màn 375px (rộng 99px > ô 95px). Sửa class nút loại lỗi → `px-1 text-xs sm:text-sm leading-tight` (điện thoại 12px, desktop ≥640px 14px). Sửa Ở CẢ 2 CHỖ: HTML gốc trong index.html VÀ chuỗi className trong `renderTypeBtns()` của app.js (nếu chỉ sửa 1 chỗ thì bấm chọn loại lỗi sẽ reset về cỡ cũ). Verify: mobile 12px scrollW 91≤95 không tràn; desktop 14px không tràn; không lỗi console; không tràn ngang toàn trang.
@@ -158,6 +158,36 @@ Thầy duyệt bản chặng 6 và yêu cầu tinh chỉnh (kèm ảnh icon logo
 - Ảnh HS thật (giờ là chữ cái đầu) — thầy sẽ cập nhật dữ liệu sau (qua `photos` trong classes.json hoặc app máy tính).
 - `teacher.html` vẫn là file cũ không dùng.
 
+## CHẶNG 8 — 19/07/2026: ĐỔI TÊN dự án mySTCheck → mySpeaking
+
+- Thầy chốt: dự án + app tương lai đều tên **mySpeaking**.
+- Đã đổi tên **thư mục** `D:\APP AND DATA\mySTCheck` → `D:\APP AND DATA\mySpeaking` (git repo bên trong đi theo, vẫn nguyên lịch sử).
+- Thay MỌI tham chiếu chữ (bỏ qua `Backup/`): `mySTCheck→mySpeaking`, `MYSTCHECK→MYSPEAKING` (biến `window.MYSPEAKING_CONFIG`), `mystcheck→myspeaking` (localStorage key `myspeaking_`, tên preview). Dùng `sed` byte-safe — tiếng Việt còn nguyên (đã verify). launch.json + memory cũng đã sửa.
+- User-facing GIỮ NGUYÊN: tab "SPEAKING TEAM CHECK", branding "ANDREW CLASSES / Speaking Team Check" (mySpeaking là tên DỰ ÁN/app).
+
+## ⭐ HANDOFF — TIẾP TỤC NGÀY MAI (session mới)
+
+**Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7.
+
+**Đang ở đâu:** Làm **CHẶNG 1 (web học sinh)** trong lộ trình 4 chặng. Web HS gần xong, thầy đã duyệt tới chặng 7 ("ok rồi").
+
+**Chạy thử:** `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking"` → http://localhost:8123 (hoặc preview tên `myspeaking`). KHÔNG cần node/build.
+- Đăng nhập lớp TEST: **Your class = `B1AH`**, **Class code = `germs`** → chọn tên → tích cam kết → Start.
+
+**Trạng thái Chặng 1:**
+- ✅ XONG: UI English-only; 1 link + đăng nhập lớp (gõ classCode+code, sai→pop-up); chọn tên bằng ô select; màn xác nhận có ảnh HS (tạm chữ cái đầu) + bảng cam kết bắt buộc tích; logo ANDREW CLASSES; fix mobile; cache-busting `?v` (TĂNG mỗi lần sửa app.js/config.js — hiện v=4); classes.json seed B1AH-GERMS; Code.gs thêm cột LỚP.
+- ⏳ CÒN: (a) **Thầy** deploy Apps Script → điền SCRIPT_URL vào config.js (HUONG DAN TRIEN KHAI.md Bước 1); (b) push GitHub Pages (gh login `andrewclasses-code`, chờ thầy chốt tên repo/public); (c) thầy có thể còn tinh chỉnh chính màn BẮT LỖI bên trong.
+- ⚠️ Ảnh HS = chữ cái đầu (chờ ảnh thật qua `photos` trong classes.json). Mapping video→đội GIẢ ĐỊNH theo thứ tự. `teacher.html` là file CŨ không dùng.
+
+**Lộ trình tiếp (thầy chốt 1→2→3→4):**
+- Chặng 2: **app MÁY TÍNH (Electron, như myBoard/myActivity)** — nút "sắp xếp folder + tạo file chấm chéo" (thay khâu tay skill sapxepspeaking). KHI BẮT ĐẦU: gọi skill `kienthucbuildapp`, code trên `E:\LAP TRINH APP\mySpeaking` + bare repo/dữ liệu ở `D:\APP AND DATA\mySpeaking`, chờ "ok build".
+- Chặng 3: thu + xem + phân tích dữ liệu HS trong app.
+- Chặng 4: trình chiếu video offline + sub + đánh dấu vị trí lỗi (đích cuối).
+
+**Cách làm việc với thầy:** KHÔNG chuyên lập trình → giải thích dễ hiểu, hỏi bằng AskUserQuestion khi cần quyết, cho xem kết quả chạy thật/ảnh, chờ "ok build" trước tính năng lớn, mỗi đợt ghi GHI CHU DU AN.md + commit.
+
+> mục "TIẾP TỤC CÔNG VIỆC Ở MÁY KHÁC" bên dưới (chặng 3) đã CŨ (còn nói link ?d=) — đọc HANDOFF này thay cho nó.
+
 ## DỮ LIỆU TEST THẬT (buổi speaking lớp B1AH, 18/07/2026)
 - Folder Drive (public): https://drive.google.com/drive/folders/1eLoEVKvqNGWMAsYkk1U2NtfUfQ_Rmiqe
 - 4 video (~440–580MB, MP4 H.264, đều >100MB nên dính chặn UA — xem chặng 2), kèm file SRT cùng tên:
@@ -176,7 +206,7 @@ Thầy duyệt bản chặng 6 và yêu cầu tinh chỉnh (kèm ảnh icon logo
 1. **Thư mục app tự chứa đủ mọi thứ** (D:\ đồng bộ Drive giữa 2 máy): code + hồ sơ + file mẫu (`mau/`) + Apps Script (`apps-script/Code.gs`) + hướng dẫn (`HUONG DAN TRIEN KHAI.md`). Đọc CLAUDE.md + file này trước khi sửa.
 2. **Git**: repo thường (không bare) ngay trong thư mục app, nhánh `master`, đã commit đến chặng 3. CHƯA có remote GitHub — thầy chưa xác nhận push (tài khoản `andrewclasses-code`, gh đã đăng nhập trên máy 1; máy 2 muốn push phải `gh auth login`). Lệnh push nằm trong HUONG DAN TRIEN KHAI.md Bước 2.
    ⚠ Vì thư mục đồng bộ qua Drive, KHÔNG làm việc git đồng thời trên 2 máy — chờ Drive đồng bộ xong mới sửa tiếp.
-3. **Chạy test**: `python -m http.server 8123 --directory "D:\APP AND DATA\mySTCheck"` → mở http://localhost:8123 (app HS) và /teacher.html (trang thầy). Không cần node/build.
+3. **Chạy test**: `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking"` → mở http://localhost:8123 (app HS) và /teacher.html (trang thầy). Không cần node/build.
 4. **Trạng thái cấu hình**: `config.js` còn 2 chỗ TRỐNG chờ thầy — `SCRIPT_URL` (Apps Script, Bước 1) và `DRIVE_API_KEY` (tùy chọn, Bước 1b). Chưa có SCRIPT_URL thì nút Nộp bài báo hướng dẫn dùng Xuất Excel (đúng thiết kế, không phải bug).
 5. **Đã verify**: luồng HS đầy đủ (YouTube + Drive fallback), teacher.html tạo link/QR, xuất Excel đúng mẫu, autosave/khôi phục. **Chưa verify**: nộp bài end-to-end vào Google Sheet (chờ SCRIPT_URL), Drive API key với file lớn (chờ key), giao diện điện thoại.
 

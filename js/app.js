@@ -1,11 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════
-   mySTCheck — SPEAKING TEAM CHECK
+   mySpeaking — SPEAKING TEAM CHECK
    App bắt lỗi video thuyết trình cho học sinh (GitHub Pages)
    ═══════════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
 
-  const CFG = window.MYSTCHECK_CONFIG || {};
+  const CFG = window.MYSPEAKING_CONFIG || {};
   const $ = (id) => document.getElementById(id);
 
   // ─── Danh sách lớp (data/classes.json) — mô hình 1 LINK CHUNG + đăng nhập theo lớp ───
@@ -29,7 +29,7 @@
   let fType = '';
 
   const SCRIPT_URL = CFG.SCRIPT_URL || '';
-  let saveKey = 'mystcheck_manual';   // đặt lại khi biết videoUrl (sau bước chọn tên)
+  let saveKey = 'myspeaking_manual';   // đặt lại khi biết videoUrl (sau bước chọn tên)
 
   // ─── Lưu / khôi phục tạm (localStorage) ───
   let saveTimer = null;
@@ -544,7 +544,7 @@
     state.videoUrl = checked.video || '';
     state.topic = cls.topic || '';
     state.className = cls.name || cls.id;
-    saveKey = 'mystcheck_' + (state.videoUrl || 'manual').slice(-60);
+    saveKey = 'myspeaking_' + (state.videoUrl || 'manual').slice(-60);
 
     // ảnh HS: dùng ảnh thật nếu có, tạm thời hiện chữ cái đầu
     const photo = photoFor(cls, name);

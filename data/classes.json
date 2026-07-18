@@ -1,5 +1,5 @@
 {
-  "_note": "Danh sach lop cho mySTCheck. MOI lop: id (ma noi bo), name (ten hien thi lop), classCode (HS go vao o 'Your class'), code (HS go vao o 'Class code'), topic, teams (moi doi co video + members), pairs (cap cham cheo: checker cham video cua checked). HS phai go DUNG CA classCode LAN code moi vao duoc. Chang sau app may tinh se tu sinh file nay.",
+  "_note": "Danh sach lop cho mySpeaking. MOI lop: id (ma noi bo), name (ten hien thi lop), classCode (HS go vao o 'Your class'), code (HS go vao o 'Class code'), topic, teams (moi doi co video + members), pairs (cap cham cheo: checker cham video cua checked). HS phai go DUNG CA classCode LAN code moi vao duoc. Chang sau app may tinh se tu sinh file nay.",
   "classes": [
     {
       "id": "B1AH-GERMS",
