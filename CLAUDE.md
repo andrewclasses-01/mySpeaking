@@ -25,7 +25,12 @@ apps-script/Code.gs — code Google Apps Script nhận bài nộp, ghi vào Goog
 teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo link ?d= — giữ tạm, sẽ bỏ/thay bằng app máy tính
 ```
 - **UI**: Tailwind (CDN), font Be Vietnam Pro, icon Lucide, SheetJS (xuất Excel).
-- **Mô hình MỚI (chặng 6, 19/07/2026): 1 LINK CHUNG + đăng nhập theo lớp.** Không còn link `?d=` mỗi buổi. `index.html` (không tham số) → MÀN 1 chọn lớp + gõ mã lớp (code, so sánh không phân biệt hoa thường) → MÀN 2 chọn TÊN trong danh sách lớp → app tự tính đội mình (checker) + đội phải chấm (checked, theo `pairs`) → tự nạp video + members đội bạn. Dữ liệu lớp đọc từ `data/classes.json` (fetch no-store để luôn mới). Cấu trúc: `{classes:[{id,name,code,topic,teams:[{team,video,members[]}],pairs:[{checker,checked}]}]}`. Chặng sau app máy tính sẽ TỰ SINH file này.
+- **Mô hình MỚI (chặng 6-7, 19/07/2026): 1 LINK CHUNG + đăng nhập theo lớp.** Không còn link `?d=` mỗi buổi. `index.html` (không tham số):
+  - **MÀN 1 đăng nhập** (logo SVG bảng-biểu-đồ + "ANDREW CLASSES / Speaking Team Check"): HS **TỰ GÕ 2 ô** — "Your class" (khớp `classCode`) + "Class code" (khớp `code`), cả 2 so sánh **không phân biệt hoa thường**. Sai (không khớp lớp nào) → **pop-up** "Your information is not correct. Contact teacher Andrew to get help." (không dùng toast).
+  - **MÀN 2 chọn tên**: mỗi đội = TÊN ĐỘI to + **ô select** thành viên; chọn xong (event change) → sang xác nhận ngay.
+  - **MÀN 3 xác nhận**: ảnh HS (tạm: chữ cái đầu; ảnh thật sau qua `cls.photos[name]`) + "You are in Team X · You will check Team Y" + **bảng cam kết** (nội dung A NOTE FROM YOUR TEACHER) + **ô tích BẮT BUỘC** "I agree and respect our journey, teacher ❤️" → chưa tích thì nút Start bị khoá (disabled + mờ).
+  - App tự tính đội mình (checker) + đội phải chấm (checked, theo `pairs`) → tự nạp video + members đội bạn.
+  - Dữ liệu lớp đọc từ `data/classes.json` (fetch no-store). Cấu trúc: `{classes:[{id,name,classCode,code,topic,teams:[{team,video,members[]}],pairs:[{checker,checked}], photos?:{TÊN:url}}]}`. Chặng sau app máy tính sẽ TỰ SINH file này.
 - **Video 3 chế độ** (tự nhận diện từ link):
   1. `youtube` — YouTube IFrame API, `getCurrentTime()` chính xác. KHUYÊN DÙNG (video để "Không công khai").
   2. `html5` — Drive phát trực tiếp: ưu tiên Drive API `googleapis.com/drive/v3/files/ID?alt=media&key=<DRIVE_API_KEY>` (chính thống, chạy được file lớn), rồi mới thử `drive.usercontent.google.com/download?...&confirm=t` và `uc?export=download` (chỉ chạy với file ≤100MB); lấy `video.currentTime`.

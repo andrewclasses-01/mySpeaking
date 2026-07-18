@@ -473,26 +473,23 @@
     } catch (e) { CLASSES = { classes: [] }; }
   }
 
-  // Màn 1 — đăng nhập lớp: đổ danh sách lớp vào dropdown
+  // Màn 1 — đăng nhập lớp: HS TỰ GÕ mã lớp (classCode) + mã (code)
   function initLoginScreen() {
-    const sel = $('inpClass');
-    (CLASSES.classes || []).forEach((c) => {
-      const o = document.createElement('option');
-      o.value = c.id; o.textContent = c.name;
-      sel.appendChild(o);
-    });
     if (!(CLASSES.classes || []).length) {
       toast('Chưa có lớp nào trong danh sách. Thầy cần thêm lớp vào data/classes.json.', 'err');
     }
   }
 
+  function showLoginErr() { $('loginErrModal').classList.remove('hidden'); $('loginErrModal').classList.add('flex'); }
+  function hideLoginErr() { $('loginErrModal').classList.add('hidden'); $('loginErrModal').classList.remove('flex'); }
+
   function handleLogin() {
-    const cls = (CLASSES.classes || []).find((c) => c.id === $('inpClass').value);
-    if (!cls) { toast('Please choose your class!', 'err'); return; }
-    const code = $('inpCode').value.trim();
-    if (String(cls.code || '').toLowerCase() !== code.toLowerCase()) {
-      toast('Wrong class code — please check with your teacher.', 'err'); $('inpCode').focus(); return;
-    }
+    const cv = $('inpClass').value.trim().toLowerCase();
+    const code = $('inpCode').value.trim().toLowerCase();
+    // phải khớp CẢ classCode LẪN code mới vào được
+    const cls = (CLASSES.classes || []).find((c) =>
+      String(c.classCode || '').toLowerCase() === cv && String(c.code || '').toLowerCase() === code);
+    if (!cls) { showLoginErr(); return; }
     session.class = cls;
     renderIdentify();
     $('loginScreen').classList.add('hidden');
@@ -500,27 +497,39 @@
     refreshIcons();
   }
 
-  // Màn 2 — chọn tên: liệt kê tên theo từng đội
+  // Màn 2 — chọn tên: mỗi đội = TÊN ĐỘI (to, nổi bật) + ô select chọn tên
   function renderIdentify() {
     const cls = session.class;
     $('identHeader').innerHTML =
       '<h2 class="text-lg font-extrabold text-slate-900 leading-tight">' + escapeHtml(cls.name) +
       (cls.topic ? ' — ' + escapeHtml(cls.topic) : '') + '</h2>' +
-      '<p class="text-sm text-slate-500 mt-0.5">Find and tap your name below.</p>';
+      '<p class="text-sm text-slate-500 mt-0.5">Pick your team, then choose your name.</p>';
     $('identNames').innerHTML = (cls.teams || []).map((t) =>
-      '<div><div class="text-xs font-bold text-slate-400 mb-1.5">TEAM ' + t.team + '</div>' +
-      '<div class="flex flex-wrap gap-2">' +
-      (t.members || []).map((m) =>
-        '<button data-team="' + t.team + '" data-name="' + escapeHtml(m) +
-        '" class="pickName rounded-xl border border-slate-300 hover:border-indigo-500 hover:bg-indigo-50 active:scale-95 px-3.5 py-2 text-sm font-semibold transition">' +
-        escapeHtml(m) + '</button>').join('') +
-      '</div></div>'
+      '<div class="flex items-center gap-3">' +
+      '<span class="text-2xl font-extrabold text-slate-900 shrink-0">TEAM ' + t.team + '</span>' +
+      '<select data-team="' + t.team + '" class="pickSelect flex-1 min-w-0 rounded-xl border border-slate-300 px-3 py-2.5 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">' +
+      '<option value="">— Your name —</option>' +
+      (t.members || []).map((m) => '<option value="' + escapeHtml(m) + '">' + escapeHtml(m) + '</option>').join('') +
+      '</select></div>'
     ).join('');
     $('identPick').classList.remove('hidden');
     $('identConfirm').classList.add('hidden');
   }
 
-  // Chọn tên → tính đội mình + đội phải chấm (theo cặp chấm chéo) → màn xác nhận
+  function initialsOf(name) {
+    const p = String(name).trim().split(/\s+/).filter(Boolean);
+    return ((p[0] || '')[0] + (p.length > 1 ? (p[p.length - 1] || '')[0] : '')).toUpperCase();
+  }
+  // Ảnh HS (dữ liệu chuẩn sau): lớp có thể có "photos": {"TÊN": "url"}; chưa có thì hiện chữ cái đầu
+  function photoFor(cls, name) { return (cls.photos && cls.photos[name]) || ''; }
+  function setStartEnabled(on) {
+    const b = $('btnStartCheck');
+    b.disabled = !on;
+    b.classList.toggle('opacity-50', !on);
+    b.classList.toggle('cursor-not-allowed', !on);
+  }
+
+  // Chọn tên → tính đội mình + đội phải chấm → màn xác nhận (ảnh + cam kết)
   function handleNamePick(teamNo, name) {
     const cls = session.class;
     const pair = (cls.pairs || []).find((p) => Number(p.checker) === Number(teamNo));
@@ -537,12 +546,18 @@
     state.className = cls.name || cls.id;
     saveKey = 'mystcheck_' + (state.videoUrl || 'manual').slice(-60);
 
-    $('identConfirmBox').innerHTML =
-      '<div class="text-slate-500 text-sm">You are</div>' +
-      '<div class="text-2xl font-extrabold text-slate-900">' + escapeHtml(name) + '</div>' +
-      '<div class="text-sm text-slate-600">Team ' + teamNo + '</div>' +
-      '<div class="mt-3 inline-flex items-center gap-2 bg-white rounded-full px-4 py-1.5 text-sm font-bold text-indigo-700 border border-indigo-200">' +
-      '<i data-lucide="target" class="w-4 h-4"></i> You will check TEAM ' + pair.checked + '</div>';
+    // ảnh HS: dùng ảnh thật nếu có, tạm thời hiện chữ cái đầu
+    const photo = photoFor(cls, name);
+    const ph = $('identPhoto');
+    if (photo) { ph.style.backgroundImage = 'url("' + photo + '")'; ph.textContent = ''; }
+    else { ph.style.backgroundImage = ''; ph.textContent = initialsOf(name); }
+
+    $('identName').textContent = name;
+    $('identTeams').innerHTML = 'You are in <b>Team ' + teamNo + '</b> · You will check <b>Team ' + pair.checked + '</b>';
+
+    $('chkAgree').checked = false;
+    setStartEnabled(false);
+
     $('identPick').classList.add('hidden');
     $('identConfirm').classList.remove('hidden');
     refreshIcons();
@@ -598,16 +613,20 @@
 
     // Màn đăng nhập lớp
     $('btnLogin').addEventListener('click', handleLogin);
+    $('inpClass').addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
     $('inpCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
-    // Màn chọn tên
+    $('btnLoginErrOk').addEventListener('click', hideLoginErr);
+    // Màn chọn tên (ô select — chọn xong là sang xác nhận ngay)
     $('btnBackLogin').addEventListener('click', () => {
       $('identifyScreen').classList.add('hidden');
       $('loginScreen').classList.remove('hidden');
     });
-    $('identNames').addEventListener('click', (ev) => {
-      const b = ev.target.closest('.pickName');
-      if (b) handleNamePick(b.dataset.team, b.dataset.name);
+    $('identNames').addEventListener('change', (ev) => {
+      const s = ev.target.closest('.pickSelect');
+      if (s && s.value) handleNamePick(s.dataset.team, s.value);
     });
+    // Cam kết: phải tích mới bấm Start được
+    $('chkAgree').addEventListener('change', (e) => setStartEnabled(e.target.checked));
     $('btnStartCheck').addEventListener('click', start);
     $('btnBackNames').addEventListener('click', renderIdentify);
 
