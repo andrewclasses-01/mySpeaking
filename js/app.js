@@ -8,24 +8,19 @@
   const CFG = window.MYSTCHECK_CONFIG || {};
   const $ = (id) => document.getElementById(id);
 
-  // ─── Cấu hình buổi check (từ link thầy tạo bằng teacher.html) ───
-  function readLinkConfig() {
-    try {
-      const d = new URLSearchParams(location.search).get('d');
-      if (!d) return null;
-      const json = decodeURIComponent(escape(atob(d.replace(/-/g, '+').replace(/_/g, '/'))));
-      return JSON.parse(json);
-    } catch (e) { return null; }
-  }
-  const linkCfg = readLinkConfig(); // {v: videoUrl, t: topic, team: checkedTeam, members: [], s: scriptUrl}
+  // ─── Danh sách lớp (data/classes.json) — mô hình 1 LINK CHUNG + đăng nhập theo lớp ───
+  // Cấu trúc: { classes: [ { id, name, code, topic, teams:[{team, video, members[]}], pairs:[{checker, checked}] } ] }
+  let CLASSES = { classes: [] };
+  const session = { class: null };   // lớp đang chọn sau khi đăng nhập
 
   // ─── State ───
   const state = {
     student: '', myTeam: '',
-    topic: (linkCfg && linkCfg.t) || '',
-    checkedTeam: (linkCfg && linkCfg.team) || '',
-    members: (linkCfg && linkCfg.members) || [],
-    videoUrl: (linkCfg && linkCfg.v) || '',
+    className: '',
+    topic: '',
+    checkedTeam: '',
+    members: [],
+    videoUrl: '',
     errors: [],   // {min, sec, section, who, type, detail, explain}
     timers: [],   // {name, sMin, sSec, eMin, eSec}
     submitted: false,
@@ -33,8 +28,8 @@
   let editingIndex = -1;
   let fType = '';
 
-  const SCRIPT_URL = (linkCfg && linkCfg.s) || CFG.SCRIPT_URL || '';
-  const saveKey = 'mystcheck_' + (state.videoUrl || 'manual').slice(-60);
+  const SCRIPT_URL = CFG.SCRIPT_URL || '';
+  let saveKey = 'mystcheck_manual';   // đặt lại khi biết videoUrl (sau bước chọn tên)
 
   // ─── Lưu / khôi phục tạm (localStorage) ───
   let saveTimer = null;
@@ -392,6 +387,7 @@
     try {
       const payload = {
         submittedAt: new Date().toISOString(),
+        className: state.className,
         student: state.student, myTeam: state.myTeam,
         checkedTeam: state.checkedTeam, topic: state.topic, videoUrl: state.videoUrl,
         errors: state.errors, timers: cleanTimers(),
@@ -467,42 +463,97 @@
   }
   function refreshIcons() { if (window.lucide) lucide.createIcons(); }
 
-  // ═══════════════ KHỞI ĐỘNG ═══════════════
-  function initSetupScreen() {
-    const info = $('setupInfo');
-    const parts = [];
-    if (state.topic) parts.push('<div>📚 Topic: <b>' + escapeHtml(state.topic) + '</b></div>');
-    if (state.checkedTeam) parts.push('<div>🎯 Team being checked: <b>' + escapeHtml(state.checkedTeam) + '</b></div>');
-    if (state.members.length) parts.push('<div>👥 Members: ' + state.members.map(escapeHtml).join(', ') + '</div>');
-    if (parts.length) { info.innerHTML = parts.join(''); info.classList.remove('hidden'); }
-    if (!state.videoUrl) $('manualVideoWrap').classList.remove('hidden');
+  // ═══════════════ KHỞI ĐỘNG — luồng 1 LINK CHUNG + đăng nhập lớp ═══════════════
 
-    const saved = loadSaved();
-    if (saved && saved.student && (saved.errors.length || saved.timers.some((t) => t.name))) {
-      $('inpStudent').value = saved.student;
-      $('inpMyTeam').value = saved.myTeam || '';
-      const hint = $('resumeHint');
-      hint.textContent = '💾 Found unfinished work by "' + saved.student + '" (' + saved.errors.length + ' mistakes) — it will resume when you tap Start.';
-      hint.classList.remove('hidden');
+  // Tải danh sách lớp (không cache để luôn lấy nội dung mới nhất khi thầy cập nhật)
+  async function loadClasses() {
+    try {
+      const r = await fetch('data/classes.json?_=' + Date.now(), { cache: 'no-store' });
+      if (r.ok) CLASSES = await r.json();
+    } catch (e) { CLASSES = { classes: [] }; }
+  }
+
+  // Màn 1 — đăng nhập lớp: đổ danh sách lớp vào dropdown
+  function initLoginScreen() {
+    const sel = $('inpClass');
+    (CLASSES.classes || []).forEach((c) => {
+      const o = document.createElement('option');
+      o.value = c.id; o.textContent = c.name;
+      sel.appendChild(o);
+    });
+    if (!(CLASSES.classes || []).length) {
+      toast('Chưa có lớp nào trong danh sách. Thầy cần thêm lớp vào data/classes.json.', 'err');
     }
   }
 
-  function start() {
-    const name = $('inpStudent').value.trim();
-    if (!name) { toast('Please enter your name!', 'err'); $('inpStudent').focus(); return; }
-    if (!state.videoUrl) {
-      const u = $('inpVideoUrl').value.trim();
-      if (!u) { toast('Please paste the video link!', 'err'); $('inpVideoUrl').focus(); return; }
-      state.videoUrl = u;
-      state.checkedTeam = $('inpCheckedTeam').value.trim() || state.checkedTeam;
+  function handleLogin() {
+    const cls = (CLASSES.classes || []).find((c) => c.id === $('inpClass').value);
+    if (!cls) { toast('Please choose your class!', 'err'); return; }
+    const code = $('inpCode').value.trim();
+    if (String(cls.code || '').toLowerCase() !== code.toLowerCase()) {
+      toast('Wrong class code — please check with your teacher.', 'err'); $('inpCode').focus(); return;
     }
-    state.student = name;
-    state.myTeam = $('inpMyTeam').value.trim();
+    session.class = cls;
+    renderIdentify();
+    $('loginScreen').classList.add('hidden');
+    $('identifyScreen').classList.remove('hidden');
+    refreshIcons();
+  }
 
+  // Màn 2 — chọn tên: liệt kê tên theo từng đội
+  function renderIdentify() {
+    const cls = session.class;
+    $('identHeader').innerHTML =
+      '<h2 class="text-lg font-extrabold text-slate-900 leading-tight">' + escapeHtml(cls.name) +
+      (cls.topic ? ' — ' + escapeHtml(cls.topic) : '') + '</h2>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Find and tap your name below.</p>';
+    $('identNames').innerHTML = (cls.teams || []).map((t) =>
+      '<div><div class="text-xs font-bold text-slate-400 mb-1.5">TEAM ' + t.team + '</div>' +
+      '<div class="flex flex-wrap gap-2">' +
+      (t.members || []).map((m) =>
+        '<button data-team="' + t.team + '" data-name="' + escapeHtml(m) +
+        '" class="pickName rounded-xl border border-slate-300 hover:border-indigo-500 hover:bg-indigo-50 active:scale-95 px-3.5 py-2 text-sm font-semibold transition">' +
+        escapeHtml(m) + '</button>').join('') +
+      '</div></div>'
+    ).join('');
+    $('identPick').classList.remove('hidden');
+    $('identConfirm').classList.add('hidden');
+  }
+
+  // Chọn tên → tính đội mình + đội phải chấm (theo cặp chấm chéo) → màn xác nhận
+  function handleNamePick(teamNo, name) {
+    const cls = session.class;
+    const pair = (cls.pairs || []).find((p) => Number(p.checker) === Number(teamNo));
+    if (!pair) { toast('This team has no video to check yet.', 'err'); return; }
+    const checked = (cls.teams || []).find((t) => Number(t.team) === Number(pair.checked));
+    if (!checked) { toast('Missing the team to check.', 'err'); return; }
+
+    state.student = name;
+    state.myTeam = 'TEAM ' + teamNo;
+    state.checkedTeam = 'TEAM ' + pair.checked;
+    state.members = checked.members || [];
+    state.videoUrl = checked.video || '';
+    state.topic = cls.topic || '';
+    state.className = cls.name || cls.id;
+    saveKey = 'mystcheck_' + (state.videoUrl || 'manual').slice(-60);
+
+    $('identConfirmBox').innerHTML =
+      '<div class="text-slate-500 text-sm">You are</div>' +
+      '<div class="text-2xl font-extrabold text-slate-900">' + escapeHtml(name) + '</div>' +
+      '<div class="text-sm text-slate-600">Team ' + teamNo + '</div>' +
+      '<div class="mt-3 inline-flex items-center gap-2 bg-white rounded-full px-4 py-1.5 text-sm font-bold text-indigo-700 border border-indigo-200">' +
+      '<i data-lucide="target" class="w-4 h-4"></i> You will check TEAM ' + pair.checked + '</div>';
+    $('identPick').classList.add('hidden');
+    $('identConfirm').classList.remove('hidden');
+    refreshIcons();
+  }
+
+  function start() {
+    // state.student / myTeam / checkedTeam / members / videoUrl / topic đã set ở handleNamePick
     // khôi phục bài dở nếu cùng người
     const saved = loadSaved();
     let savedTimers = null;
-    if (saved && saved.student === name) {
+    if (saved && saved.student === state.student) {
       state.errors = saved.errors || [];
       savedTimers = saved.timers;
       state.submitted = !!saved.submitted;
@@ -521,7 +572,8 @@
     renderErrors();
     initVideo();
 
-    $('setupScreen').classList.add('hidden');
+    $('loginScreen').classList.add('hidden');
+    $('identifyScreen').classList.add('hidden');
     $('appScreen').classList.remove('hidden');
     autosave();
     refreshIcons();
@@ -538,13 +590,26 @@
   }
 
   // ─── Gắn sự kiện ───
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     refreshIcons();
-    initSetupScreen();
+    await loadClasses();
+    initLoginScreen();
     switchTab('errors');
 
-    $('btnStart').addEventListener('click', start);
-    $('inpStudent').addEventListener('keydown', (e) => { if (e.key === 'Enter') start(); });
+    // Màn đăng nhập lớp
+    $('btnLogin').addEventListener('click', handleLogin);
+    $('inpCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
+    // Màn chọn tên
+    $('btnBackLogin').addEventListener('click', () => {
+      $('identifyScreen').classList.add('hidden');
+      $('loginScreen').classList.remove('hidden');
+    });
+    $('identNames').addEventListener('click', (ev) => {
+      const b = ev.target.closest('.pickName');
+      if (b) handleNamePick(b.dataset.team, b.dataset.name);
+    });
+    $('btnStartCheck').addEventListener('click', start);
+    $('btnBackNames').addEventListener('click', renderIdentify);
 
     document.querySelectorAll('.tabBtn').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 

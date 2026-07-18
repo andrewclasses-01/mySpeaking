@@ -106,6 +106,28 @@ Thầy muốn nâng mySTCheck từ "web nhỏ cho HS bắt lỗi" thành **hệ 
 - Push GitHub Pages (gh đã login `andrewclasses-code` máy 1) — chờ thầy chốt tên repo + public.
 - Gợi ý CHƯA làm (chờ thầy duyệt khi review UI): header trên điện thoại cao 148px (3 dòng wrap) — chưa vỡ nhưng hơi chiếm màn, có thể gọn lại sau.
 
+## CHẶNG 6 — 19/07/2026: Đổi sang mô hình "1 LINK CHUNG + đăng nhập lớp"
+
+### Bối cảnh
+Thầy chưa ưng cách "mỗi buổi 1 link ?d=". Hỏi: dùng chung 1 link + đăng nhập riêng từng lớp được không? → Tư vấn (có sơ đồ): NÊN 1 link chung, cùng 1 thiết kế, chỉ nội dung khác theo lớp (mỗi lớp 1 thiết kế = khó bảo trì). Thầy chốt: **chọn lớp + mã lớp ngắn** để vào; **chọn tên từ danh sách lớp** (không tự gõ → dữ liệu sạch). Quản lý nội dung: em seed lớp GERMS, phần thêm/sửa lớp để app máy tính lo sau.
+
+### Việc đã làm (thay toàn bộ luồng vào app)
+- **`data/classes.json`** (MỚI): danh sách lớp. Seed thật lớp B1AH-GERMS: 4 đội + video Drive (id từ ghi chú, GIẢ ĐỊNH thứ tự đội theo số video C0400/02/03/04 = T1/T2/T3/T4 — thầy chỉnh dễ) + cặp chấm chéo 1→2→3→4→1.
+- **index.html**: bỏ màn hình vào cũ (name/team/video). Thêm 2 màn: MÀN 1 `#loginScreen` (dropdown lớp + ô mã lớp + Continue) → MÀN 2 `#identifyScreen` (tên nhóm theo đội, bấm chọn → khối xác nhận "You are X, Team N, You will check TEAM M" + Start / chọn lại). Bump cache `?v=3`.
+- **js/app.js**: bỏ `readLinkConfig`/`linkCfg` (cơ chế ?d=). Thêm `loadClasses()` (fetch no-store), `initLoginScreen`, `handleLogin` (validate code, không phân biệt hoa thường), `renderIdentify`, `handleNamePick` (tính checker→checked theo pairs, set state + đặt lại `saveKey`). `start()` không đọc input nữa (state đã set). `saveKey` đổi `const`→`let`. Payload nộp thêm `className`.
+- **apps-script/Code.gs**: thêm cột `LỚP` (className) vào cả sheet FORM và TIMER.
+
+### Verify (preview browser, đã chụp màn thật)
+- Login: chọn B1AH + mã sai → bị chặn (ở lại login); mã đúng "GERMS" (test hoa/thường) → sang màn chọn tên ✓
+- Tên nhóm đúng 4 đội (T1 HOANG/TIEN … T4 PHONG/HA AN/BAO CHAU) ✓
+- Chọn HOANG (đội 1) → xác nhận "You will check TEAM 2"; Start → app: student HOANG, checked TEAM 2, topic GERMS, dropdown HS CÓ LỖI = NGAN/TRUC/Whole team/Someone else, VIDEO tự nạp đúng video đội 2 (C0402=1bra-…, rơi vào chế độ đồng hồ dự phòng vì Drive >100MB chưa có API key) ✓
+- Mobile 375px: login + identify KHÔNG tràn, nút tên không tràn. Không lỗi console. Ảnh chụp 2 màn đẹp, rõ.
+
+### Lưu ý / còn treo
+- `teacher.html` (tạo link ?d=) giờ KHÔNG còn dùng trong mô hình mới — giữ tạm, sẽ bỏ hoặc thay bằng chức năng của app máy tính.
+- Video Drive vẫn dính chặn UA (chế độ đồng hồ) tới khi có DRIVE_API_KEY hoặc chuyển YouTube unlisted.
+- Mapping video→đội trong classes.json đang GIẢ ĐỊNH theo thứ tự — khi làm thật cần đúng (app máy tính chặng sau sẽ set chuẩn).
+
 ## DỮ LIỆU TEST THẬT (buổi speaking lớp B1AH, 18/07/2026)
 - Folder Drive (public): https://drive.google.com/drive/folders/1eLoEVKvqNGWMAsYkk1U2NtfUfQ_Rmiqe
 - 4 video (~440–580MB, MP4 H.264, đều >100MB nên dính chặn UA — xem chặng 2), kèm file SRT cùng tên:

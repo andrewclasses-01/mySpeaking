@@ -17,20 +17,21 @@ App web tĩnh (GitHub Pages) cho học sinh xem video thuyết trình speaking c
 
 ## Kiến trúc
 ```
-index.html        — app học sinh (màn hình vào → app chính 2 cột: video | nhập liệu)
-teacher.html      — trang THẦY tạo link buổi check (link + QR, mã hóa config vào ?d=base64url)
+index.html        — app học sinh: MÀN 1 đăng nhập lớp → MÀN 2 chọn tên → app chính 2 cột: video | nhập liệu
+data/classes.json — DANH SÁCH LỚP (nội dung mỗi lớp) — nguồn cho luồng đăng nhập
 config.js         — SCRIPT_URL của Apps Script (thầy điền 1 lần)
 js/app.js         — toàn bộ logic (IIFE, không framework)
 apps-script/Code.gs — code Google Apps Script nhận bài nộp, ghi vào Google Sheet
+teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo link ?d= — giữ tạm, sẽ bỏ/thay bằng app máy tính
 ```
-- **UI**: Tailwind (CDN), font Be Vietnam Pro, icon Lucide, SheetJS (xuất Excel), qrcodejs (teacher.html).
-- **Config buổi check** truyền qua URL `index.html?d=<base64url(JSON)>`: `{v: videoUrl, t: chủ đề, team: đội được check, members: [tên...], s: scriptUrl override (tùy chọn)}`. Không có `?d` → học sinh tự dán link video (chế độ thủ công).
+- **UI**: Tailwind (CDN), font Be Vietnam Pro, icon Lucide, SheetJS (xuất Excel).
+- **Mô hình MỚI (chặng 6, 19/07/2026): 1 LINK CHUNG + đăng nhập theo lớp.** Không còn link `?d=` mỗi buổi. `index.html` (không tham số) → MÀN 1 chọn lớp + gõ mã lớp (code, so sánh không phân biệt hoa thường) → MÀN 2 chọn TÊN trong danh sách lớp → app tự tính đội mình (checker) + đội phải chấm (checked, theo `pairs`) → tự nạp video + members đội bạn. Dữ liệu lớp đọc từ `data/classes.json` (fetch no-store để luôn mới). Cấu trúc: `{classes:[{id,name,code,topic,teams:[{team,video,members[]}],pairs:[{checker,checked}]}]}`. Chặng sau app máy tính sẽ TỰ SINH file này.
 - **Video 3 chế độ** (tự nhận diện từ link):
   1. `youtube` — YouTube IFrame API, `getCurrentTime()` chính xác. KHUYÊN DÙNG (video để "Không công khai").
   2. `html5` — Drive phát trực tiếp: ưu tiên Drive API `googleapis.com/drive/v3/files/ID?alt=media&key=<DRIVE_API_KEY>` (chính thống, chạy được file lớn), rồi mới thử `drive.usercontent.google.com/download?...&confirm=t` và `uc?export=download` (chỉ chạy với file ≤100MB); lấy `video.currentTime`.
   3. `stopwatch` — nếu Drive chặn phát trực tiếp: nhúng iframe `/preview` + đồng hồ bấm giờ song song (có nút Chỉnh giờ). App TỰ fallback theo thứ tự 2→3, có guard timeout 15s.
-- **Nộp bài**: POST JSON với `Content-Type: text/plain` (tránh CORS preflight; Apps Script trả CORS `*` cho simple request). Payload: student, myTeam, checkedTeam, topic, videoUrl, errors[], timers[].
-- **Autosave**: localStorage theo key `mystcheck_<60 ký tự cuối videoUrl>`, debounce 300ms; vào lại cùng link + cùng tên → khôi phục bài đang làm dở.
+- **Nộp bài**: POST JSON với `Content-Type: text/plain` (tránh CORS preflight; Apps Script trả CORS `*` cho simple request). Payload: className, student, myTeam, checkedTeam, topic, videoUrl, errors[], timers[]. Code.gs ghi thêm cột LỚP vào FORM + TIMER.
+- **Autosave**: localStorage theo key `mystcheck_<60 ký tự cuối videoUrl>`, debounce 300ms; vào lại cùng video + cùng tên → khôi phục bài đang làm dở. (`saveKey` là `let`, đặt lại ở bước chọn tên khi biết videoUrl.)
 - **Xuất Excel**: SheetJS dựng đúng cấu trúc file mẫu — sheet TIMER (merge A1:A2, B1:B2, C1:D1, E1:F1, dòng dặn dò merge 6 cột) + sheet FORM (7 cột như form gốc).
 
 ## Khám phá kỹ thuật quan trọng

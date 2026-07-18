@@ -27,11 +27,11 @@ function doPost(e) {
 
     // ── Sheet FORM: mỗi dòng 1 lỗi ──
     var f = getSheet(ss, 'FORM', [
-      'NGÀY GIỜ NỘP', 'NGƯỜI CHECK', 'ĐỘI CỦA NGƯỜI CHECK', 'ĐỘI ĐƯỢC CHECK', 'CHỦ ĐỀ',
+      'NGÀY GIỜ NỘP', 'LỚP', 'NGƯỜI CHECK', 'ĐỘI CỦA NGƯỜI CHECK', 'ĐỘI ĐƯỢC CHECK', 'CHỦ ĐỀ',
       'PHÚT', 'GIÂY', 'ĐOẠN', 'HS CÓ LỖI', 'LOẠI LỖI', 'LỖI CỤ THỂ', 'GIẢI THÍCH LỖI'
     ]);
     var rows = (data.errors || []).map(function (er) {
-      return [now, data.student, data.myTeam, data.checkedTeam, data.topic,
+      return [now, data.className, data.student, data.myTeam, data.checkedTeam, data.topic,
         er.min, er.sec, er.section, er.who, er.type, er.detail, er.explain];
     });
     if (rows.length) {
@@ -40,11 +40,11 @@ function doPost(e) {
 
     // ── Sheet TIMER: mỗi dòng 1 bạn ──
     var t = getSheet(ss, 'TIMER', [
-      'NGÀY GIỜ NỘP', 'NGƯỜI CHECK', 'ĐỘI ĐƯỢC CHECK', 'STT', 'BẠN',
+      'NGÀY GIỜ NỘP', 'LỚP', 'NGƯỜI CHECK', 'ĐỘI ĐƯỢC CHECK', 'STT', 'BẠN',
       'BĐ PHÚT', 'BĐ GIÂY', 'KT PHÚT', 'KT GIÂY'
     ]);
     var trows = (data.timers || []).map(function (tm, i) {
-      return [now, data.student, data.checkedTeam, i + 1, tm.name,
+      return [now, data.className, data.student, data.checkedTeam, i + 1, tm.name,
         tm.sMin, tm.sSec, tm.eMin, tm.eSec];
     });
     if (trows.length) {
