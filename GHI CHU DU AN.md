@@ -175,7 +175,7 @@ Thầy duyệt bản chặng 6 và yêu cầu tinh chỉnh (kèm ảnh icon logo
 - Đăng nhập lớp TEST: **Your class = `B1AH`**, **Class code = `germs`** → chọn tên → tích cam kết → Start.
 
 **Trạng thái Chặng 1:**
-- ✅ XONG: UI English-only; 1 link + đăng nhập lớp (gõ classCode+code, sai→pop-up); chọn tên bằng ô select; màn xác nhận có ảnh HS (tạm chữ cái đầu) + bảng cam kết bắt buộc tích; logo ANDREW CLASSES; fix mobile; cache-busting `?v` (TĂNG mỗi lần sửa app.js/config.js — hiện v=4); classes.json seed B1AH-GERMS; Code.gs thêm cột LỚP.
+- ✅ XONG: UI English-only; 1 link + đăng nhập lớp (gõ classCode+code, sai→pop-up); chọn tên bằng ô select; màn xác nhận có ảnh HS (tạm chữ cái đầu) + bảng cam kết bắt buộc tích; logo ANDREW CLASSES; fix mobile; cache-busting `?v` (TĂNG mỗi lần sửa app.js/config.js — **hiện v=5**; bẫy đã gặp ở chặng 8: đổi tên biến config nhưng quên bump v → trình duyệt chạy bản cache cũ, đã fix bằng v=5); classes.json seed B1AH-GERMS; Code.gs thêm cột LỚP.
 - ⏳ CÒN: (a) **Thầy** deploy Apps Script → điền SCRIPT_URL vào config.js (HUONG DAN TRIEN KHAI.md Bước 1); (b) push GitHub Pages (gh login `andrewclasses-code`, chờ thầy chốt tên repo/public); (c) thầy có thể còn tinh chỉnh chính màn BẮT LỖI bên trong.
 - ⚠️ Ảnh HS = chữ cái đầu (chờ ảnh thật qua `photos` trong classes.json). Mapping video→đội GIẢ ĐỊNH theo thứ tự. `teacher.html` là file CŨ không dùng.
 
