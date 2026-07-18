@@ -3,10 +3,11 @@
 ## Mục đích
 App web tĩnh (GitHub Pages) cho học sinh xem video thuyết trình speaking của đội bạn và **bắt lỗi** (NGỮ PHÁP / PHÁT ÂM / THÔNG TIN) + ghi **thời gian nói** của từng bạn. Dữ liệu nộp về Google Sheet của thầy, đồng thời có nút xuất file Excel đúng mẫu `SPEAKING TEAM CHECK FORM.xlsx` (2 sheet TIMER + FORM).
 
-## Cách chạy / test
+## Cách chạy / test (mọi máy)
 - Là web tĩnh thuần, không cần build, không cần node. Test local: `python -m http.server 8123 --directory "D:\APP AND DATA\mySTCheck"` rồi mở `http://localhost:8123`.
-- Máy này đã có cấu hình preview tên `mystcheck` trong `D:\OTHERS\CLAUDE\.claude\launch.json`.
+- Cấu hình preview tên `mystcheck` nằm trong `D:\OTHERS\CLAUDE\.claude\launch.json` — file này KHÔNG đồng bộ theo app; máy khác thì tự chạy lệnh python ở trên (hoặc thêm config tương tự).
 - YouTube IFrame API chỉ chạy trên http/https (localhost hoặc GitHub Pages), KHÔNG chạy qua file://.
+- File mẫu gốc của thầy đã chép vào repo: `mau/SPEAKING TEAM CHECK FORM.xlsx` (bản gốc ở `D:\OTHERS\CLAUDE\FORM SITE\` của máy 1) — cấu trúc xuất Excel phải luôn khớp file này.
 
 ## Kiến trúc
 ```

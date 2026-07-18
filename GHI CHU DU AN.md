@@ -47,6 +47,34 @@ Thầy đưa folder Drive thật: 4 video speaking `C0400/02/03/04_CUT.mp4` (~44
 - HUONG DAN TRIEN KHAI.md: thêm Bước 1b hướng dẫn tạo Drive API key (enable Drive API, restrict theo referrer github.io + localhost).
 - Cập nhật CLAUDE.md phần khám phá kỹ thuật.
 
+## CHẶNG 3 — 18/07/2026: Hoàn thiện hồ sơ bàn giao (đồng bộ 2 máy / session mới)
+
+### Việc đã làm
+- Chép file mẫu gốc vào repo: `mau/SPEAKING TEAM CHECK FORM.xlsx` — máy nào cũng có chuẩn đối chiếu khi sửa phần xuất Excel.
+- Ghi mục DỮ LIỆU TEST THẬT và mục TIẾP TỤC CÔNG VIỆC (bên dưới) để máy khác/session mới tự đứng dậy làm tiếp không cần hỏi lại.
+
+## DỮ LIỆU TEST THẬT (buổi speaking lớp B1AH, 18/07/2026)
+- Folder Drive (public): https://drive.google.com/drive/folders/1eLoEVKvqNGWMAsYkk1U2NtfUfQ_Rmiqe
+- 4 video (~440–580MB, MP4 H.264, đều >100MB nên dính chặn UA — xem chặng 2), kèm file SRT cùng tên:
+  - `C0400_CUT.mp4` — id `1esxEggI2nZ10EsRBexCsSilBV9PphR9N` (đã dùng test chặng 2)
+  - `C0402_CUT.mp4` — id `1bra-fN4fwmHAxGrqWLRq6BFYGxWAfhSQ`
+  - `C0403_CUT.mp4` — id `1JrAw8sj3sdkApazLSO_-4eoGgaNBCW25`
+  - `C0404_CUT.mp4` — id `1FZCpyGrK0R3D213kqNj1dQAeLRKGa9-X`
+- Danh sách đội (file `DS HOC SINH B1AH_18.7.txt` trong folder):
+  - T1: HOANG; TIEN
+  - T2: NGAN; TRUC
+  - T3: DIEM MY; CUONG; KHOI
+  - T4: PHONG; HA AN; BAO CHAU
+- Link video dán vào app/teacher.html dạng: `https://drive.google.com/file/d/<id>/view`
+
+## TIẾP TỤC CÔNG VIỆC Ở MÁY KHÁC / SESSION MỚI
+1. **Thư mục app tự chứa đủ mọi thứ** (D:\ đồng bộ Drive giữa 2 máy): code + hồ sơ + file mẫu (`mau/`) + Apps Script (`apps-script/Code.gs`) + hướng dẫn (`HUONG DAN TRIEN KHAI.md`). Đọc CLAUDE.md + file này trước khi sửa.
+2. **Git**: repo thường (không bare) ngay trong thư mục app, nhánh `master`, đã commit đến chặng 3. CHƯA có remote GitHub — thầy chưa xác nhận push (tài khoản `andrewclasses-code`, gh đã đăng nhập trên máy 1; máy 2 muốn push phải `gh auth login`). Lệnh push nằm trong HUONG DAN TRIEN KHAI.md Bước 2.
+   ⚠ Vì thư mục đồng bộ qua Drive, KHÔNG làm việc git đồng thời trên 2 máy — chờ Drive đồng bộ xong mới sửa tiếp.
+3. **Chạy test**: `python -m http.server 8123 --directory "D:\APP AND DATA\mySTCheck"` → mở http://localhost:8123 (app HS) và /teacher.html (trang thầy). Không cần node/build.
+4. **Trạng thái cấu hình**: `config.js` còn 2 chỗ TRỐNG chờ thầy — `SCRIPT_URL` (Apps Script, Bước 1) và `DRIVE_API_KEY` (tùy chọn, Bước 1b). Chưa có SCRIPT_URL thì nút Nộp bài báo hướng dẫn dùng Xuất Excel (đúng thiết kế, không phải bug).
+5. **Đã verify**: luồng HS đầy đủ (YouTube + Drive fallback), teacher.html tạo link/QR, xuất Excel đúng mẫu, autosave/khôi phục. **Chưa verify**: nộp bài end-to-end vào Google Sheet (chờ SCRIPT_URL), Drive API key với file lớn (chờ key), giao diện điện thoại.
+
 ### VIỆC ĐANG CHỜ
 1. **Thầy deploy Apps Script** (theo `HUONG DAN TRIEN KHAI.md` hoặc đầu file `apps-script/Code.gs`): tạo Google Sheet nhận bài → dán ID vào Code.gs → deploy Web App (Execute as Me / Anyone) → dán URL `/exec` vào `SCRIPT_URL` trong `config.js`. Khi chưa có URL này, nút Nộp bài sẽ báo dùng Xuất Excel thay thế.
 2. **Push GitHub + bật Pages** (tài khoản `andrewclasses-code` đã đăng nhập gh trên máy này) — đang chờ thầy đồng ý tên repo/công khai.
