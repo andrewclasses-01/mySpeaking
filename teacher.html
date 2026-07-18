@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mySTCheck — Tạo link cho lớp</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['"Be Vietnam Pro"','sans-serif']}}}}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800">
+<div class="max-w-2xl mx-auto px-4 py-8">
+  <div class="flex items-center gap-3 mb-6">
+    <div class="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30">
+      <i data-lucide="link" class="w-6 h-6 text-white"></i>
+    </div>
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-900">Tạo link buổi check</h1>
+      <p class="text-sm text-slate-500">Dành cho thầy — điền thông tin, lấy link/QR gửi học sinh</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 space-y-4">
+    <div>
+      <label class="block text-sm font-bold mb-1.5">Link video (YouTube hoặc Google Drive) <span class="text-rose-500">*</span></label>
+      <input id="fVideo" type="text" placeholder="https://youtu.be/… hoặc https://drive.google.com/file/d/…" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <p class="text-xs text-slate-400 mt-1">💡 YouTube (chế độ Không công khai) cho mốc thời gian chính xác nhất và mượt khi cả lớp cùng xem.</p>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-bold mb-1.5">Chủ đề / bài</label>
+        <input id="fTopic" type="text" placeholder="VD: BEAVERS AND DAMS" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1.5">Đội được check</label>
+        <input id="fTeam" type="text" placeholder="VD: TEAM 2" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1.5">Thành viên đội được check <span class="text-slate-400 font-normal">(mỗi dòng 1 tên — HS sẽ chọn từ danh sách này)</span></label>
+      <textarea id="fMembers" rows="4" placeholder="Minh Anh&#10;Gia Bảo&#10;Khánh Chi" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+    </div>
+    <button id="btnGen" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl py-3 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30">
+      <i data-lucide="wand-2" class="w-5 h-5"></i> Tạo link
+    </button>
+  </div>
+
+  <div id="result" class="hidden mt-5 bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
+    <h2 class="font-extrabold mb-3 flex items-center gap-2"><i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500"></i> Link cho học sinh</h2>
+    <div class="flex gap-2">
+      <input id="outUrl" readonly class="flex-1 rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm font-mono">
+      <button id="btnCopy" class="bg-slate-900 hover:bg-slate-700 text-white rounded-xl px-4 font-bold text-sm flex items-center gap-1.5">
+        <i data-lucide="copy" class="w-4 h-4"></i> Copy
+      </button>
+    </div>
+    <div class="mt-4 flex items-center gap-5">
+      <div id="qrBox" class="bg-white p-2 border border-slate-200 rounded-2xl"></div>
+      <div class="text-sm text-slate-500">
+        <p class="font-semibold text-slate-700 mb-1">📱 QR cho học sinh quét</p>
+        <p>Chiếu QR này lên màn hình, học sinh quét là vào thẳng buổi check — không phải gõ gì thêm.</p>
+        <a id="btnOpen" target="_blank" class="inline-flex items-center gap-1.5 mt-2 text-indigo-600 font-bold hover:underline cursor-pointer">
+          <i data-lucide="external-link" class="w-4 h-4"></i> Mở thử link
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+lucide.createIcons();
+function b64url(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+let qr = null;
+document.getElementById('btnGen').addEventListener('click', () => {
+  const v = document.getElementById('fVideo').value.trim();
+  if (!v) { alert('Thầy dán link video trước nhé!'); return; }
+  const cfg = {
+    v: v,
+    t: document.getElementById('fTopic').value.trim(),
+    team: document.getElementById('fTeam').value.trim(),
+    members: document.getElementById('fMembers').value.split('\n').map(s=>s.trim()).filter(Boolean),
+  };
+  const url = location.href.replace(/teacher\.html.*$/, 'index.html') + '?d=' + b64url(JSON.stringify(cfg));
+  document.getElementById('outUrl').value = url;
+  document.getElementById('btnOpen').href = url;
+  document.getElementById('result').classList.remove('hidden');
+  const box = document.getElementById('qrBox');
+  box.innerHTML = '';
+  qr = new QRCode(box, { text: url, width: 160, height: 160 });
+  lucide.createIcons();
+});
+document.getElementById('btnCopy').addEventListener('click', () => {
+  navigator.clipboard.writeText(document.getElementById('outUrl').value);
+  document.getElementById('btnCopy').innerHTML = '✓ Đã copy';
+  setTimeout(()=>{document.getElementById('btnCopy').innerHTML='<i data-lucide="copy" class="w-4 h-4"></i> Copy';lucide.createIcons();}, 1500);
+});
+</script>
+</body>
+</html>
