@@ -105,39 +105,6 @@
     const s = Math.max(0, Math.floor(cur || 0));
     $('fMin').value = Math.floor(s / 60);
     $('fSec').value = s % 60;
-    autoPickStudent(s);
-  }
-
-  // Khoảng thời gian nói của 1 HS (null nếu chưa nhập đủ 4 ô)
-  function timerRangeOf(t) {
-    if (['sMin', 'sSec', 'eMin', 'eSec'].some((k) => String(t[k]).trim() === '')) return null;
-    return { s: (parseInt(t.sMin, 10) || 0) * 60 + (parseInt(t.sSec, 10) || 0), e: (parseInt(t.eMin, 10) || 0) * 60 + (parseInt(t.eSec, 10) || 0) };
-  }
-  // Video đang ở trong khoảng nói của HS nào → tự sáng tên HS đó
-  function autoPickStudent(cur) {
-    if (!state.members.length) return;
-    for (let i = 0; i < state.timers.length; i++) {
-      const r = timerRangeOf(state.timers[i]);
-      if (r && cur >= r.s && cur <= r.e) {
-        if (fWhoSel !== state.timers[i].name) { fWhoSel = state.timers[i].name; renderWhoBtns(); }
-        return;
-      }
-    }
-  }
-
-  // Chỉnh tay MIN/SEC (Enter hoặc click ra ngoài) → video nhảy theo
-  function seekVideoTo(t) {
-    t = Math.max(0, t || 0);
-    const d = vcDuration();
-    if (d) t = Math.min(t, Math.max(0, d - 0.2));
-    if (video.mode === 'html5' && video.el) video.el.currentTime = t;
-    else if (video.mode === 'youtube' && video.yt && video.ready) { try { video.yt.seekTo(t, true); } catch (e) {} }
-    else if (video.mode === 'stopwatch') { sw.elapsed = t; sw.startedAt = Date.now(); swRender(); }
-    vcUpdate(t, d);
-    autoPickStudent(Math.floor(t));
-  }
-  function manualTimeSeek() {
-    seekVideoTo((parseInt($('fMin').value, 10) || 0) * 60 + (parseInt($('fSec').value, 10) || 0));
   }
   function vcAttachHtml5(v) {
     vcShow();
@@ -337,7 +304,8 @@
     document.querySelectorAll('.whoBtn').forEach((b) => {
       const on = b.dataset.who === fWhoSel;
       b.className = 'whoBtn w-full min-w-0 rounded-lg border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition truncate text-center ' +
-        (on ? TYPE_ON : TYPE_OFF);   // chọn tên = KHUNG VÀNG y hệt phần TYPE
+        (on ? 'border-indigo-600 bg-indigo-600 text-white shadow shadow-indigo-600/30'
+            : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300');
     });
   }
   function getWho() {
@@ -463,28 +431,6 @@
       el.classList.toggle('ring-rose-300', miss.includes(el.dataset.tt));
     });
   }
-  // Đánh dấu đỏ cả 4 ô của những HS có thời gian sai
-  function markBadTimerRows(idxList) {
-    const keys = [];
-    idxList.forEach((i) => ['sMin', 'sSec', 'eMin', 'eSec'].forEach((k) => keys.push(i + ':' + k)));
-    markMissingTimers(keys);
-  }
-  // Thời gian nói phải CHUẨN mới cho Submit: end > start từng HS, các khoảng không đan xen nhau
-  function validateTimerRanges() {
-    const rows = state.timers.map((t, i) => ({ name: t.name, i, r: timerRangeOf(t) }));
-    for (const x of rows) {
-      if (x.r && x.r.e <= x.r.s) {
-        return { msg: x.name + ': the END time must be AFTER the START time!', bad: [x.i] };
-      }
-    }
-    const sorted = rows.filter((x) => x.r).sort((a, b) => a.r.s - b.r.s);
-    for (let k = 0; k + 1 < sorted.length; k++) {
-      if (sorted[k + 1].r.s < sorted[k].r.e) {
-        return { msg: 'Speaking times of ' + sorted[k].name + ' and ' + sorted[k + 1].name + ' overlap — please check!', bad: [sorted[k].i, sorted[k + 1].i] };
-      }
-    }
-    return null;
-  }
 
   // ═══════════════ NỘP BÀI ═══════════════
   function cleanTimers() {
@@ -498,13 +444,6 @@
     markMissingTimers(miss);
     if (miss.length) {
       toast('Please fill each student\'s speaking time (min:sec → min:sec) under their name!', 'err');
-      return;
-    }
-    // Thời gian phải CHUẨN: end > start từng HS + các khoảng không đan xen
-    const bad = validateTimerRanges();
-    if (bad) {
-      markBadTimerRows(bad.bad);
-      toast(bad.msg, 'err');
       return;
     }
     const s = $('submitSummary');
@@ -797,20 +736,7 @@
       else if (video.mode === 'youtube' && video.yt && video.ready) { try { video.yt.seekTo(t, true); } catch (e2) {} }
     });
 
-    // Chỉnh tay MIN/SEC: Enter hoặc click ra ngoài → video nhảy theo (2 chiều với syncTimeFields)
-    ['fMin', 'fSec'].forEach((id) => {
-      $(id).addEventListener('change', manualTimeSeek);
-      $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); manualTimeSeek(); e.target.blur(); } });
-    });
-
-    // Bấm logo → về trang chủ đăng nhập lại; còn dữ liệu chưa submit thì hỏi trước
-    $('btnHome').addEventListener('click', () => {
-      const unsubmitted = !$('appScreen').classList.contains('hidden') && state.errors.length && !state.submitted;
-      if (unsubmitted) { $('leaveModal').classList.remove('hidden'); $('leaveModal').classList.add('flex'); }
-      else window.location.href = window.location.pathname;
-    });
-    $('btnLeaveCancel').addEventListener('click', () => { $('leaveModal').classList.add('hidden'); $('leaveModal').classList.remove('flex'); });
-    $('btnLeaveOk').addEventListener('click', () => { window.location.href = window.location.pathname; });
+    // (nút Grab timestamp đã bỏ — MIN/SEC tự chạy theo video, xem syncTimeFields)
 
     $('btnAddErr').addEventListener('click', addOrUpdateError);
     $('btnCancelEdit').addEventListener('click', clearErrForm);

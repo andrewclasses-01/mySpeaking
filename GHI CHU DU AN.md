@@ -226,6 +226,23 @@ Bump cache `?v=9`, backup trước ở `Backup/pre-chang12/`. Chi tiết:
 
 **Verify (preview thật):** nhãn mới đủ; thêm lỗi thiếu EXPLANATION bị chặn; Submit thiếu giờ bị chặn + 12 ô đỏ; điền đủ (mô phỏng gõ) → hết đỏ + modal mở, summary "Students timed: 3"; Excel khớp mẫu; autosave khôi phục thời gian theo tên; mobile 375 không tràn ngang, ô 41px bấm được; 0 lỗi console.
 
+## CHẶNG 13 — 19/07/2026: 10 cải tiến đợt 4 (thầy đã test đợt 3)
+
+Bump cache `?v=10`, backup `Backup/pre-chang13/`. Chi tiết:
+
+1. **STUDENT lên ĐẦU form**, cụm MIN/SEC xuống dưới STUDENT.
+2. Cụm MIN/SEC có tiêu đề **TIME**; chữ MIN/SEC chuyển VÀO TRONG đầu ô (span absolute trái, input pl-10).
+3. Chọn tên HS → **KHUNG VÀNG y hệt TYPE** (dùng chung TYPE_ON/TYPE_OFF).
+4. Placeholder MISTAKE + EXPLANATION: **nhỏ (12px) + in nghiêng + xám mờ** (placeholder:italic placeholder:text-xs placeholder:text-slate-300).
+5. Icon bảng Mistakes found: binoculars → **scan-search** (hiện đại hơn).
+6. **BẤM LOGO về trang chủ** đăng nhập lại (header logo thành button #btnHome); còn lỗi chưa submit → **pop-up #leaveModal** "You have work that hasn't been submitted yet..." Stay here / Go back; không có dữ liệu treo thì về thẳng. (Dữ liệu vẫn autosave nên quay lại không mất.)
+7. **Chỉnh tay MIN/SEC + Enter/click ra ngoài → VIDEO NHẢY THEO** (`manualTimeSeek`→`seekVideoTo`: html5 currentTime / YouTube seekTo / stopwatch set elapsed; clamp theo duration).
+8. **TỰ CHỌN STUDENT theo thời gian**: video ở giây nào nằm trong khoảng nói (đủ 4 ô) của HS nào → tên HS đó tự sáng (`autoPickStudent` gọi từ syncTimeFields khi phát + sau mọi cú seek). HS bấm tay vẫn được nhưng khi video chạy vào khoảng của bạn khác sẽ tự nhảy — đúng thiết kế.
+9. Nút "Export Excel" → **"Export"**.
+10. **Submit kiểm tra thời gian CHUẨN**: (a) end > start từng HS — sai báo "X: the END time must be AFTER the START time!"; (b) các khoảng **không đan xen** — sai báo "Speaking times of A and B overlap — please check!"; ô của HS sai viền đỏ (markBadTimerRows). Chạm biên bằng nhau (1:00→1:00) vẫn hợp lệ.
+
+**Verify (preview thật):** thứ tự nhãn STUDENT→TIME→TYPE→MISTAKE*→EXPLANATION*; chọn CUONG khung vàng; gõ 2:30+change → video nhảy đúng 150s; đặt 3 khoảng 0-1/1-2/2-3 phút → seek 0:30 tự sáng DIEM MY, 2:30 tự sáng KHOI; overlap → chặn + đúng tên + 8 ô đỏ; end<start → chặn đúng tên KHOI; sửa xong modal mở; logo: có lỗi treo → pop-up, Stay ở lại, Go back về login; placeholder italic 12px; icon scan-search; Export; mobile 375 không tràn, nhãn MIN trong ô hiện, ô giờ 39px; 0 lỗi console.
+
 ## ⭐ HANDOFF — TIẾP TỤC NGÀY MAI (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7.

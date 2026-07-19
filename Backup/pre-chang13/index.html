@@ -132,14 +132,13 @@ tailwind.config = {
   <!-- Header: không sticky nữa — mobile cuộn qua header để nhường chỗ, VIDEO mới là thứ ghim -->
   <header class="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-lg lg:shrink-0">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
-      <!-- Bấm logo = về trang chủ đăng nhập lại (có pop-up hỏi nếu còn dữ liệu chưa submit) -->
-      <button id="btnHome" class="flex items-center gap-2.5 mr-auto text-left hover:opacity-90 active:scale-[.98] transition">
+      <div class="flex items-center gap-2.5 mr-auto">
         <img src="img/logo-chibi.png" alt="Andrew Classes" class="w-10 h-10 rounded-full ring-2 ring-white/50 shadow shrink-0">
         <div>
           <div class="font-extrabold leading-tight">ANDREW CLASSES</div>
           <div id="hdTopic" class="text-xs text-indigo-100"></div>
         </div>
-      </button>
+      </div>
       <div class="flex items-center gap-2 text-sm">
         <span id="hdChecked" class="hidden bg-white/20 rounded-full px-3 py-1 font-semibold"></span>
         <span id="hdStudent" class="bg-white/20 rounded-full px-3 py-1 font-semibold flex items-center gap-1.5">
@@ -148,7 +147,7 @@ tailwind.config = {
       </div>
       <div class="flex items-center gap-2">
         <button id="btnExport" class="bg-white/15 hover:bg-white/25 transition rounded-xl px-3.5 py-2 text-sm font-bold flex items-center gap-1.5">
-          <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export
+          <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export Excel
         </button>
         <button id="btnSubmit" class="bg-emerald-500 hover:bg-emerald-400 transition rounded-xl px-4 py-2 text-sm font-bold flex items-center gap-1.5 shadow">
           <i data-lucide="send" class="w-4 h-4"></i> Submit
@@ -202,25 +201,21 @@ tailwind.config = {
       <!-- MISTAKES TAB -->
       <div id="tab-errors" class="space-y-4">
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:shrink-0">
-          <!-- STUDENT trên cùng (nút tên + thời gian nói dưới mỗi tên) -->
+          <!-- MIN/SEC tự chạy theo video khi đang phát; pause thì chỉnh tay được -->
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1">MIN</label>
+              <input id="fMin" type="number" min="0" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-center font-mono text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 mb-1">SEC</label>
+              <input id="fSec" type="number" min="0" max="59" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-center font-mono text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+          </div>
+
           <div class="mb-3">
             <label class="block text-xs font-bold text-slate-500 mb-1">STUDENT</label>
             <div id="fStudentWrap"></div>
-          </div>
-
-          <!-- TIME: MIN/SEC tự chạy theo video khi phát; pause chỉnh tay được — Enter/click ra ngoài thì video nhảy theo -->
-          <div class="mb-3">
-            <label class="block text-xs font-bold text-slate-500 mb-1">TIME</label>
-            <div class="grid grid-cols-2 gap-3">
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">MIN</span>
-                <input id="fMin" type="number" min="0" class="w-full rounded-xl border border-slate-300 pl-10 pr-3 py-2 text-center font-mono text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              </div>
-              <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">SEC</span>
-                <input id="fSec" type="number" min="0" max="59" class="w-full rounded-xl border border-slate-300 pl-10 pr-3 py-2 text-center font-mono text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              </div>
-            </div>
           </div>
 
           <div class="mb-3">
@@ -235,11 +230,11 @@ tailwind.config = {
 
           <div class="mb-3">
             <label class="block text-xs font-bold text-slate-500 mb-1">MISTAKE <span class="text-rose-500">*</span></label>
-            <input id="fDetail" type="text" placeholder="e.g. said 'he go' instead of 'he goes'" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 placeholder:italic placeholder:text-xs placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <input id="fDetail" type="text" placeholder="e.g. said 'he go' instead of 'he goes'" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
           <div class="mb-4">
             <label class="block text-xs font-bold text-slate-500 mb-1">EXPLANATION <span class="text-rose-500">*</span></label>
-            <textarea id="fExplain" rows="2" placeholder="Why is it wrong? How should it be fixed?" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 placeholder:italic placeholder:text-xs placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+            <textarea id="fExplain" rows="2" placeholder="Why is it wrong? How should it be fixed?" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
           </div>
 
           <div class="flex gap-2">
@@ -259,7 +254,7 @@ tailwind.config = {
           <div class="lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             <div id="errList" class="space-y-2.5"></div>
             <div id="errEmpty" class="text-center py-8 text-slate-400 text-sm">
-              <i data-lucide="scan-search" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+              <i data-lucide="binoculars" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
               No mistakes yet. Watch closely and get started! 🔍
             </div>
           </div>
@@ -286,20 +281,6 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- Leave/home confirmation modal (bấm logo khi còn dữ liệu chưa submit) -->
-<div id="leaveModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop text-center">
-    <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
-      <i data-lucide="log-out" class="w-6 h-6 text-amber-500"></i>
-    </div>
-    <p class="text-slate-700 font-semibold mb-4 leading-relaxed">You have work that hasn't been submitted yet. Go back to the start anyway?</p>
-    <div class="flex gap-2">
-      <button id="btnLeaveCancel" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">Stay here</button>
-      <button id="btnLeaveOk" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl py-2.5 font-bold text-sm">Go back</button>
-    </div>
-  </div>
-</div>
-
 <!-- Submit confirmation modal -->
 <div id="submitModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop">
@@ -313,7 +294,7 @@ tailwind.config = {
 </div>
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
-<script src="config.js?v=10"></script>
-<script src="js/app.js?v=10"></script>
+<script src="config.js?v=9"></script>
+<script src="js/app.js?v=9"></script>
 </body>
 </html>
