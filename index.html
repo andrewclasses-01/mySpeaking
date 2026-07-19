@@ -45,6 +45,17 @@ tailwind.config = {
   /* Nháy ô MIN/SEC khi ánh sáng SET TIME bay tới */
   @keyframes timeflash { 0%{ box-shadow:0 0 0 3px rgba(37,99,235,.55) } 100%{ box-shadow:0 0 0 0 rgba(37,99,235,0) } }
   .time-flash { animation: timeflash .7s ease-out; }
+  /* ── CHỐNG TỰ PHÓNG TO TRANG KHI GÕ TRÊN ĐIỆN THOẠI (chặng 18) ──
+     Safari iPhone TỰ zoom trang khi bấm vào ô nhập có cỡ chữ < 16px và KHÔNG tự thu lại
+     → HS phải chụm tay thu nhỏ sau mỗi lần gõ. Không tắt được bằng thẻ viewport
+     (iOS bỏ qua user-scalable/maximum-scale). Cách chắc ăn duy nhất (Apple khuyến nghị):
+     ép MỌI ô nhập ≥ 16px trên màn nhỏ. Chỉ áp dụng < 1024px → desktop giữ nguyên chữ nhỏ như cũ. */
+  @media (max-width:1023px){
+    input, select, textarea { font-size:16px !important; }
+    input::placeholder, textarea::placeholder { font-size:16px !important; }
+    /* 4 ô giờ nói tí hon dưới mỗi tên: chữ to lên thì bỏ đệm ngang + siết nét cho vừa khung */
+    .tIn { padding-left:0; padding-right:0; letter-spacing:-.03em; }
+  }
   /* ── Bố cục GHIM (desktop ≥1024px): video + khung bắt lỗi đứng yên, CHỈ danh sách lỗi cuộn ──
      Dùng CSS riêng thay vì class lg:flex của Tailwind: nếu dùng lg:flex nó sẽ ĐÈ class .hidden
      (cùng độ ưu tiên, media query nằm sau) làm màn/tab đang ẩn hiện ngược ra — bẫy cascade. */

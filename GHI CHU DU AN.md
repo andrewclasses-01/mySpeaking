@@ -393,6 +393,19 @@ Sheet cũ "SPEAKING CHECK - BÀI NỘP" (mô hình 1 sheet phẳng) nay KHÔNG c
 - **HƯỚNG SAU (mọi lesson):** dùng YouTube unlisted cho video phát HS; Drive giữ làm kho gốc. Chặng 2 (app máy tính) có thể tự upload YouTube + lấy link (YouTube Data API) hoặc thầy upload tay.
 - **✅ ĐÃ XONG (19/7):** thầy upload 4 video lên YouTube (playlist "2026.7.17 GERMS - B1AH" id PLGZlczMSK2Ds). Em lấy 4 video id từ playlist, map theo TÊN video (khớp thành viên): T1 HOANG TIEN=4gATHmdhJZo, T2 NGAN TRUC=uR0gK0VbjEU, T3 MY CUONG KHOI=eJVjDezD0Tw, T4 PHONG AN CHAU=ujSwcBbI8Rw. Điền cột VIDEO (LESSONS F2:F5) = `https://youtu.be/<id>` (gõ thẳng vào Google Sheet, KHÔNG sửa code/deploy). Verify: config trả 4 link YouTube đúng đội; **cả 4 video embed OK** (IFrame API onReady, dur 373/369/488/475s — không private/không chặn nhúng); **app dùng đúng mode youtube KHÔNG rơi dự phòng**; **bấm giờ tự động chạy** (kéo tua 50% → MIN/SEC tự điền 3:04). ➡️ **BÀI B1AH GERMS SẴN SÀNG GỬI LỚP** (video YouTube, không còn giới hạn tải Drive). Lưu ý: các lesson sau cột VIDEO điền link YouTube dạng `https://youtu.be/<id>` (hoặc watch?v=) — buildConfig giữ nguyên chuỗi http.
 
+## CHẶNG 18 — 20/07/2026: Hết TỰ PHÓNG TO khi gõ trên điện thoại (1 việc)
+
+**Thầy báo:** *"khi nhấn vào ô nhập liệu (SENTENCE, MISTAKE, EXPLANATION) bằng điện thoại, ô này tự động zoom trang lên... nhập xong thì lại không tự zoom lại, sau đó lại phải zoom lại bằng tay khá bất tiện. Hãy bỏ việc tự zoom đi."*
+
+**GỐC LỖI:** Safari trên iPhone TỰ phóng to trang khi bấm vào ô nhập có **cỡ chữ < 16px** và KHÔNG tự thu lại. 3 ô textarea đang để `text-xs` (12px), MIN/SEC 14px, select chọn tên 14px → đều dính. **Không tắt được bằng thẻ viewport** (iOS bỏ qua `user-scalable=no`/`maximum-scale`, và làm vậy còn chặn luôn việc tự chụm tay phóng to).
+
+**FIX (chỉ `index.html`, thêm 1 khối CSS):** media query `@media (max-width:1023px)` ép
+`input, select, textarea { font-size:16px !important }` + placeholder 16px + `.tIn` (4 ô giờ nói tí hon) bỏ đệm ngang cho vừa khung. **Chỉ áp dụng dưới 1024px → bản desktop giữ nguyên cỡ chữ cũ.** Đây là cách Apple khuyến nghị và là cách duy nhất chắc ăn.
+
+**Đã test (số đo, cổng 8123):** mobile 375px — fSentence/fDetail/fExplain **12px → 16px**, MIN/SEC 14→16, select 14→16, 4 ô giờ nói 16px rộng 65px **không tràn**, trang **không tràn ngang**, gõ câu dài ô vẫn tự giãn cao (52px). Desktop 1280px — fSentence **vẫn 12px**, MIN/SEC vẫn 14px (**không đổi gì**). Đã đăng nhập B1AH/germs đi hết luồng tới màn bắt lỗi để đo trên giao diện thật.
+
+**LƯU Ý:** chữ trong 3 ô nhập trên điện thoại to hơn trước (12→16px) — thầy đã duyệt ("Ổn, để vậy"). KHÔNG đụng `js/app.js`, KHÔNG đụng Apps Script, KHÔNG đụng Sheet → lớp B1AH đang chấm không bị ảnh hưởng; HS đang làm dở tải lại trang vẫn còn nguyên bài (khoá lưu nháp `myspeaking_<videoUrl>` giữ nguyên).
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.
