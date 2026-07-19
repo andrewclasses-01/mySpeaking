@@ -323,7 +323,7 @@ Video Drive phát html5 (không rơi dự phòng). Test đủ: 2 ô Team/Name (N
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; Drive API key = chặng 9; màn bắt lỗi hiện tại = chặng 10→13; hạ tầng live = chặng 14.
 
-**Đang ở đâu:** **CHẶNG 1 (web học sinh) ĐÃ XONG TRỌN VẸN** (chặng 14, 19/07/2026): web live tại **https://andrewclasses-01.github.io/mySpeaking/**, bài nộp tự đổ về Google Sheet "SPEAKING CHECK - BÀI NỘP", video Drive phát trực tiếp với key đã giới hạn. Sẵn sàng dùng thật với lớp hoặc **bắt đầu CHẶNG 2 (app máy tính Electron)**.
+**Đang ở đâu:** **CHẶNG 1 (web học sinh) XONG + đã qua 3 đợt tinh chỉnh giao diện (chặng 14→16b, 19/07/2026)**: web live tại **https://andrewclasses-01.github.io/mySpeaking/**, bài nộp tự đổ về Google Sheet "SPEAKING CHECK - BÀI NỘP", video Drive phát trực tiếp. Thầy nói **"ok rồi"** — dừng tinh chỉnh web. **➡️ VIỆC NGAY SESSION SAU: THỐNG NHẤT KHUNG DỮ LIỆU** (xem mục ⭐ KHUNG DỮ LIỆU bên dưới) rồi mới sang Chặng 2 (app máy tính Electron).
 
 **Chạy thử:** `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking"` → http://localhost:8123 (hoặc preview tên `myspeaking`). KHÔNG cần node/build.
 - Đăng nhập lớp TEST: **Your class = `B1AH`**, **Class code = `germs`** → chọn tên → tích cam kết → Start.
@@ -336,6 +336,36 @@ Video Drive phát html5 (không rơi dự phòng). Test đủ: 2 ô Team/Name (N
 - ✅ XONG (tinh chỉnh đợt 6, chặng 16): **đăng nhập 2 ô Your Team + Your Name** (Name khóa đến khi chọn Team; chọn Name → xác nhận ngay); màn xác nhận tiêu đề "**{Tên HS}, Andrew has something for you.**" + ô tích "**I understand and respect our journey, teacher Andrew ❤️**"; **TIME/TYPE tiêu đề cùng hàng với ô** (desktop; mobile xếp tầng để không cắt chữ); chữ trong SENTENCE/MISTAKE/EXPLANATION nhỏ = placeholder; **XOÁ MIN/SEC sau khi Add**; **nâng cấp fallback**: thanh kéo xanh dương nút to gấp đôi (không play/pause) + nút **SET TIME** đưa giờ vào MIN/SEC kèm ánh sáng bay, bỏ hết chữ hướng dẫn; tăng thời gian chờ video Drive 15→25s. **Điều tra**: sự cố rơi dự phòng trước là TẠM THỜI (key vừa giới hạn, Google áp dụng chậm ~5 phút) — nay video Drive phát html5 bình thường.
 - ⚠️ **KHUNG DỮ LIỆU còn treo** (việc TIẾP): Google Sheet CHƯA có cột SENTENCE — Code.gs chưa map `er.sentence`, cần thêm cột + deploy version mới khi thầy chốt khung dữ liệu (Excel export + autosave đã có sentence). Xem chi tiết ở CHẶNG 15.
 - ⚠️ Ảnh HS = chữ cái đầu (chờ ảnh thật qua `photos` trong classes.json). Mapping video→đội GIẢ ĐỊNH theo thứ tự. `teacher.html` là file CŨ không dùng. Header: nút người chấm "HOANG · T1" (chặng 16b), đã bỏ badge TEAM X. Cache-busting: **hiện `?v=14`** — TĂNG mỗi lần sửa app.js/config.js. Thanh kéo dự phòng max mặc định 900s (15:00) — chỉnh sau nếu cần. Tài khoản Google Cloud thầy còn 1 project mySpeaking TRÙNG THỪA (vô hại, dọn khi tiện). Backup từng chặng ở `Backup/pre-chang10/12/13`.
+
+## ⭐ KHUNG DỮ LIỆU — VIỆC NGAY Ở SESSION SAU (thầy sẽ cùng chốt)
+
+**Mục tiêu:** thống nhất CẤU TRÚC DỮ LIỆU giữa 4 nơi để nhất quán (web nộp ↔ Google Sheet ↔ Excel xuất ↔ app máy tính sắp làm). Hiện đang có 1 chỗ LỆCH (SENTENCE) cần chốt.
+
+### A. Web NỘP LÊN (payload) — `js/app.js` hàm `submit()`
+```
+{ submittedAt, className, student, myTeam, checkedTeam, topic, videoUrl,
+  errors: [ {min, sec, section:'' , who, type, sentence, detail, explain} ],   // 1 phần tử = 1 lỗi
+  timers: [ {name, sMin, sSec, eMin, eSec} ] }                                  // 1 phần tử = 1 HS (thời gian nói)
+```
+- `type` lưu TIẾNG VIỆT: `NGỮ PHÁP` / `PHÁT ÂM` / `THÔNG TIN` (hiển thị Grammar/Pronunciation/Information). `section` luôn rỗng (đã bỏ ô ĐOẠN). `sentence` = câu chứa lỗi (MỚI, chặng 15). Mốc thời gian đã LÙI 3s khi thêm.
+
+### B. Google Sheet "SPEAKING CHECK - BÀI NỘP" — `apps-script/Code.gs` (id `1XkrbGHkiMHHTVSWLP6OZ0O-CIEORDj4dqYrXHynuA5E`)
+- Sheet **FORM** (mỗi dòng 1 lỗi) — hiện **13 cột, CHƯA có SENTENCE**: `NGÀY GIỜ NỘP, LỚP, NGƯỜI CHECK, ĐỘI CỦA NGƯỜI CHECK, ĐỘI ĐƯỢC CHECK, CHỦ ĐỀ, PHÚT, GIÂY, ĐOẠN, HS CÓ LỖI, LOẠI LỖI, LỖI CỤ THỂ, GIẢI THÍCH LỖI`. Hàng map: `[now, className, student, myTeam, checkedTeam, topic, er.min, er.sec, er.section, er.who, er.type, er.detail, er.explain]` → **`er.sentence` bị rớt (chưa ghi)**.
+- Sheet **TIMER** (mỗi dòng 1 HS): `NGÀY GIỜ NỘP, LỚP, NGƯỜI CHECK, ĐỘI ĐƯỢC CHECK, STT, BẠN, BĐ PHÚT, BĐ GIÂY, KT PHÚT, KT GIÂY`.
+
+### C. Excel HS xuất (nút Export) — `js/app.js` hàm `exportExcel()`
+- Sheet **FORM** (8 cột, **ĐÃ có SENTENCE**): `PHÚT, GIÂY, ĐOẠN, HS CÓ LỖI, LOẠI LỖI, CÂU CHỨA LỖI, LỖI CỤ THỂ, GIẢI THÍCH LỖI` (chèn "CÂU CHỨA LỖI" sau LOẠI LỖI).
+- Sheet **TIMER** giống file mẫu gốc (STT, BẠN, TGIAN BẮT ĐẦU Phút/Giây, TGIAN KẾT THÚC Phút/Giây + dòng dặn dò A10).
+
+### D. File MẪU gốc — `mau/SPEAKING TEAM CHECK FORM.xlsx`
+- Bản gốc của thầy, **CHƯA có cột CÂU CHỨA LỖI** → Excel export (C) hiện đã LỆCH so mẫu này.
+
+### ⚠️ CẦN CHỐT / VIỆC LÀM khi thống nhất
+1. **Cột SENTENCE (câu chứa lỗi)**: chốt tên cột + VỊ TRÍ (Excel đang đặt sau LOẠI LỖI). Rồi: (a) thêm vào FORM header + hàng trong `Code.gs` (`er.sentence`); (b) **sheet FORM cũ đã tồn tại với header 13 cột** → phải sửa header (xoá sheet FORM để tạo lại, hoặc sửa tay) + **DEPLOY VERSION MỚI** của Web App (Manage deployments → Edit → New version); (c) cập nhật file mẫu `SPEAKING TEAM CHECK FORM.xlsx` cho khớp.
+2. **Chốt bộ cột/tên chuẩn** dùng chung cho cả app máy tính (Chặng 2-4). App máy tính sẽ ĐỌC dữ liệu này để: đánh dấu vị trí lỗi lên video offline (cần min:sec + type + who + sentence + detail + explain) + hiển thị thời gian nói (timers). Nên cân nhắc thêm khoá nhận diện: **mã bài nộp (ID)** + **định danh video** (videoUrl/id) để app ghép lỗi đúng video/đội.
+3. Cân nhắc: có cần đổi `type` sang mã nhất quán không (hiện tiếng Việt để khớp mẫu Excel); ảnh HS thật (`photos` trong classes.json); mapping video→đội hiện GIẢ ĐỊNH theo thứ tự (app máy tính chặng sau sẽ set chuẩn khi sinh classes.json).
+
+**Nơi sửa nhanh:** payload = `js/app.js` `submit()`; ghi Sheet = `apps-script/Code.gs` `doPost`/`getSheet`; Excel = `js/app.js` `exportExcel()`; nhớ TĂNG `?v=` trong index.html khi sửa app.js.
 
 **Lộ trình tiếp (thầy chốt 1→2→3→4):**
 - Chặng 2: **app MÁY TÍNH (Electron, như myBoard/myActivity)** — nút "sắp xếp folder + tạo file chấm chéo" (thay khâu tay skill sapxepspeaking). KHI BẮT ĐẦU: gọi skill `kienthucbuildapp`, code trên `E:\LAP TRINH APP\mySpeaking` + bare repo/dữ liệu ở `D:\APP AND DATA\mySpeaking`, chờ "ok build".
