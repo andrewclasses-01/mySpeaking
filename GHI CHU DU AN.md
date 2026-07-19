@@ -165,6 +165,22 @@ Thầy duyệt bản chặng 6 và yêu cầu tinh chỉnh (kèm ảnh icon logo
 - Thay MỌI tham chiếu chữ (bỏ qua `Backup/`): `mySTCheck→mySpeaking`, `MYSTCHECK→MYSPEAKING` (biến `window.MYSPEAKING_CONFIG`), `mystcheck→myspeaking` (localStorage key `myspeaking_`, tên preview). Dùng `sed` byte-safe — tiếng Việt còn nguyên (đã verify). launch.json + memory cũng đã sửa.
 - User-facing GIỮ NGUYÊN: tab "SPEAKING TEAM CHECK", branding "ANDREW CLASSES / Speaking Team Check" (mySpeaking là tên DỰ ÁN/app).
 
+## CHẶNG 9 — 19/07/2026: DRIVE API KEY — video Drive phát TRỰC TIẾP, lấy mốc thời gian CHÍNH XÁC
+
+### Bối cảnh
+Thầy băn khoăn "lấy thời gian từ video Drive cho việc chấm có thuận tiện không". Đi lại luồng thật: video B1AH >100MB → app rơi chế độ đồng hồ dự phòng (HS phải chạy đồng hồ song song, không tiện). Thầy bổ sung bối cảnh quan trọng: **mỗi HS một máy, một nhà, Wi-Fi riêng** → nỗi lo nghẽn Wi-Fi cũ KHÔNG còn áp dụng → chốt phương án DRIVE API KEY (thầy không muốn YouTube, muốn giữ Drive).
+
+### Việc đã làm
+- Dùng Claude in Chrome thao tác Google Cloud Console giúp thầy (thầy tự làm thấy rối): tạo project **mySpeaking** (id `myspeaking-502901`), bật **Google Drive API**, tạo **API key** đã giới hạn CHỈ dùng được Drive API (UI mới của Google bắt buộc chọn API ngay lúc tạo — lần đầu danh sách trống vì API mới bật chưa kịp lan, reload là có).
+- Verify key bằng curl TRƯỚC khi điền (tránh đọc nhầm ký tự từ ảnh): metadata trả đúng `C0400_CUT.mp4` 441MB; `alt=media` + Range trả **206 Partial Content, video/mp4** → phát + tua được file lớn.
+- Điền key vào `config.js` (DRIVE_API_KEY), bump cache `?v=6` trong index.html.
+- **Test thật trên app (preview, mobile 375px)**: login B1AH → HOANG → video đội 2 (C0402, ~500MB) **phát trực tiếp trong thẻ video của app** ("Direct playback — precise timestamps", đồng hồ dự phòng ẨN, duration 368s, ảnh hiện rõ "Germs in the Air"); tua tới 83s, phát tiếp tới 94.4s mượt; bấm **⏱ Grab timestamp → điền đúng MIN=1 SEC=34 (=94s)** — chính xác từng giây.
+
+### Lưu ý còn treo
+- ⚠️ **TRƯỚC KHI đưa web lên GitHub Pages**: vào lại Google Cloud Console → API key → Application restrictions → **Websites** → thêm domain `*.github.io` (+ localhost để còn test). Hiện key để None (chưa giới hạn website) cho tiện test local.
+- Tài khoản Google Cloud của thầy hiện có project THỪA: 1 project "mySpeaking" trùng tên (thầy tự tạo lúc loay hoay) + Drive API từng bật nhầm trên "My First Project". Không hại gì, khi nào tiện thì dọn (console.cloud.google.com → IAM & Admin → Manage resources → delete project thừa).
+- Chế độ đồng hồ dự phòng vẫn giữ nguyên trong code — nếu key hỏng/hết hạn app vẫn tự fallback, HS không bị kẹt.
+
 ## ⭐ HANDOFF — TIẾP TỤC NGÀY MAI (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7.
@@ -175,8 +191,8 @@ Thầy duyệt bản chặng 6 và yêu cầu tinh chỉnh (kèm ảnh icon logo
 - Đăng nhập lớp TEST: **Your class = `B1AH`**, **Class code = `germs`** → chọn tên → tích cam kết → Start.
 
 **Trạng thái Chặng 1:**
-- ✅ XONG: UI English-only; 1 link + đăng nhập lớp (gõ classCode+code, sai→pop-up); chọn tên bằng ô select; màn xác nhận có ảnh HS (tạm chữ cái đầu) + bảng cam kết bắt buộc tích; logo ANDREW CLASSES; fix mobile; cache-busting `?v` (TĂNG mỗi lần sửa app.js/config.js — **hiện v=5**; bẫy đã gặp ở chặng 8: đổi tên biến config nhưng quên bump v → trình duyệt chạy bản cache cũ, đã fix bằng v=5); classes.json seed B1AH-GERMS; Code.gs thêm cột LỚP.
-- ⏳ CÒN: (a) **Thầy** deploy Apps Script → điền SCRIPT_URL vào config.js (HUONG DAN TRIEN KHAI.md Bước 1); (b) push GitHub Pages (gh login `andrewclasses-code`, chờ thầy chốt tên repo/public); (c) thầy có thể còn tinh chỉnh chính màn BẮT LỖI bên trong.
+- ✅ XONG: UI English-only; 1 link + đăng nhập lớp (gõ classCode+code, sai→pop-up); chọn tên bằng ô select; màn xác nhận có ảnh HS (tạm chữ cái đầu) + bảng cam kết bắt buộc tích; logo ANDREW CLASSES; fix mobile; cache-busting `?v` (TĂNG mỗi lần sửa app.js/config.js — **hiện v=6**; bẫy đã gặp ở chặng 8: đổi tên biến config nhưng quên bump v → trình duyệt chạy bản cache cũ); classes.json seed B1AH-GERMS; Code.gs thêm cột LỚP; **DRIVE_API_KEY đã có + test OK (chặng 9): video Drive >100MB phát trực tiếp, ⏱ Grab lấy đúng từng giây**.
+- ⏳ CÒN: (a) **Thầy** deploy Apps Script → điền SCRIPT_URL vào config.js (HUONG DAN TRIEN KHAI.md Bước 1); (b) push GitHub Pages (gh login `andrewclasses-code`, chờ thầy chốt tên repo/public) — **NHỚ trước khi push: giới hạn API key theo website `*.github.io` (xem chặng 9)**; (c) thầy có thể còn tinh chỉnh chính màn BẮT LỖI bên trong.
 - ⚠️ Ảnh HS = chữ cái đầu (chờ ảnh thật qua `photos` trong classes.json). Mapping video→đội GIẢ ĐỊNH theo thứ tự. `teacher.html` là file CŨ không dùng.
 
 **Lộ trình tiếp (thầy chốt 1→2→3→4):**

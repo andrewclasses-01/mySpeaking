@@ -10,7 +10,7 @@ window.MYSPEAKING_CONFIG = {
   // (lấy mốc thời gian chính xác thay vì dùng đồng hồ dự phòng).
   // Không có key: video Drive lớn tự chuyển sang chế độ iframe + đồng hồ.
   // Cách tạo key: xem HUONG DAN TRIEN KHAI.md. Nên giới hạn key theo referrer github.io.
-  DRIVE_API_KEY: "",
+  DRIVE_API_KEY: "AIzaSyD7LSc95xVC98ALO0bvX7LRTWIEdcRP2Hk",
 
   // Tên hiển thị trên app
   APP_TITLE: "SPEAKING TEAM CHECK",
