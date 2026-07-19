@@ -34,7 +34,7 @@ Video Drive >100MB bị chặn phát trực tiếp (trang virus scan) nếu khô
 
 ## Bước 2 — GitHub Pages (ĐÃ XONG — cách làm)
 ```
-cd "D:\APP AND DATA\mySpeaking"
+cd "D:\APP AND DATA\mySpeaking Web"
 git add -A ; git commit -m "..."
 # repo đã có remote origin = https://github.com/andrewclasses-01/mySpeaking.git
 git push

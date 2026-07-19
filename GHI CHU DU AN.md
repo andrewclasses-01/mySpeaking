@@ -406,15 +406,50 @@ Sheet cũ "SPEAKING CHECK - BÀI NỘP" (mô hình 1 sheet phẳng) nay KHÔNG c
 
 **LƯU Ý:** chữ trong 3 ô nhập trên điện thoại to hơn trước (12→16px) — thầy đã duyệt ("Ổn, để vậy"). KHÔNG đụng `js/app.js`, KHÔNG đụng Apps Script, KHÔNG đụng Sheet → lớp B1AH đang chấm không bị ảnh hưởng; HS đang làm dở tải lại trang vẫn còn nguyên bài (khoá lưu nháp `myspeaking_<videoUrl>` giữ nguyên).
 
+## CHẶNG 19 — 20/07/2026: ĐỔI TÊN THƯ MỤC → "mySpeaking Web" (bộ não nhận CẢ HAI tên)
+
+**Thầy chốt:** *"tôi muốn đổi tên thư mục mySpeaking (bản web cho học sinh) thành 'mySpeaking Web' để rõ ràng, không bị nhầm lẫn. Thư mục của app thì sẽ thành mySpeaking App (tên app vẫn là mySpeaking). Khi đổi thư mục, đổi tất cả các thành phần khác liên quan để tránh một số chức năng không chạy được"*
+
+**⚠️ CHỖ CHẾT NGƯỜI phát hiện trước khi làm:** `Code.gs` ghi CỨNG đường dẫn Drive
+`APP AND DATA / mySpeaking / mySpeaking Data / …`. Ổ D: là **mirror của Drive** → đổi tên ở máy là
+đổi luôn trên Drive → nếu đổi tên trước khi sửa Apps Script thì **học sinh không đăng nhập được**
+(web lấy bài từ `?config=1`) **và nộp bài cũng trượt**. Thêm nữa Drive đồng bộ có **độ trễ**, nên có
+lúc trên mây vẫn còn tên cũ.
+
+**Cách làm (không gián đoạn giây nào) — thứ tự BẮT BUỘC:**
+1. **Sửa Apps Script TRƯỚC**: mỗi bậc đường dẫn nhận **NHIỀU TÊN** —
+   `WEB_NAMES = ['mySpeaking Web', 'mySpeaking']` (tên mới đứng trước), `folderByPath` thử lần lượt,
+   tạo mới thì dùng tên đầu → chạy đúng dù Drive đã đồng bộ hay chưa, và **đổi tên lần nữa cũng
+   không hỏng** (chỉ cần thêm tên vào `WEB_NAMES`).
+2. Thêm cửa kiểm tra **`?check=1`** (`kiemTraKho()`): trả về đang thấy folder nào, đường dẫn đầy đủ,
+   có file cấu hình chưa, mấy lớp, mấy dòng LESSONS, có file kết quả nào — **KHÔNG ghi gì**. Từ nay
+   khỏi phải nộp bài thật rồi đi xoá để kiểm tra.
+3. Dán code + **Deploy Phiên bản 3** (SCRIPT_URL **GIỮ NGUYÊN**).
+4. Đổi tên thư mục trên ổ D:, rồi sửa mọi chỗ liên quan.
+
+**Đã đổi theo (để không hỏng chức năng nào):**
+- Thư mục: `D:\APP AND DATA\mySpeaking` → **`D:\APP AND DATA\mySpeaking Web`** (git repo nguyên vẹn,
+  remote GitHub không đổi, nhánh `master`, `mySpeaking Data` vẫn nằm trong đó và vẫn .gitignore).
+- `D:\OTHERS\CLAUDE\.claude\launch.json` (cấu hình chạy thử cổng 8123).
+- Tài liệu repo web: `CLAUDE.md`, `HUONG DAN TRIEN KHAI.md`, mục HANDOFF của file này.
+- Tài liệu app máy tính: `CLAUDE.md`, `PHAC THAO APP.md` trong `E:\LAP TRINH APP\mySpeaking`.
+- ⚠️ **KHÔNG đổi**: tên repo GitHub (`andrewclasses-01/mySpeaking`) và **link học sinh**
+  `https://andrewclasses-01.github.io/mySpeaking/` — đổi là hỏng link đã gửi lớp. Tên thư mục dữ
+  liệu `mySpeaking Data` và tên app máy tính (**mySpeaking**) cũng giữ nguyên.
+
+**BÀI HỌC:** ổ D: là mirror Drive → **mọi thao tác đổi tên/di chuyển thư mục ở máy đều là thao tác
+trên Drive**, và bất cứ thứ gì Apps Script tìm theo TÊN đều có thể gãy. Trước khi đổi tên bất kỳ thư
+mục nào trong `APP AND DATA`, hãy tìm tên đó trong `apps-script/Code.gs` trước.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
-**Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.
+**Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking Web`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.
 
-**Đang ở đâu (mới nhất 19/07/2026 — CHẶNG 17 XONG):** Web live **https://andrewclasses-01.github.io/mySpeaking/** đã chạy **khung dữ liệu MỚI**: đọc bài LIVE từ Apps Script `?config=1` (file CẤU HÌNH Google Sheet: sheet CLASSES + LESSONS), TYPE lưu **tiếng Anh** (Grammar/Pronunciation/Information), bài nộp route về **file mỗi lớp → sheet tên LESSON + sheet TIME**, có SUBMISSION ID/videoId. Apps Script đã **deploy Phiên bản 2** (SCRIPT_URL trong config.js GIỮ NGUYÊN). Dữ liệu ở Drive tài khoản **namdaptrai01** (= ổ D: mirror): `D:\APP AND DATA\mySpeaking\mySpeaking Data\{mySpeaking Settings\MYSPEAKING - CẤU HÌNH, mySpeaking Sheets\<lớp>}`. **BÀI THẬT B1AH GERMS SẴN SÀNG GỬI LỚP** (video đã chuyển sang **YouTube unlisted** vì Drive giới hạn tải file lớn — xem "SỰ CỐ VIDEO" cuối chặng 17). `?v=15`.
+**Đang ở đâu (mới nhất 19/07/2026 — CHẶNG 17 XONG):** Web live **https://andrewclasses-01.github.io/mySpeaking/** đã chạy **khung dữ liệu MỚI**: đọc bài LIVE từ Apps Script `?config=1` (file CẤU HÌNH Google Sheet: sheet CLASSES + LESSONS), TYPE lưu **tiếng Anh** (Grammar/Pronunciation/Information), bài nộp route về **file mỗi lớp → sheet tên LESSON + sheet TIME**, có SUBMISSION ID/videoId. Apps Script đã **deploy Phiên bản 2** (SCRIPT_URL trong config.js GIỮ NGUYÊN). Dữ liệu ở Drive tài khoản **namdaptrai01** (= ổ D: mirror): `D:\APP AND DATA\mySpeaking Web\mySpeaking Data\{mySpeaking Settings\MYSPEAKING - CẤU HÌNH, mySpeaking Sheets\<lớp>}`. **BÀI THẬT B1AH GERMS SẴN SÀNG GỬI LỚP** (video đã chuyển sang **YouTube unlisted** vì Drive giới hạn tải file lớn — xem "SỰ CỐ VIDEO" cuối chặng 17). `?v=15`.
 - ➡️ **VIỆC SESSION SAU (thầy sẽ chỉ định):** (a) **Bước 5** — nhân ra 7 lớp còn lại (A1A/A1B/A1C/A2A/A2B/B2A/B2B: điền CODE trong CLASSES + tạo file kết quả tên lớp trong mySpeaking Sheets + thêm dòng LESSONS khi ra bài + video YouTube unlisted); và/hoặc (b) **CHẶNG 2 — app máy tính Electron** (dọn folder + tạo file chấm chéo + sau này tự sinh config/upload YouTube; gọi skill `kienthucbuildapp`, code E:\LAP TRINH APP\mySpeaking + bare repo/dữ liệu D:, CHỜ "ok build").
 - ⚠️ Mục "⭐ KHUNG DỮ LIỆU" bên dưới (viết lúc CHƯA code) chỉ để tham khảo lịch sử — trạng thái THẬT đã ở CHẶNG 17.
 
-**Chạy thử:** `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking"` → http://localhost:8123 (hoặc preview tên `myspeaking`). KHÔNG cần node/build.
+**Chạy thử:** `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking Web"` → http://localhost:8123 (hoặc preview tên `myspeaking`). KHÔNG cần node/build.
 - Đăng nhập lớp TEST: **Your class = `B1AH`**, **Class code = `germs`** → chọn tên → tích cam kết → Start.
 
 **Trạng thái Chặng 1:**
@@ -483,7 +518,7 @@ Sheet cũ "SPEAKING CHECK - BÀI NỘP" (mô hình 1 sheet phẳng) nay KHÔNG c
 1. **Thư mục app tự chứa đủ mọi thứ** (D:\ đồng bộ Drive giữa 2 máy): code + hồ sơ + file mẫu (`mau/`) + Apps Script (`apps-script/Code.gs`) + hướng dẫn (`HUONG DAN TRIEN KHAI.md`). Đọc CLAUDE.md + file này trước khi sửa.
 2. **Git**: repo thường (không bare) ngay trong thư mục app, nhánh `master`, đã commit đến chặng 3. CHƯA có remote GitHub — thầy chưa xác nhận push (tài khoản `andrewclasses-code`, gh đã đăng nhập trên máy 1; máy 2 muốn push phải `gh auth login`). Lệnh push nằm trong HUONG DAN TRIEN KHAI.md Bước 2.
    ⚠ Vì thư mục đồng bộ qua Drive, KHÔNG làm việc git đồng thời trên 2 máy — chờ Drive đồng bộ xong mới sửa tiếp.
-3. **Chạy test**: `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking"` → mở http://localhost:8123 (app HS) và /teacher.html (trang thầy). Không cần node/build.
+3. **Chạy test**: `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking Web"` → mở http://localhost:8123 (app HS) và /teacher.html (trang thầy). Không cần node/build.
 4. **Trạng thái cấu hình**: `config.js` còn 2 chỗ TRỐNG chờ thầy — `SCRIPT_URL` (Apps Script, Bước 1) và `DRIVE_API_KEY` (tùy chọn, Bước 1b). Chưa có SCRIPT_URL thì nút Nộp bài báo hướng dẫn dùng Xuất Excel (đúng thiết kế, không phải bug).
 5. **Đã verify**: luồng HS đầy đủ (YouTube + Drive fallback), teacher.html tạo link/QR, xuất Excel đúng mẫu, autosave/khôi phục. **Chưa verify**: nộp bài end-to-end vào Google Sheet (chờ SCRIPT_URL), Drive API key với file lớn (chờ key), giao diện điện thoại.
 

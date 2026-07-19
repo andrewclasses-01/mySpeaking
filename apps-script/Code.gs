@@ -20,8 +20,16 @@
  */
 
 // ── Đường dẫn folder (theo TÊN, tính từ gốc My Drive) ──
-var PATH_SETTINGS = ['APP AND DATA', 'mySpeaking', 'mySpeaking Data', 'mySpeaking Settings'];
-var PATH_SHEETS   = ['APP AND DATA', 'mySpeaking', 'mySpeaking Data', 'mySpeaking Sheets'];
+// MỖI BẬC CÓ THỂ CÓ NHIỀU TÊN — thử lần lượt, thấy tên nào trước thì dùng tên đó.
+// Vì sao: 20/07/2026 thầy đổi tên thư mục web "mySpeaking" -> "mySpeaking Web" cho khỏi lẫn với
+// thư mục app máy tính. Ổ D: là bản mirror của Drive nên đổi tên ở máy sẽ đổi luôn trên Drive,
+// mà Drive đồng bộ có ĐỘ TRỄ -> trong lúc đó bộ não phải chấp nhận CẢ HAI tên, không thì học sinh
+// không đăng nhập và không nộp bài được. Giữ luôn về sau: đổi tên lần nữa cũng không hỏng.
+var ROOT_NAMES  = ['APP AND DATA'];
+var WEB_NAMES   = ['mySpeaking Web', 'mySpeaking'];   // ← tên mới đứng TRƯỚC
+var DATA_NAMES  = ['mySpeaking Data'];
+var PATH_SETTINGS = [ROOT_NAMES, WEB_NAMES, DATA_NAMES, ['mySpeaking Settings']];
+var PATH_SHEETS   = [ROOT_NAMES, WEB_NAMES, DATA_NAMES, ['mySpeaking Sheets']];
 var CONFIG_NAME   = 'MYSPEAKING - CẤU HÌNH';
 
 var FORM_HEADERS = ['TIME', 'CHECKER', 'CHECKER TEAM', 'TEAM', 'VIDEO',
@@ -32,7 +40,52 @@ var TIME_HEADERS = ['TIME', 'LESSON', 'TEAM', 'CHECKER', 'STUDENT',
 // ═══════════════ WEB ENTRY POINTS ═══════════════
 function doGet(e) {
   if (e && e.parameter && e.parameter.config) return json(buildConfig());
+  if (e && e.parameter && e.parameter.check) return json(kiemTraKho());
   return json({ ok: true, app: 'mySpeaking' });
+}
+
+// ?check=1 — KIỂM TRA KHO DỮ LIỆU mà KHÔNG ghi gì. Dùng sau khi đổi tên thư mục / đổi tài khoản
+// để biết bộ não còn nhìn thấy đúng chỗ không (thay cho việc phải nộp bài thật rồi đi xoá).
+function kiemTraKho() {
+  var out = { ok: true, app: 'mySpeaking' };
+  try {
+    var st = folderByPath(PATH_SETTINGS, false);
+    var sh = folderByPath(PATH_SHEETS, false);
+    out.settings = st ? st.getName() : null;
+    out.sheets = sh ? sh.getName() : null;
+    out.duong_dan = st ? duongDan(st) : (sh ? duongDan(sh) : '');
+    var ss = openConfigSS(false);
+    out.co_file_cau_hinh = !!ss;
+    if (ss) {
+      var cs = ss.getSheetByName('CLASSES');
+      var ls = ss.getSheetByName('LESSONS');
+      out.so_lop = cs ? Math.max(0, cs.getLastRow() - 1) : 0;
+      out.so_dong_lessons = ls ? Math.max(0, ls.getLastRow() - 1) : 0;
+    }
+    if (sh) {
+      var names = [];
+      var it = sh.getFiles();
+      while (it.hasNext() && names.length < 20) names.push(it.next().getName());
+      out.file_ket_qua = names;
+    }
+    out.ok = !!(st && sh && out.co_file_cau_hinh);
+  } catch (err) {
+    out.ok = false;
+    out.error = String(err);
+  }
+  return out;
+}
+
+function duongDan(folder) {
+  var ten = [folder.getName()];
+  var f = folder;
+  for (var i = 0; i < 6; i++) {
+    var ps = f.getParents();
+    if (!ps.hasNext()) break;
+    f = ps.next();
+    ten.unshift(f.getName());
+  }
+  return ten.join(' / ');
 }
 
 function doPost(e) {
@@ -219,12 +272,19 @@ function openConfigSS(create) {
   return cf ? SpreadsheetApp.openById(cf.getId()) : null;
 }
 
+// parts = mảng các BẬC; mỗi bậc là 1 tên (chuỗi) hoặc NHIỀU tên chấp nhận được (mảng).
+// Tạo mới thì luôn dùng tên ĐẦU TIÊN của bậc đó.
 function folderByPath(parts, create) {
   var f = DriveApp.getRootFolder();
   for (var i = 0; i < parts.length; i++) {
-    var it = f.getFoldersByName(parts[i]);
-    if (it.hasNext()) f = it.next();
-    else if (create) f = f.createFolder(parts[i]);
+    var names = (parts[i] instanceof Array) ? parts[i] : [parts[i]];
+    var found = null;
+    for (var j = 0; j < names.length && !found; j++) {
+      var it = f.getFoldersByName(names[j]);
+      if (it.hasNext()) found = it.next();
+    }
+    if (found) f = found;
+    else if (create) f = f.createFolder(names[0]);
     else return null;
   }
   return f;

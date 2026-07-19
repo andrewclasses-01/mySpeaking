@@ -4,7 +4,7 @@
 > - **Cấu hình bài đọc LIVE** từ Apps Script `?config=1` (file Google Sheet "MYSPEAKING - CẤU HÌNH": CLASSES + LESSONS) — KHÔNG còn dùng `data/classes.json` (chỉ còn là dự phòng).
 > - **Dữ liệu lưu = TIẾNG ANH** (TYPE = Grammar/Pronunciation/Information); bài nộp route về **file mỗi lớp → sheet tên LESSON + sheet TIME chung** (KHÔNG còn 1 Sheet phẳng "SPEAKING CHECK - BÀI NỘP"); Excel export khớp mẫu tiếng Anh mới.
 > - **Video phát cho HS = YouTube unlisted** (KHÔNG còn phát Drive trực tiếp — Drive giới hạn tải file lớn; Drive chỉ giữ kho gốc). App tự nhận link youtube/youtu.be trong cột VIDEO của LESSONS.
-> - Dữ liệu ở Drive tài khoản **namdaptrai01** (= ổ D: mirror): `D:\APP AND DATA\mySpeaking\mySpeaking Data\`.
+> - Dữ liệu ở Drive tài khoản **namdaptrai01** (= ổ D: mirror): `D:\APP AND DATA\mySpeaking Web\mySpeaking Data\`.
 
 ## Mục đích
 App web tĩnh (GitHub Pages) cho học sinh xem video thuyết trình speaking của đội bạn và **bắt lỗi** (Grammar / Pronunciation / Information) + ghi **thời gian nói** của từng bạn. Dữ liệu nộp về Google Sheet của thầy, đồng thời có nút xuất file Excel đúng mẫu `SPEAKING TEAM CHECK FORM.xlsx` (2 sheet TIMER + FORM).
@@ -16,7 +16,7 @@ App web tĩnh (GitHub Pages) cho học sinh xem video thuyết trình speaking c
 - Cột "HS CÓ LỖI" trong Excel là free-text (không validation) → không lo lệch mẫu. Từ chặng 12-13: giá trị = đúng TÊN THÀNH VIÊN đội được chấm (chọn bằng nút, đã BỎ "Whole team"/"Someone else…").
 
 ## Cách chạy / test (mọi máy)
-- Là web tĩnh thuần, không cần build, không cần node. Test local: `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking"` rồi mở `http://localhost:8123`.
+- Là web tĩnh thuần, không cần build, không cần node. Test local: `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking Web"` rồi mở `http://localhost:8123`.
 - Cấu hình preview tên `myspeaking` nằm trong `D:\OTHERS\CLAUDE\.claude\launch.json` — file này KHÔNG đồng bộ theo app; máy khác thì tự chạy lệnh python ở trên (hoặc thêm config tương tự).
 - YouTube IFrame API chỉ chạy trên http/https (localhost hoặc GitHub Pages), KHÔNG chạy qua file://.
 - File mẫu gốc của thầy đã chép vào repo: `mau/SPEAKING TEAM CHECK FORM.xlsx` (bản gốc ở `D:\OTHERS\CLAUDE\FORM SITE\` của máy 1) — cấu trúc xuất Excel phải luôn khớp file này.
