@@ -70,56 +70,6 @@
 
   function setVideoStatus(html) { $('videoStatus').innerHTML = html; }
 
-  // Dòng thông tin dưới video: LỚP · ĐỘI ĐƯỢC CHẤM · các thành viên (thay cho chữ trạng thái kỹ thuật)
-  function videoInfoHtml() {
-    const mem = (state.members || []).join(' · ');
-    return '<i data-lucide="users" class="w-3.5 h-3.5 text-indigo-500 shrink-0"></i> ' +
-      '<b>' + escapeHtml(state.className) + '</b><span class="text-slate-300">|</span>' +
-      '<b class="text-indigo-600">' + escapeHtml(state.checkedTeam) + '</b>' +
-      (mem ? '<span class="text-slate-300">|</span><span class="font-semibold">' + escapeHtml(mem) + '</span>' : '');
-  }
-
-  // ─── Khung điều khiển video LUÔN HIỆN (nút gốc của trình duyệt tự ẩn — không cấm được,
-  //     nên tự vẽ khung rời: play/pause + thời gian + thanh tua, không bao giờ ẩn) ───
-  const vc = { dragging: false, playing: null, poll: null };
-  function fmtClock(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
-  function vcShow() { const el = $('videoCtrl'); el.classList.remove('hidden'); el.classList.add('flex'); }
-  function vcSetPlaying(p) {
-    if (vc.playing === p) return;
-    vc.playing = p;
-    $('vcPlay').innerHTML = '<i data-lucide="' + (p ? 'pause' : 'play') + '" class="w-5 h-5 pointer-events-none"></i>';
-    refreshIcons();
-  }
-  function vcUpdate(cur, dur) {
-    if (!vc.dragging && dur) $('vcSeek').value = Math.round((cur / dur) * 1000);
-    $('vcCur').textContent = fmtClock(cur);
-    $('vcDur').textContent = fmtClock(dur);
-  }
-  function vcDuration() {
-    if (video.mode === 'html5' && video.el) return video.el.duration || 0;
-    if (video.mode === 'youtube' && video.yt && video.ready) { try { return video.yt.getDuration() || 0; } catch (e) { return 0; } }
-    return 0;
-  }
-  function vcAttachHtml5(v) {
-    vcShow();
-    v.addEventListener('timeupdate', () => vcUpdate(v.currentTime, v.duration));
-    v.addEventListener('durationchange', () => vcUpdate(v.currentTime, v.duration));
-    v.addEventListener('play', () => vcSetPlaying(true));
-    v.addEventListener('pause', () => vcSetPlaying(false));
-    vcUpdate(v.currentTime, v.duration);
-    vcSetPlaying(!v.paused);
-  }
-  function vcAttachYouTube() {
-    vcShow();
-    clearInterval(vc.poll);
-    vc.poll = setInterval(() => {
-      try {
-        vcUpdate(video.yt.getCurrentTime() || 0, video.yt.getDuration() || 0);
-        vcSetPlaying(video.yt.getPlayerState() === 1);
-      } catch (e) {}
-    }, 300);
-  }
-
   function initVideo() {
     const box = $('videoContainer');
     const p = parseVideoUrl(state.videoUrl);
@@ -151,8 +101,7 @@
         events: {
           onReady: () => {
             video.ready = true;
-            setVideoStatus(videoInfoHtml());
-            vcAttachYouTube();
+            setVideoStatus('<i data-lucide="badge-check" class="w-3.5 h-3.5 text-emerald-500"></i> YouTube — precise timestamps');
             refreshIcons();
           },
         },
@@ -208,8 +157,7 @@
       settled = true;
       clearTimeout(guard);
       video.ready = true;
-      setVideoStatus(videoInfoHtml());
-      vcAttachHtml5(v);
+      setVideoStatus('<i data-lucide="badge-check" class="w-3.5 h-3.5 text-emerald-500"></i> Direct playback — precise timestamps');
       refreshIcons();
     });
     tryNext();
@@ -221,7 +169,7 @@
     video.el = null;
     box.innerHTML = '<iframe src="https://drive.google.com/file/d/' + id + '/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>';
     $('stopwatchWrap').classList.remove('hidden');
-    setVideoStatus(videoInfoHtml());  // khung vàng phía trên đã giải thích chế độ đồng hồ
+    setVideoStatus('<i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-500"></i> Backup mode: use the timer below for timestamps');
     refreshIcons();
   }
 
@@ -255,44 +203,35 @@
   }
 
   // ═══════════════ FORM BẮT LỖI ═══════════════
-  // Chọn HS có lỗi = DÃY NÚT TÊN xếp đều — bấm ai người đó sáng, 1 thời điểm chỉ 1 tên
-  // (1 người nói tại 1 thời điểm). fWhoSel = tên đang chọn ('' = chưa chọn, '__other' = tên khác).
-  let fWhoSel = '';
   function buildStudentField() {
     const wrap = $('fStudentWrap');
     if (state.members.length) {
-      const btns = state.members.concat(['Whole team', '__other']).map((n) => {
-        const label = n === '__other' ? 'Someone else…' : n;
-        return '<button type="button" data-who="' + escapeHtml(n) + '" class="whoBtn">' + escapeHtml(label) + '</button>';
-      }).join('');
-      wrap.innerHTML = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-2">' + btns + '</div>' +
-        '<input id="fWhoOther" type="text" placeholder="Name of the student" class="hidden mt-2 w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">';
-      renderWhoBtns();
+      let html = '<select id="fWho" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">';
+      html += '<option value="">— Select the student —</option>';
+      state.members.forEach((m) => { html += '<option>' + escapeHtml(m) + '</option>'; });
+      html += '<option value="Whole team">Whole team</option><option value="__other">Someone else…</option></select>';
+      html += '<input id="fWhoOther" type="text" placeholder="Name of the student" class="hidden mt-2 w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">';
+      wrap.innerHTML = html;
+      $('fWho').addEventListener('change', () => {
+        $('fWhoOther').classList.toggle('hidden', $('fWho').value !== '__other');
+      });
     } else {
       wrap.innerHTML = '<input id="fWho" type="text" placeholder="Name of the student" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">';
     }
   }
-  function renderWhoBtns() {
-    document.querySelectorAll('.whoBtn').forEach((b) => {
-      const on = b.dataset.who === fWhoSel;
-      b.className = 'whoBtn rounded-xl border-2 px-2 py-2.5 text-xs sm:text-sm font-bold leading-tight transition truncate ' +
-        (on ? 'border-indigo-600 bg-indigo-600 text-white shadow shadow-indigo-600/30'
-            : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300');
-    });
-    const other = $('fWhoOther');
-    if (other) other.classList.toggle('hidden', fWhoSel !== '__other');
-  }
   function getWho() {
-    if (!state.members.length) { const el = $('fWho'); return el ? el.value.trim() : ''; }
-    if (fWhoSel === '__other') { const o = $('fWhoOther'); return o ? o.value.trim() : ''; }
-    return fWhoSel;
+    const el = $('fWho');
+    if (!el) return '';
+    if (el.tagName === 'SELECT' && el.value === '__other') return $('fWhoOther').value.trim();
+    return el.value === '__other' ? '' : el.value.trim();
   }
   function setWho(val) {
-    if (!state.members.length) { const el = $('fWho'); if (el) el.value = val; return; }
-    if (!val) fWhoSel = '';
-    else if (state.members.includes(val) || val === 'Whole team') fWhoSel = val;
-    else { fWhoSel = '__other'; const o = $('fWhoOther'); if (o) o.value = val; }
-    renderWhoBtns();
+    const el = $('fWho');
+    if (el.tagName === 'SELECT') {
+      const opts = Array.from(el.options).map((o) => o.value);
+      if (opts.includes(val)) { el.value = val; $('fWhoOther').classList.add('hidden'); }
+      else { el.value = '__other'; $('fWhoOther').classList.remove('hidden'); $('fWhoOther').value = val; }
+    } else el.value = val;
   }
 
   const TYPE_STYLE = {
@@ -694,32 +633,6 @@
     document.querySelectorAll('.tabBtn').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
     document.querySelectorAll('.errType').forEach((b) => b.addEventListener('click', () => { fType = b.dataset.type; renderTypeBtns(); }));
-
-    // Nút chọn HS có lỗi (delegation — wrap tồn tại sẵn, nút dựng lại sau mỗi buildStudentField)
-    $('fStudentWrap').addEventListener('click', (ev) => {
-      const b = ev.target.closest('.whoBtn');
-      if (!b) return;
-      fWhoSel = (fWhoSel === b.dataset.who) ? '' : b.dataset.who;  // bấm lại tên đang sáng = bỏ chọn
-      renderWhoBtns();
-    });
-
-    // Khung điều khiển video luôn hiện
-    $('vcPlay').addEventListener('click', () => {
-      if (video.mode === 'html5' && video.el) { video.el.paused ? video.el.play() : video.el.pause(); }
-      else if (video.mode === 'youtube' && video.yt && video.ready) {
-        try { video.yt.getPlayerState() === 1 ? video.yt.pauseVideo() : video.yt.playVideo(); } catch (e) {}
-      }
-    });
-    $('vcSeek').addEventListener('input', (e) => {
-      vc.dragging = true;
-      $('vcCur').textContent = fmtClock((e.target.value / 1000) * vcDuration());  // xem trước mốc khi kéo
-    });
-    $('vcSeek').addEventListener('change', (e) => {
-      vc.dragging = false;
-      const t = (e.target.value / 1000) * vcDuration();
-      if (video.mode === 'html5' && video.el) video.el.currentTime = t;
-      else if (video.mode === 'youtube' && video.yt && video.ready) { try { video.yt.seekTo(t, true); } catch (e2) {} }
-    });
 
     $('btnGrabTime').addEventListener('click', () => {
       const t = getVideoTime();

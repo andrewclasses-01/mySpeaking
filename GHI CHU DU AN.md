@@ -181,6 +181,22 @@ Thầy băn khoăn "lấy thời gian từ video Drive cho việc chấm có thu
 - Tài khoản Google Cloud của thầy hiện có project THỪA: 1 project "mySpeaking" trùng tên (thầy tự tạo lúc loay hoay) + Drive API từng bật nhầm trên "My First Project". Không hại gì, khi nào tiện thì dọn (console.cloud.google.com → IAM & Admin → Manage resources → delete project thừa).
 - Chế độ đồng hồ dự phòng vẫn giữ nguyên trong code — nếu key hỏng/hết hạn app vẫn tự fallback, HS không bị kẹt.
 
+## CHẶNG 10 — 19/07/2026: 5 tinh chỉnh màn BẮT LỖI theo yêu cầu thầy
+
+Thầy đưa 5 yêu cầu sau khi xem bản chặng 9. Đã làm đủ, bump cache `?v=7`, backup trước ở `Backup/pre-chang10/`:
+
+1. **Bỏ khung "A NOTE FROM YOUR TEACHER"** ở màn bắt lỗi (trùng với bảng cam kết màn xác nhận — bản đó GIỮ).
+2. **Khung điều khiển video LUÔN HIỆN** (`#videoCtrl`): nút gốc của thẻ video trình duyệt TỰ ẨN sau vài giây, không cấm được → làm khung rời dưới video (nền đen): Play/Pause + thời gian hiện tại + thanh tua + tổng thời lượng, không bao giờ ẩn. Chạy cả 2 chế độ: html5/Drive (nghe event timeupdate/play/pause) + YouTube (poll 300ms qua IFrame API). Kéo thanh tua có xem trước mốc; nhả tay mới tua. Chế độ đồng hồ dự phòng thì khung này ẩn (không điều khiển được iframe).
+3. **Dòng dưới video** đổi từ chữ trạng thái kỹ thuật → `👥 B1AH | TEAM 2 | NGAN · TRUC` (lớp · đội được chấm · thành viên) — hàm `videoInfoHtml()`, áp dụng cả 3 chế độ video.
+4. **Chọn HS có lỗi = DÃY NÚT** (bỏ ô select): tên xếp đều grid 2 cột (3 cột ≥640px) + Whole team + Someone else…; bấm ai người đó sáng indigo, 1 thời điểm chỉ 1 tên (bấm lại = bỏ chọn); Someone else… mở ô gõ tên. Sửa `buildStudentField/getWho/setWho` + biến `fWhoSel`, delegation trên `#fStudentWrap`. Giữ nguyên hành vi cũ: sau khi Add, tên vẫn sáng (1 bạn thường bị nhiều lỗi liên tiếp).
+5. **Bố cục GHIM — chỉ danh sách lỗi cuộn**:
+   - **Desktop ≥1024px**: `#appScreen` khoá `height:100dvh; overflow:hidden` (flex column), main chia 2 cột; cột phải flex dọc — form `shrink-0` đứng yên, card "Mistakes found" `flex-1` với vùng cuộn riêng bao `#errList`. Cả trang KHÔNG cuộn.
+   - **Mobile <1024px**: không thể nhét video+form+list vào 812px → giải pháp: header thôi sticky (cuộn qua để nhường chỗ), **CỤM VIDEO (video + khung điều khiển + dòng lớp/đội) sticky top-0** — luôn ghim trên cùng khi cuộn form/list. Form vẫn cuộn được (bắt buộc về không gian) nhưng video không bao giờ mất.
+   - ⚠️ BẪY CASCADE đã né: KHÔNG dùng class `lg:flex` cho phần tử có toggle `.hidden` (appScreen, tab-errors, tab-timer) — media query nằm SAU trong stylesheet sẽ ĐÈ `.hidden` làm màn ẩn hiện ngược ra. Dùng CSS riêng `#id:not(.hidden){display:flex...}` trong `<style>`.
+   - Mobile main đổi `grid` → block thường (grid làm sticky con không có quãng trượt — sticky chỉ trượt trong grid-area của chính nó).
+
+**Verify (preview thật, đã chụp màn):** Desktop 1269px: appH=winH, body không cuộn, thêm 8 lỗi → chỉ list cuộn (scrollH 482>clientH 389), form đứng yên; nút tên radio đúng (NGAN→TRUC chỉ 1 sáng); Play/Pause chạy, tua 50%→184s=đúng nửa 368s; bấm ✏️ sửa lỗi → nút tên sáng đúng người. Mobile 375: cuộn 500px video+điều khiển+dòng lớp/đội GHIM trên cùng; không tràn ngang; 0 lỗi console. Đã xoá draft test khỏi localStorage.
+
 ## ⭐ HANDOFF — TIẾP TỤC NGÀY MAI (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7.
