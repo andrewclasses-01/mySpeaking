@@ -91,6 +91,9 @@ function duongDan(folder) {
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
+    // Cửa QUẢN TRỊ (app máy tính mySpeaking gọi vào — có mật khẩu). Bài nộp của học sinh KHÔNG
+    // bao giờ có cờ này nên luồng cũ chạy y nguyên.
+    if (data.admin) return json(adminRouter(data));
     var sheetsFolder = folderByPath(PATH_SHEETS, false);
     if (!sheetsFolder) throw new Error('Chưa có folder "mySpeaking Sheets" — chạy setup() trước.');
 
@@ -262,6 +265,140 @@ function setupGermsB1AH() {
   }
   if (rows.length) les.getRange(les.getLastRow() + 1, 1, rows.length, 8).setValues(rows);
   return report.join(' || ');
+}
+
+// ═══════════════ CỬA QUẢN TRỊ cho APP MÁY TÍNH mySpeaking (v0.3.0) ═══════════════
+// App máy tính gọi vào đây để RA BÀI (ghi sheet LESSONS) thay cho việc thầy gõ tay Google Sheet,
+// và (để dành) KÉO BÀI HỌC SINH NỘP về cho khâu đánh giá.
+//
+// ⛔ MẬT KHẨU KHÔNG NẰM TRONG FILE NÀY — file này ở repo GitHub CÔNG KHAI.
+//    Mật khẩu do hàm taoMatKhau() tự sinh, cất trong Script Properties (chỉ tài khoản chạy script
+//    đọc được) và chép ra sheet ADMIN của file CẤU HÌNH để thầy dán 1 lần vào app.
+var WEB_LINK = 'https://andrewclasses-01.github.io/mySpeaking/';
+
+// CHẠY TAY 1 LẦN trong trình soạn Apps Script -> mở file CẤU HÌNH, sheet ADMIN, chép mật khẩu.
+function taoMatKhau() {
+  var props = PropertiesService.getScriptProperties();
+  var k = props.getProperty('ADMIN_KEY');
+  if (!k) {
+    k = Utilities.getUuid().replace(/-/g, '').slice(0, 24);
+    props.setProperty('ADMIN_KEY', k);
+  }
+  var ss = openConfigSS(true);
+  var sh = getSheet(ss, 'ADMIN', ['MẬT KHẨU APP', 'GHI CHÚ']);
+  sh.getRange(2, 1, 1, 2).setValues([[k,
+    'Dán mật khẩu này vào app mySpeaking (Cài đặt -> Đẩy bài). KHÔNG gửi cho ai, KHÔNG đưa lên GitHub.']]);
+  return k;
+}
+
+function adminRouter(data) {
+  var key = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY');
+  if (!key) return { ok: false, error: 'CHUA_TAO_MATKHAU' };
+  if (String(data.key || '') !== key) return { ok: false, error: 'SAI_MATKHAU' };
+  if (data.action === 'push') return adminPush(data);
+  if (data.action === 'results') return adminResults(data);
+  return { ok: false, error: 'LENH_LA: ' + data.action };
+}
+
+// ── RA BÀI ──────────────────────────────────────────────────────────────────
+// data = { classCode, lesson, date, code, rows:[{team, video, members, checks}], tatBaiCu }
+// tatBaiCu = false mà lớp đang có bài khác mở -> KHÔNG GHI GÌ, trả về để app hỏi thầy trước.
+function adminPush(data) {
+  var cls = String(data.classCode || '').trim();
+  var lesson = String(data.lesson || '').trim();
+  if (!cls || !lesson) return { ok: false, error: 'THIEU_LOP_HOAC_BAI' };
+  var rows = data.rows || [];
+  if (!rows.length) return { ok: false, error: 'THIEU_DOI' };
+
+  var ss = openConfigSS(true);
+  if (!ss) return { ok: false, error: 'CHUA_CO_FILE_CAU_HINH' };
+
+  // 1) CLASSES — lớp mới thì thêm dòng luôn (khỏi phải làm tay "Bước 5" cho từng lớp)
+  var CS = getSheet(ss, 'CLASSES', ['CLASS', 'CODE', 'NAME', 'RESULT FILE', 'STATUS']);
+  var C = CS.getDataRange().getValues();
+  var dong = 0;
+  for (var i = 1; i < C.length; i++) {
+    if (String(C[i][0] || '').trim().toLowerCase() === cls.toLowerCase()) { dong = i + 1; break; }
+  }
+  if (!dong) {
+    dong = CS.getLastRow() + 1;
+    CS.getRange(dong, 1, 1, 5).setValues([[cls, String(data.code || '').trim(), 'Lớp ' + cls, cls, 'active']]);
+  } else if (String(data.code || '').trim()) {
+    CS.getRange(dong, 2).setValue(String(data.code).trim());          // thầy đổi mã đăng nhập
+  }
+  var code = String(CS.getRange(dong, 2).getValue() || '').trim();
+  var resultName = String(CS.getRange(dong, 4).getValue() || '').trim() || cls;
+  if (!CS.getRange(dong, 4).getValue()) CS.getRange(dong, 4).setValue(resultName);
+  if (!CS.getRange(dong, 5).getValue()) CS.getRange(dong, 5).setValue('active');
+
+  // 2) File kết quả của lớp — chưa có thì tạo (KHÔNG bao giờ đụng file đã có)
+  var sheetsFolder = folderByPath(PATH_SHEETS, true);
+  if (!fileByName(sheetsFolder, resultName)) {
+    var rss = SpreadsheetApp.create(resultName);
+    DriveApp.getFileById(rss.getId()).moveTo(sheetsFolder);
+  }
+
+  // 3) LESSONS
+  var LS = getSheet(ss, 'LESSONS', ['CLASS', 'LESSON', 'DATE', 'ACTIVE', 'TEAM', 'VIDEO', 'MEMBERS', 'CHECKS']);
+  var L = LS.getDataRange().getValues();
+  var baiKhacDangMo = {};
+  for (var r = 1; r < L.length; r++) {
+    if (String(L[r][0] || '').trim().toLowerCase() !== cls.toLowerCase()) continue;
+    if (String(L[r][3] || '').trim().toLowerCase() !== 'yes') continue;
+    var ten = String(L[r][1] || '').trim();
+    if (ten.toLowerCase() !== lesson.toLowerCase()) baiKhacDangMo[ten] = (baiKhacDangMo[ten] || 0) + 1;
+  }
+  var dsBaiKhac = Object.keys(baiKhacDangMo);
+  if (dsBaiKhac.length && !data.tatBaiCu) {
+    return { ok: false, need: 'confirm', dangMo: dsBaiKhac, classCode: cls, lesson: lesson };
+  }
+
+  // Xoá dòng CŨ CỦA CHÍNH BÀI NÀY (ra lại bài = ghi đè, không sinh dòng trùng) — đi từ dưới lên.
+  // Bài KHÁC thì chỉ TẮT (ACTIVE=no), KHÔNG xoá: giữ lịch sử + dữ liệu HS đã nộp vẫn nguyên.
+  for (var d = L.length - 1; d >= 1; d--) {
+    if (String(L[d][0] || '').trim().toLowerCase() !== cls.toLowerCase()) continue;
+    if (String(L[d][1] || '').trim().toLowerCase() === lesson.toLowerCase()) LS.deleteRow(d + 1);
+    else if (String(L[d][3] || '').trim().toLowerCase() === 'yes') LS.getRange(d + 1, 4).setValue('no');
+  }
+
+  var them = [];
+  for (var t = 0; t < rows.length; t++) {
+    var x = rows[t];
+    them.push([cls, lesson, String(data.date || ''), 'yes', x.team,
+      String(x.video || ''), String(x.members || ''), x.checks || '']);
+  }
+  LS.getRange(LS.getLastRow() + 1, 1, them.length, 8).setValues(them);
+
+  return {
+    ok: true, classCode: cls, lesson: lesson, code: code, link: WEB_LINK,
+    soDoi: them.length, daTatBaiCu: dsBaiKhac,
+  };
+}
+
+// ── KÉO BÀI HỌC SINH NỘP (để dành cho v0.5 ĐÁNH GIÁ) ────────────────────────
+function adminResults(data) {
+  var cls = String(data.classCode || '').trim();
+  var lesson = String(data.lesson || '').trim();
+  if (!cls) return { ok: false, error: 'THIEU_LOP' };
+  var sheetsFolder = folderByPath(PATH_SHEETS, false);
+  if (!sheetsFolder) return { ok: false, error: 'CHUA_CO_FOLDER_SHEETS' };
+  var f = fileByName(sheetsFolder, resolveResultFileName(cls));
+  if (!f) return { ok: false, error: 'KHONG_THAY_FILE_KET_QUA' };
+  var ss = SpreadsheetApp.openById(f.getId());
+
+  var out = { ok: true, classCode: cls, lesson: lesson, errors: [], timers: [] };
+  var fsh = lesson ? ss.getSheetByName(sanitizeName(lesson)) : null;
+  if (fsh && fsh.getLastRow() > 1) out.errors = fsh.getDataRange().getValues().slice(1);
+  var tsh = ss.getSheetByName('TIME');
+  if (tsh && tsh.getLastRow() > 1) {
+    var T = tsh.getDataRange().getValues();
+    for (var i = 1; i < T.length; i++) {
+      if (!lesson || String(T[i][1] || '').trim().toLowerCase() === lesson.toLowerCase()) out.timers.push(T[i]);
+    }
+  }
+  out.headersErrors = FORM_HEADERS;
+  out.headersTimers = TIME_HEADERS;
+  return out;
 }
 
 // ═══════════════ TIỆN ÍCH ═══════════════

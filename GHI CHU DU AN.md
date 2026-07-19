@@ -441,6 +441,27 @@ lúc trên mây vẫn còn tên cũ.
 trên Drive**, và bất cứ thứ gì Apps Script tìm theo TÊN đều có thể gãy. Trước khi đổi tên bất kỳ thư
 mục nào trong `APP AND DATA`, hãy tìm tên đó trong `apps-script/Code.gs` trước.
 
+## CHẶNG 20 — 20/07/2026: BỘ NÃO CÓ THÊM CỬA QUẢN TRỊ (cho app máy tính ra bài)
+
+**Vì sao:** app máy tính **mySpeaking v0.3.0** (màn ② YOUTUBE) cần tự ghi sheet LESSONS để ra bài,
+thay vì thầy gõ tay Google Sheet. Thầy đã đồng ý cho bổ sung Apps Script **một lần** cho việc này.
+
+**Đã thêm vào `apps-script/Code.gs` (chưa deploy — xem phần CẦN LÀM):**
+- `doPost`: bài nộp của học sinh **giữ nguyên đường cũ**; chỉ gói có cờ `admin` mới rẽ sang cửa mới.
+- `taoMatKhau()` — chạy tay 1 lần: tự sinh mật khẩu, cất trong **Script Properties**, đồng thời chép
+  ra sheet **ADMIN** của file CẤU HÌNH để thầy dán vào app.
+  ⛔ **KHÔNG viết mật khẩu vào file này** — repo web là repo **CÔNG KHAI** trên GitHub.
+- `adminPush` — ra bài: ghi/ghi đè các dòng LESSONS của bài đó, bật `ACTIVE=yes`; lớp chưa có trong
+  CLASSES thì **tự thêm dòng + tự tạo file kết quả** trong `mySpeaking Sheets`.
+  **Lớp đang mở bài KHÁC → KHÔNG ghi gì**, trả `need:'confirm'` để app hỏi thầy; đồng ý thì bài cũ
+  chỉ bị **TẮT** (`ACTIVE=no`), **không xoá dòng nào** — bài HS đã nộp còn nguyên.
+- `adminResults` — trả về bảng lỗi + bảng TIME của một bài (để dành cho v0.5 ĐÁNH GIÁ, khỏi phải sửa
+  Apps Script thêm lần nữa).
+
+**CẦN LÀM TRÊN GOOGLE (chưa xong):** dán `Code.gs` mới đè bản cũ → chạy `taoMatKhau` → **Deploy →
+Manage deployments → Edit → New version**. **SCRIPT_URL giữ nguyên → link học sinh và mã lớp KHÔNG đổi.**
+Chưa làm thì web HS vẫn chạy bình thường, chỉ có nút "Đẩy bài" bên app máy tính là báo lỗi.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking Web`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.
