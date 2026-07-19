@@ -782,12 +782,10 @@
     }
 
     // dựng UI chính
-    $('hdStudentName').textContent = state.student;
+    // Nút người chấm: "HOANG · T1" (tên · đội của người chấm) — bỏ icon, cỡ = nút Export
+    const myTeamNo = String(state.myTeam || '').replace(/[^0-9]/g, '');
+    $('hdStudent').textContent = state.student + (myTeamNo ? ' · T' + myTeamNo : '');
     $('hdTopic').textContent = state.topic || 'Watch · spot mistakes · improve together';
-    if (state.checkedTeam) {
-      $('hdChecked').textContent = '🎯 ' + state.checkedTeam;
-      $('hdChecked').classList.remove('hidden');
-    }
     initTimers(savedTimers);      // timers TRƯỚC — buildStudentField vẽ ô thời gian từ timers
     buildStudentField();
     renderErrors();
