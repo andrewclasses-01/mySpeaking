@@ -445,7 +445,23 @@ mục nào trong `APP AND DATA`, hãy tìm tên đó trong `apps-script/Code.gs`
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking Web`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.
 
-**Đang ở đâu (mới nhất 19/07/2026 — CHẶNG 17 XONG):** Web live **https://andrewclasses-01.github.io/mySpeaking/** đã chạy **khung dữ liệu MỚI**: đọc bài LIVE từ Apps Script `?config=1` (file CẤU HÌNH Google Sheet: sheet CLASSES + LESSONS), TYPE lưu **tiếng Anh** (Grammar/Pronunciation/Information), bài nộp route về **file mỗi lớp → sheet tên LESSON + sheet TIME**, có SUBMISSION ID/videoId. Apps Script đã **deploy Phiên bản 2** (SCRIPT_URL trong config.js GIỮ NGUYÊN). Dữ liệu ở Drive tài khoản **namdaptrai01** (= ổ D: mirror): `D:\APP AND DATA\mySpeaking Web\mySpeaking Data\{mySpeaking Settings\MYSPEAKING - CẤU HÌNH, mySpeaking Sheets\<lớp>}`. **BÀI THẬT B1AH GERMS SẴN SÀNG GỬI LỚP** (video đã chuyển sang **YouTube unlisted** vì Drive giới hạn tải file lớn — xem "SỰ CỐ VIDEO" cuối chặng 17). `?v=15`.
+**⭐ MỚI NHẤT 20/07/2026 (chốt phiên):**
+- **CHẶNG 18** — hết **tự phóng to khi gõ trên điện thoại** (ép ô nhập ≥16px dưới 1024px). Đã đẩy live.
+- **CHẶNG 19** — thư mục kho web đổi tên thành **`D:\APP AND DATA\mySpeaking Web`**; Apps Script nhận
+  **CẢ HAI tên** (`WEB_NAMES`), **Deploy Phiên bản 3**, SCRIPT_URL giữ nguyên; thêm cửa kiểm tra
+  **`?check=1`**. **Link học sinh + tên repo GitHub KHÔNG đổi.**
+- **Đã kiểm tra lại toàn bộ sau khi đổi tên (đều ĐẠT):** `?check=1` trỏ đúng `… / mySpeaking Web / …`
+  (8 lớp, 4 dòng LESSONS, file kết quả B1AH) · `?config=1` cấp đúng bài GERMS 4 đội kèm link YouTube ·
+  **ghi được vào file lớp** (test bằng sheet tạm rồi xoá, không đụng dữ liệu thật) · đăng nhập
+  B1AH/germs trên link live đi hết tới màn bắt lỗi, video YouTube đội 2 chạy, không rơi dự phòng ·
+  `.gitignore` vẫn chặn `mySpeaking Data` (0 file bị theo dõi).
+- **Dữ liệu thật đang có:** lớp B1AH bài GERMS — sheet `GERMS` **22 dòng lỗi**, sheet `TIME` 4 dòng.
+- **Song song:** app máy tính **mySpeaking v0.2.2** đang được build ở `E:\LAP TRINH APP\mySpeaking`
+  (kho riêng `D:\APP AND DATA\mySpeaking App`) — xem `GHI CHU DU AN.md` bên đó.
+- ⚠️ Ghi chú trong `Code.gs` trên Google hiện viết KHÔNG DẤU (vá qua trình duyệt), bản trong kho có
+  dấu — logic y hệt. Lần sau sửa Apps Script nên **dán từ bản trong kho** cho khớp hoàn toàn.
+
+**Đang ở đâu (19/07/2026 — CHẶNG 17 XONG):** Web live **https://andrewclasses-01.github.io/mySpeaking/** đã chạy **khung dữ liệu MỚI**: đọc bài LIVE từ Apps Script `?config=1` (file CẤU HÌNH Google Sheet: sheet CLASSES + LESSONS), TYPE lưu **tiếng Anh** (Grammar/Pronunciation/Information), bài nộp route về **file mỗi lớp → sheet tên LESSON + sheet TIME**, có SUBMISSION ID/videoId. Apps Script đã **deploy Phiên bản 2** (SCRIPT_URL trong config.js GIỮ NGUYÊN). Dữ liệu ở Drive tài khoản **namdaptrai01** (= ổ D: mirror): `D:\APP AND DATA\mySpeaking Web\mySpeaking Data\{mySpeaking Settings\MYSPEAKING - CẤU HÌNH, mySpeaking Sheets\<lớp>}`. **BÀI THẬT B1AH GERMS SẴN SÀNG GỬI LỚP** (video đã chuyển sang **YouTube unlisted** vì Drive giới hạn tải file lớn — xem "SỰ CỐ VIDEO" cuối chặng 17). `?v=15`.
 - ➡️ **VIỆC SESSION SAU (thầy sẽ chỉ định):** (a) **Bước 5** — nhân ra 7 lớp còn lại (A1A/A1B/A1C/A2A/A2B/B2A/B2B: điền CODE trong CLASSES + tạo file kết quả tên lớp trong mySpeaking Sheets + thêm dòng LESSONS khi ra bài + video YouTube unlisted); và/hoặc (b) **CHẶNG 2 — app máy tính Electron** (dọn folder + tạo file chấm chéo + sau này tự sinh config/upload YouTube; gọi skill `kienthucbuildapp`, code E:\LAP TRINH APP\mySpeaking + bare repo/dữ liệu D:, CHỜ "ok build").
 - ⚠️ Mục "⭐ KHUNG DỮ LIỆU" bên dưới (viết lúc CHƯA code) chỉ để tham khảo lịch sử — trạng thái THẬT đã ở CHẶNG 17.
 
