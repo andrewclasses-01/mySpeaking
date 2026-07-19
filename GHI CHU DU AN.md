@@ -372,6 +372,18 @@ Thầy cùng em nghiên cứu + tư vấn để CHỐT cấu trúc dữ liệu c
 
 Sheet cũ "SPEAKING CHECK - BÀI NỘP" (mô hình 1 sheet phẳng) nay KHÔNG còn dùng (bộ não đã route sang file lớp) — có thể xoá khi tiện.
 
+### ✅ BÀI THẬT B1AH GERMS — SẴN SÀNG GỬI HS (19/7, thầy yêu cầu làm bài thật từ thư mục chuẩn)
+- **Cấu trúc thư mục 1 LESSON (cách thầy tổ chức — QUAN TRỌNG cho Chặng 2 app máy tính tự sinh config):**
+  `D:\6. SPEAKING\SPEAKING TEST\<LỚP>\<NGÀY + TÊN BÀI>\` (vd `2026.7.17 GERMS`) gồm:
+  - `DS HOC SINH <LỚP>.txt` — mỗi dòng 1 đội: `T{n} - {tên ngắn} - {MEMBER1}; {MEMBER2}; ...` (vd `T3 - D.MY CUONG KHOI - DIEM MY; CUONG; KHOI`).
+  - `DS-....docm` — nội dung bài; `<LỚP> <BÀI> - ASSESSMENT\` — folder chấm.
+  - `SPEAKING\` → `<BÀI> - <LỚP>\` (output sắp xếp, có thể rỗng) + **`SPEAKING GOC\`** (video gốc): `<BÀI> - <LỚP> TEAM {n} - {MEMBERS}.mp4` + `SUBF\` (srt).
+  - ⚠️ **Tên file video có thể GHI NHẦM số team** (vd file "TEAM 1 - MY CUONG KHOI" thực ra là T3) → LUÔN map đội theo **TÊN THÀNH VIÊN** (khớp DS HOC SINH), KHÔNG theo "TEAM N" trong tên file.
+  - Cặp chấm chéo mặc định: T1→T2→T3→T4→T1 (mỗi đội check đội kế).
+- **Đã làm:** thêm hàm `setupGermsB1AH()` trong Code.gs → quét `SPEAKING GOC`, **đặt 4 video "ai có link đều xem"** (DriveApp setSharing ANYONE_WITH_LINK), map đội theo tên thành viên, ghi đè LESSONS (DATE 17/7). Chạy qua editor (không cần deploy lại — doGet/doPost giữ Phiên bản 2). 4 video hoá ra CHÍNH LÀ các file test cũ (thầy đổi tên + dời vào SPEAKING GOC → Drive giữ nguyên mã: T1=1esxEgg HOANG TIEN, T2=1bra NGAN TRUC, T3=1JrAw8 DIEM MY CUONG KHOI, T4=1FZCpy PHONG HA AN BAO CHAU).
+- **Verify LIVE:** config trả đúng 4 đội + video thật; **video Team 2 phát trực tiếp trên live** (readyState 4, duration 368s "Are All Germs Bad?", KHÔNG rơi dự phòng, nguồn Drive API). **➡️ Bài B1AH GERMS SẴN SÀNG — thầy gửi lớp làm được ngay** (link https://andrewclasses-01.github.io/mySpeaking/, lớp `B1AH`, mã `germs`).
+- Còn lại Bước 5 (7 lớp kia) như trên. Sheet kết quả B1AH đã sạch (chỉ header GERMS + TIME).
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; Drive API key = chặng 9; màn bắt lỗi hiện tại = chặng 10→13; hạ tầng live = chặng 14.
