@@ -8,20 +8,21 @@
   const CFG = window.MYSPEAKING_CONFIG || {};
   const $ = (id) => document.getElementById(id);
 
-  // ─── Danh sách lớp (data/classes.json) — mô hình 1 LINK CHUNG + đăng nhập theo lớp ───
-  // Cấu trúc: { classes: [ { id, name, code, topic, teams:[{team, video, members[]}], pairs:[{checker, checked}] } ] }
+  // ─── Danh sách lớp — mô hình 1 LINK CHUNG + đăng nhập theo lớp ───
+  // Nguồn: đọc LIVE từ "bộ não" (Apps Script ?config=1); dự phòng data/classes.json.
+  // Cấu trúc: { classes: [ { id, name, classCode, code, lesson, topic, teams:[{team, video, members[]}], pairs:[{checker, checked}] } ] }
   let CLASSES = { classes: [] };
   const session = { class: null };   // lớp đang chọn sau khi đăng nhập
 
   // ─── State ───
   const state = {
     student: '', myTeam: '',
-    className: '',
-    topic: '',
+    className: '', classCode: '',
+    lesson: '', topic: '',
     checkedTeam: '',
     members: [],
-    videoUrl: '',
-    errors: [],   // {min, sec, section, who, type, sentence, detail, explain}
+    videoUrl: '', videoId: '',
+    errors: [],   // {min, sec, section, who, type, sentence, detail, explain}  (type = Grammar/Pronunciation/Information)
     timers: [],   // {name, sMin, sSec, eMin, eSec}
     submitted: false,
   };
@@ -372,14 +373,13 @@
   // Nút loại lỗi: mặc định cả 3 NỀN TRẮNG, chọn thì KHUNG VÀNG (badge trong danh sách vẫn giữ màu riêng)
   const TYPE_ON = 'border-amber-400 bg-amber-50 text-slate-900 shadow shadow-amber-200';
   const TYPE_OFF = 'border-slate-200 bg-white text-slate-700 hover:border-slate-300';
+  // TYPE lưu bằng TIẾNG ANH (khớp mẫu mới của thầy: Grammar / Pronunciation / Information)
   const TYPE_STYLE = {
-    'NGỮ PHÁP': { badge: 'bg-blue-100 text-blue-700' },
-    'PHÁT ÂM': { badge: 'bg-emerald-100 text-emerald-700' },
-    'THÔNG TIN': { badge: 'bg-amber-100 text-amber-700' },
+    'Grammar': { badge: 'bg-blue-100 text-blue-700' },
+    'Pronunciation': { badge: 'bg-emerald-100 text-emerald-700' },
+    'Information': { badge: 'bg-amber-100 text-amber-700' },
   };
-  // English display labels for the mistake types (stored values stay Vietnamese to match the Excel template)
-  const TYPE_LABEL = { 'NGỮ PHÁP': 'Grammar', 'PHÁT ÂM': 'Pronunciation', 'THÔNG TIN': 'Information' };
-  const typeLabel = (t) => TYPE_LABEL[t] || t;
+  const typeLabel = (t) => t;   // giá trị lưu đã là tiếng Anh → hiển thị nguyên
   function renderTypeBtns() {
     document.querySelectorAll('.errType').forEach((b) => {
       b.className = 'errType rounded-lg border-2 px-0.5 sm:px-1 py-2 text-[10px] sm:text-xs font-bold leading-tight transition flex flex-row items-center justify-center gap-1.5 ' +
@@ -574,9 +574,11 @@
     try {
       const payload = {
         submittedAt: new Date().toISOString(),
-        className: state.className,
+        classCode: state.classCode, className: state.className,
+        lesson: state.lesson, topic: state.topic,
         student: state.student, myTeam: state.myTeam,
-        checkedTeam: state.checkedTeam, topic: state.topic, videoUrl: state.videoUrl,
+        checkedTeam: state.checkedTeam,
+        videoUrl: state.videoUrl, videoId: state.videoId,
         errors: state.errors, timers: cleanTimers(),
       };
       const res = await fetch(SCRIPT_URL, {
@@ -598,42 +600,27 @@
     }
   }
 
-  // ═══════════════ EXPORT EXCEL (matches the SPEAKING TEAM CHECK FORM template) ═══════════════
-  // NOTE: sheet names, column headers and the reminder note stay in Vietnamese on purpose,
-  // so the exported file lines up 1:1 with the teacher's template and Google Sheet.
+  // ═══════════════ EXPORT EXCEL (khớp mẫu SPEAKING TEAM CHECK FORM mới — TIẾNG ANH) ═══════════════
+  // 2 sheet khớp mẫu mới của thầy:
+  //   TIMER: STUDENT | MIN START | SEC START | MIN END | SEC END
+  //   FORM : NO | MIN | SEC | STUDENT | TYPE | SENTENCE | MISTAKE | EXPLANATION | CHECKER
   function exportExcel() {
     const wb = XLSX.utils.book_new();
 
-    // Sheet TIMER
-    const note = 'DẶN DÒ CỦA THẦY:  Việc luyện tập là trách nhiệm, nhưng cũng là quyền lợi của các em. Hãy luôn nhớ rằng, việc mình luyện tập hôm nay chính là sự chuẩn bị năng lực cho chính mình vào ngày mai. Không bao giờ vi phạm đạo đức và vô trách nhiệm với bản thân bằng việc sao chép phần luyện tập của các bạn khác nhé!';
-    const timerAoa = [
-      ['STT', 'BẠN', 'TGIAN BẮT ĐẦU', null, 'TGIAN KẾT THÚC', null],
-      [null, null, 'Phút', 'Giây', 'Phút', 'Giây'],
-    ];
-    const rows = cleanTimers();
-    for (let i = 0; i < Math.max(6, rows.length); i++) {
-      const t = rows[i];
-      timerAoa.push(t ? [i + 1, t.name, num(t.sMin), num(t.sSec), num(t.eMin), num(t.eSec)] : [i + 1, null, null, null, null, null]);
-    }
-    timerAoa.push([]);
-    timerAoa.push([note]);
+    // Sheet TIMER (thời gian nói)
+    const timerAoa = [['STUDENT', 'MIN START', 'SEC START', 'MIN END', 'SEC END']];
+    cleanTimers().forEach((t) => timerAoa.push([t.name, num(t.sMin), num(t.sSec), num(t.eMin), num(t.eSec)]));
     const wsT = XLSX.utils.aoa_to_sheet(timerAoa);
-    const noteRow = timerAoa.length - 1;
-    wsT['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }, { s: { r: 0, c: 1 }, e: { r: 1, c: 1 } },
-      { s: { r: 0, c: 2 }, e: { r: 0, c: 3 } }, { s: { r: 0, c: 4 }, e: { r: 0, c: 5 } },
-      { s: { r: noteRow, c: 0 }, e: { r: noteRow, c: 5 } },
-    ];
-    wsT['!cols'] = [{ wch: 5 }, { wch: 22 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }];
+    wsT['!cols'] = [{ wch: 22 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }];
     XLSX.utils.book_append_sheet(wb, wsT, 'TIMER');
 
-    // Sheet FORM
-    const formAoa = [['PHÚT', 'GIÂY', 'ĐOẠN', 'HS CÓ LỖI', 'LOẠI LỖI', 'CÂU CHỨA LỖI', 'LỖI CỤ THỂ', 'GIẢI THÍCH LỖI']];
-    state.errors.slice().sort((a, b) => tSec(a) - tSec(b)).forEach((e) => {
-      formAoa.push([num(e.min), num(e.sec), e.section, e.who, e.type, e.sentence, e.detail, e.explain]);
+    // Sheet FORM (bảng bắt lỗi)
+    const formAoa = [['NO', 'MIN', 'SEC', 'STUDENT', 'TYPE', 'SENTENCE', 'MISTAKE', 'EXPLANATION', 'CHECKER']];
+    state.errors.slice().sort((a, b) => tSec(a) - tSec(b)).forEach((e, idx) => {
+      formAoa.push([idx + 1, num(e.min), num(e.sec), e.who, e.type, e.sentence, e.detail, e.explain, state.student]);
     });
     const wsF = XLSX.utils.aoa_to_sheet(formAoa);
-    wsF['!cols'] = [{ wch: 6 }, { wch: 6 }, { wch: 8 }, { wch: 16 }, { wch: 12 }, { wch: 42 }, { wch: 40 }, { wch: 45 }];
+    wsF['!cols'] = [{ wch: 5 }, { wch: 6 }, { wch: 6 }, { wch: 16 }, { wch: 14 }, { wch: 42 }, { wch: 40 }, { wch: 45 }, { wch: 16 }];
     XLSX.utils.book_append_sheet(wb, wsF, 'FORM');
 
     const name = 'SPEAKING CHECK' +
@@ -652,8 +639,19 @@
 
   // ═══════════════ KHỞI ĐỘNG — luồng 1 LINK CHUNG + đăng nhập lớp ═══════════════
 
-  // Tải danh sách lớp (không cache để luôn lấy nội dung mới nhất khi thầy cập nhật)
+  // Tải danh sách lớp + bài đang chạy.
+  // ƯU TIÊN đọc LIVE từ "bộ não" (Apps Script ?config=1) — thầy ra bài mới KHÔNG cần đăng lại web.
+  // DỰ PHÒNG file tĩnh data/classes.json khi bộ não chưa sẵn / lỗi mạng.
   async function loadClasses() {
+    if (SCRIPT_URL) {
+      try {
+        const r = await fetch(SCRIPT_URL + '?config=1&_=' + Date.now(), { cache: 'no-store' });
+        if (r.ok) {
+          const j = await r.json();
+          if (j && Array.isArray(j.classes) && j.classes.length) { CLASSES = j; return; }
+        }
+      } catch (e) { /* rơi xuống dự phòng */ }
+    }
     try {
       const r = await fetch('data/classes.json?_=' + Date.now(), { cache: 'no-store' });
       if (r.ok) CLASSES = await r.json();
@@ -747,8 +745,12 @@
     state.checkedTeam = 'TEAM ' + pair.checked;
     state.members = checked.members || [];
     state.videoUrl = checked.video || '';
-    state.topic = cls.topic || '';
+    const vp = parseVideoUrl(state.videoUrl);
+    state.videoId = (vp && vp.id) ? vp.id : '';   // mã video (để bộ não/app máy tính ghép đúng video)
+    state.lesson = cls.lesson || cls.topic || '';
+    state.topic = cls.topic || cls.lesson || '';
     state.className = cls.name || cls.id;
+    state.classCode = cls.classCode || cls.id;    // khóa route tới đúng file lớp
     saveKey = 'myspeaking_' + (state.videoUrl || 'manual').slice(-60);
 
     // ảnh HS: dùng ảnh thật nếu có, tạm thời hiện chữ cái đầu

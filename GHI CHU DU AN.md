@@ -319,6 +319,49 @@ Video Drive phát html5 (không rơi dự phòng). Test đủ: 2 ô Team/Name (N
 - **Nút người chấm** (`#hdStudent`): bỏ icon user, cỡ = nút Export (`bg-white/15 rounded-xl px-3.5 py-2 text-sm font-bold`), nội dung đổi thành **"HOANG · T1"** (tên · đội của người chấm; teamNo tách từ `state.myTeam`).
 - **Chữ TIME** bỏ `tracking-[0.3em]` (trước giãn rộng hơn TYPE) → về chữ bình thường; vẫn giữ `sm:w-14` nên ô MIN/SEC vẫn thẳng hàng với ô TYPE.
 
+## CHẶNG 17 — 19/07/2026: CHỐT KHUNG DỮ LIỆU CUỐI CÙNG (chưa code — chờ "ok build")
+
+Thầy cùng em nghiên cứu + tư vấn để CHỐT cấu trúc dữ liệu cho quy mô thật: **10 lớp, mỗi 2 tuần 1 bài** (nhiều video, nhiều đội check chéo), **1 link web duy nhất** cho mọi lớp. Đây mới là bước THIẾT KẾ — CHƯA sửa code.
+
+### Phát hiện quan trọng: file mẫu đã đổi
+- `D:\OTHERS\CLAUDE\FORM SITE\SPEAKING TEAM CHECK FORM.xlsx` giờ có **3 sheet**: `SHEET` (bản Việt cũ STT/BẠN + dặn dò A10, để lại), **`TIMER`** (tiếng Anh: `STUDENT · MIN START · SEC START · MIN END · SEC END`), **`FORM`** (tiếng Anh: `NO · MIN · SEC · STUDENT · TYPE · SENTENCE · MISTAKE · EXPLANATION · CHECKER`). Không còn dropdown validation.
+- ➡️ Mẫu đã **sang tiếng Anh + đã có SENTENCE** → app hiện lưu tiếng Việt là KHÔNG còn khớp. Nên chốt A = đổi app sang tiếng Anh.
+
+### Thầy đã CHỐT (qua AskUserQuestion)
+- **A. Ngôn ngữ dữ liệu = TIẾNG ANH** (khớp mẫu mới). `TYPE` = `Grammar / Pronunciation / Information` (bỏ lưu tiếng Việt NGỮ PHÁP/PHÁT ÂM/THÔNG TIN).
+- **B. Kết quả = 1 file Google Sheet / LỚP** (10 files).
+- **C. Cấu hình bài để trong Google Sheet riêng** (web đọc LIVE qua Apps Script) → **1 link không đổi mãi mãi**, ra bài mới KHÔNG cần đăng lại web.
+- **Điều chỉnh của thầy:** trong file mỗi lớp, **mỗi lesson = 1 sheet mới đặt tên theo lesson** (bảng BẮT LỖI). **Thời gian nói = 1 sheet "TIME" CHUNG cả lớp** (mọi lesson, phân biệt bằng cột LESSON).
+- **Giữ 2 cột khóa: VIDEO (id) + SUBMISSION ID** — phục vụ app máy tính (Chặng 4) mở đúng video tua tới chỗ lỗi + gom đúng lượt nộp.
+
+### KHUNG DỮ LIỆU CUỐI CÙNG (đã duyệt) — dùng cho cả web + Apps Script + app máy tính
+**① File CẤU HÌNH ("MYSPEAKING – CẤU HÌNH") — 1 file riêng, app máy tính/thầy điền:**
+- Sheet **CLASSES**: `CLASS | CODE | NAME | RESULT FILE` (CLASS=ô "Your class", CODE=ô "Class code" HS gõ; RESULT FILE = spreadsheetId file kết quả lớp đó → cũng là "danh bạ" báo Apps Script ghi vào file nào).
+- Sheet **LESSONS** (mỗi dòng = 1 đội trong 1 bài; `ACTIVE=yes` là bài web đang hiện): `CLASS | LESSON | DATE | ACTIVE | TEAM | VIDEO | MEMBERS | CHECKS` (MEMBERS ngăn bằng `;`; CHECKS = đội mà đội này đi check → web tự dựng cặp chấm chéo).
+
+**② 10 file KẾT QUẢ (mỗi lớp 1 file, VD "MYSPEAKING – B1AH"):**
+- Sheet mỗi **LESSON** (tên = tên lesson, VD "GERMS") — bảng bắt lỗi, mỗi lỗi 1 dòng:
+  `TIME | CHECKER | CHECKER TEAM | TEAM | VIDEO | MIN | SEC | STUDENT | TYPE | SENTENCE | MISTAKE | EXPLANATION | SUBMISSION ID`
+  (TEAM = đội được check; CHECKER/CHECKER TEAM = người chấm + đội của họ).
+- Sheet **"TIME"** (chung cả lớp) — thời gian nói, mỗi bạn 1 dòng:
+  `TIME | LESSON | TEAM | CHECKER | STUDENT | MIN START | SEC START | MIN END | SEC END | SUBMISSION ID`
+
+### CẦN LÀM khi "ok build" (Chặng 1 hoàn thiện dữ liệu)
+1. **Web `js/app.js`**: đọc cấu hình từ Apps Script (thay `data/classes.json` tĩnh) → dựng login + bài từ CLASSES/LESSONS; lưu `TYPE` bằng tiếng Anh (sửa TYPE_LABEL/data-type); payload submit thêm `lesson`, `videoId`, `submissionId`, `checkerTeam`; Excel export đổi header sang tiếng Anh khớp mẫu (NO/MIN/SEC/STUDENT/TYPE/SENTENCE/MISTAKE/EXPLANATION/CHECKER + TIMER STUDENT/MIN START…). Bump `?v=`.
+2. **`apps-script/Code.gs`** viết lại: `doGet` phục vụ cấu hình (đọc CLASSES+LESSONS → JSON cho web); `doPost` route theo CLASS → mở đúng RESULT FILE → sheet tên LESSON (tạo nếu chưa có, header 13 cột) ghi lỗi + sheet "TIME" ghi thời gian; sinh SUBMISSION ID. **Deploy version mới**.
+3. **Tạo Google Sheet**: 1 file CẤU HÌNH (CLASSES+LESSONS, seed B1AH-GERMS) + file KẾT QUẢ cho B1AH (ít nhất). Điền RESULT FILE id vào CLASSES. (Em thao tác Chrome giúp thầy như chặng 14.)
+4. **File mẫu** `SPEAKING TEAM CHECK FORM.xlsx`: đã sẵn tiếng Anh + SENTENCE → Excel export chỉ cần khớp lại. (Cột phụ VIDEO/SUBMISSION ID chỉ có trong Google Sheet, KHÔNG bắt buộc trong Excel HS xuất.)
+
+### Khảo sát hạ tầng + chốt lưu trữ (bổ sung 19/7 — sau khi thầy nêu 3 lưu ý)
+- **Ổ D: = mirror Google Drive tài khoản `namdaptrai01@gmail.com`** (dò từ `%LOCALAPPDATA%\Google\DriveFS`, id `118226251924645809619`) — **TRÙNG** tài khoản Apps Script + Sheet nhận bài + video test. → mọi dữ liệu (cấu hình, file lớp, video) ở CHUNG 1 tài khoản, vừa trên Drive vừa hiện trên D:. Video buổi test đã nằm sẵn trong Drive (D:\6. SPEAKING mirror lên) → KHÔNG phải upload, app máy tính quét folder là lấy được mã Drive.
+- **Vị trí file (thầy đã tạo sẵn):** `D:\APP AND DATA\mySpeaking\mySpeaking Data\` gồm `mySpeaking Settings\` (để file Google Sheet CẤU HÌNH) + `mySpeaking Sheets\` (mỗi lớp 1 file Google Sheet kết quả). Video giữ ở `D:\6. SPEAKING\SPEAKING TEST\<LỚP>\<NGÀY + TÊN BÀI>\`.
+- **8 lớp hiện tại:** A1A, A1B, A1C, A2A, A2B, B1AH, B2A, B2B (folder SPEAKING TEST có sẵn A1A/A1C/A2A/A2B/B1AH/B2A/B2B; A1B chưa có buổi nào). Cấu trúc buổi test mẫu: `SPEAKING TEST\B1AH\2026.7.17 GERMS\` chứa C0400/02/03/04_CUT.mp4 + .srt + DS HOC SINH.txt.
+- **Đổi tên/thêm/bớt lớp (thầy chốt):** nhận diện lớp KHÔNG theo tên mà theo **folder + tên file** (bộ não tìm Sheet tên `<CODE lớp>` trong `mySpeaking Sheets`, KHÔNG bám mã file cứng) → **bền khi đổi tên VÀ khi đổi tài khoản** (mirror y nguyên D: sang tài khoản mới → chỉ deploy lại Apps Script + đổi SCRIPT_URL, không sửa mã file). CLASSES thêm cột **STATUS** (active/archived — bớt lớp = archived, giữ lịch sử). **Lên trình độ & đổi tên: GIỮ file cũ, lịch sử liền mạch** (chỉ sửa nhãn CLASS/NAME/CODE). Thêm lớp = thêm dòng + tạo file mới.
+- **Tài khoản nhà:** `namdaptrai01@gmail.com`; có cơ chế dự phòng đổi tài khoản như trên (thầy nói nếu đổi sẽ mirror y nguyên ổ D lên).
+- **An toàn:** folder `mySpeaking Data` nằm trong repo web public → phải **.gitignore** (dữ liệu lớp chỉ ở Drive riêng, không lên GitHub Pages).
+
+> Trạng thái: **THIẾT KẾ đã chốt, CHƯA code.** Chờ thầy "ok build" mới bắt tay (theo quy trình). Sheet cũ "SPEAKING CHECK - BÀI NỘP" (mô hình 1 sheet phẳng) sẽ được thay bằng mô hình mới này.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; Drive API key = chặng 9; màn bắt lỗi hiện tại = chặng 10→13; hạ tầng live = chặng 14.

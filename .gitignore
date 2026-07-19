@@ -1,0 +1,8 @@
+# Dữ liệu lớp + cấu hình (Google Sheet pointer) — CHỈ ở Drive riêng của thầy,
+# KHÔNG đẩy lên GitHub Pages công khai.
+mySpeaking Data/
+
+# Rác hệ thống / Google Drive
+desktop.ini
+.DS_Store
+Thumbs.db
