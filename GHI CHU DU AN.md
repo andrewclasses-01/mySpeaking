@@ -314,6 +314,11 @@ Bump `?v=13`. Thầy muốn hoàn thiện thêm web trước khi thống nhất 
 ### Verify (preview thật, chụp desktop + mobile 375)
 Video Drive phát html5 (không rơi dự phòng). Test đủ: 2 ô Team/Name (Name khóa→mở), chọn Name→xác nhận, tiêu đề+ô tích mới, TIME/TYPE cùng hàng desktop (top khớp) & xếp tầng mobile không cắt chữ, video/form cân 522/521, xoá MIN/SEC sau Add (đồng thời lùi 3s vẫn đúng 2:10→02:07), thanh dự phòng kéo→5:00 xanh dương + SET TIME→MIN/SEC 5:00. Không lỗi console, không tràn ngang.
 
+### CHẶNG 16b — header gọn (cùng ngày, bump v=14)
+- **Bỏ nút "🎯 TEAM X"** ở hàng trên cùng cạnh Submit (`#hdChecked`) — thông tin đội được chấm đã có trong dòng dưới khung video.
+- **Nút người chấm** (`#hdStudent`): bỏ icon user, cỡ = nút Export (`bg-white/15 rounded-xl px-3.5 py-2 text-sm font-bold`), nội dung đổi thành **"HOANG · T1"** (tên · đội của người chấm; teamNo tách từ `state.myTeam`).
+- **Chữ TIME** bỏ `tracking-[0.3em]` (trước giãn rộng hơn TYPE) → về chữ bình thường; vẫn giữ `sm:w-14` nên ô MIN/SEC vẫn thẳng hàng với ô TYPE.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; Drive API key = chặng 9; màn bắt lỗi hiện tại = chặng 10→13; hạ tầng live = chặng 14.
@@ -330,7 +335,7 @@ Video Drive phát html5 (không rơi dự phòng). Test đủ: 2 ô Team/Name (N
 - ✅ XONG (tinh chỉnh đợt 5, chặng 15): 2 cột bằng chiều ngang + video cân cao với khung bắt lỗi; nút play TRÒN, nút tua TO, thanh đỏ fill %; **thêm ô SENTENCE bắt buộc** (form thứ tự giờ = STUDENT → TIME → TYPE → SENTENCE* → MISTAKE* → EXPLANATION*); MIN/SEC + TYPE nhỏ lại bằng ô tên, TYPE chữ bên phải icon; 3 ô SENTENCE/MISTAKE/EXPLANATION textarea tự giãn; nút Add thấp hơn; **LUÔN lùi 3 giây** khi thêm lỗi mới; **kéo tua lúc video DỪNG → MIN/SEC nhảy theo**.
 - ✅ XONG (tinh chỉnh đợt 6, chặng 16): **đăng nhập 2 ô Your Team + Your Name** (Name khóa đến khi chọn Team; chọn Name → xác nhận ngay); màn xác nhận tiêu đề "**{Tên HS}, Andrew has something for you.**" + ô tích "**I understand and respect our journey, teacher Andrew ❤️**"; **TIME/TYPE tiêu đề cùng hàng với ô** (desktop; mobile xếp tầng để không cắt chữ); chữ trong SENTENCE/MISTAKE/EXPLANATION nhỏ = placeholder; **XOÁ MIN/SEC sau khi Add**; **nâng cấp fallback**: thanh kéo xanh dương nút to gấp đôi (không play/pause) + nút **SET TIME** đưa giờ vào MIN/SEC kèm ánh sáng bay, bỏ hết chữ hướng dẫn; tăng thời gian chờ video Drive 15→25s. **Điều tra**: sự cố rơi dự phòng trước là TẠM THỜI (key vừa giới hạn, Google áp dụng chậm ~5 phút) — nay video Drive phát html5 bình thường.
 - ⚠️ **KHUNG DỮ LIỆU còn treo** (việc TIẾP): Google Sheet CHƯA có cột SENTENCE — Code.gs chưa map `er.sentence`, cần thêm cột + deploy version mới khi thầy chốt khung dữ liệu (Excel export + autosave đã có sentence). Xem chi tiết ở CHẶNG 15.
-- ⚠️ Ảnh HS = chữ cái đầu (chờ ảnh thật qua `photos` trong classes.json). Mapping video→đội GIẢ ĐỊNH theo thứ tự. `teacher.html` là file CŨ không dùng. Cache-busting: **hiện `?v=13`** — TĂNG mỗi lần sửa app.js/config.js. Thanh kéo dự phòng max mặc định 900s (15:00) — chỉnh sau nếu cần. Tài khoản Google Cloud thầy còn 1 project mySpeaking TRÙNG THỪA (vô hại, dọn khi tiện). Backup từng chặng ở `Backup/pre-chang10/12/13`.
+- ⚠️ Ảnh HS = chữ cái đầu (chờ ảnh thật qua `photos` trong classes.json). Mapping video→đội GIẢ ĐỊNH theo thứ tự. `teacher.html` là file CŨ không dùng. Header: nút người chấm "HOANG · T1" (chặng 16b), đã bỏ badge TEAM X. Cache-busting: **hiện `?v=14`** — TĂNG mỗi lần sửa app.js/config.js. Thanh kéo dự phòng max mặc định 900s (15:00) — chỉnh sau nếu cần. Tài khoản Google Cloud thầy còn 1 project mySpeaking TRÙNG THỪA (vô hại, dọn khi tiện). Backup từng chặng ở `Backup/pre-chang10/12/13`.
 
 **Lộ trình tiếp (thầy chốt 1→2→3→4):**
 - Chặng 2: **app MÁY TÍNH (Electron, như myBoard/myActivity)** — nút "sắp xếp folder + tạo file chấm chéo" (thay khâu tay skill sapxepspeaking). KHI BẮT ĐẦU: gọi skill `kienthucbuildapp`, code trên `E:\LAP TRINH APP\mySpeaking` + bare repo/dữ liệu ở `D:\APP AND DATA\mySpeaking`, chờ "ok build".
