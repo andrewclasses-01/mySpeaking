@@ -197,6 +197,19 @@ Thầy đưa 5 yêu cầu sau khi xem bản chặng 9. Đã làm đủ, bump cac
 
 **Verify (preview thật, đã chụp màn):** Desktop 1269px: appH=winH, body không cuộn, thêm 8 lỗi → chỉ list cuộn (scrollH 482>clientH 389), form đứng yên; nút tên radio đúng (NGAN→TRUC chỉ 1 sáng); Play/Pause chạy, tua 50%→184s=đúng nửa 368s; bấm ✏️ sửa lỗi → nút tên sáng đúng người. Mobile 375: cuộn 500px video+điều khiển+dòng lớp/đội GHIM trên cùng; không tràn ngang; 0 lỗi console. Đã xoá draft test khỏi localStorage.
 
+## CHẶNG 11 — 19/07/2026: 6 tinh chỉnh tiếp màn BẮT LỖI (đợt 2 theo yêu cầu thầy)
+
+Bump cache `?v=8`. Chi tiết:
+
+1. **Header app**: "SPEAKING TEAM CHECK" → **"ANDREW CLASSES"**; logo clapperboard → **ảnh chibi thầy** (`img/logo-chibi.png`, chép từ `D:\OTHERS\OTHERS\AVATAR\OK CHIBI - TRON.png`, THU NHỎ 1024→128px = 1.9MB→32KB cho nhẹ mạng; hiển thị tròn ring trắng). Màn login + title tab GIỮ nguyên.
+2. **Khung play đổi màu SÁNG** (bg-slate-50 viền slate-200, trước nền đen), số thời gian to hơn (text-sm→text-base), thanh tiến trình **accent ĐỎ rose-600** (phần đã chạy màu đỏ).
+3. **Nút tên HS**: BỎ "Whole team" + "Someone else…" — CHỈ thành viên đã xác định; luôn vừa **1 HÀNG** (flex + flex-1 min-w-0 chia đều + truncate), chữ nhỏ hơn (text-[11px]/xs). `getWho/setWho` gọn lại theo members.
+4. **Tabs**: Mistakes `flex-[4]` (80%) · "Speaking time"→**"Time"** `flex-[1]` (20%); sửa cả `switchTab` giữ tỷ lệ khi bấm (code cũ ghi đè flex-1).
+5. **MIN/SEC TỰ CHẠY THEO VIDEO** khi đang phát (`syncTimeFields`: html5 timeupdate + YouTube poll 300ms + đồng hồ dự phòng swRender); **pause thì dừng để chỉnh tay** (đã test gõ 59 không bị ghi đè). BỎ ô SECTION (err.section luôn '' — cấu trúc Excel/Sheet GIỮ NGUYÊN cột ĐOẠN rỗng), BỎ nút Grab timestamp, tiêu đề form "Log a mistake" → **"TIME OF THE MISTAKE"**. `clearErrForm` không xoá MIN/SEC nữa (giữ mốc khi pause bắt lỗi tiếp).
+6. **Nút loại lỗi**: emoji → icon Lucide hiện đại (pencil-line xanh dương / audio-lines xanh lá / file-text vàng), mặc định cả 3 **NỀN TRẮNG**, chọn mới có **KHUNG VÀNG** (border-amber-400 + bg-amber-50); layout icon trên chữ dưới (flex-col). TYPE_STYLE gộp on/off chung thành TYPE_ON/TYPE_OFF, badge danh sách vẫn màu riêng.
+
+**Verify (preview thật, chụp màn desktop + mobile 375):** header logo chibi + ANDREW CLASSES; play bar sáng số to thanh đỏ (0:16/8:07); login NGAN (đội 2→chấm đội 3): 3 nút DIEM MY·CUONG·KHOI đúng 1 hàng không tràn (cả mobile); tab 80/20 chữ Time; TIME OF THE MISTAKE + chỉ MIN/SEC; video phát → MIN/SEC bám từng giây (0:16=16s), pause chỉnh tay OK; bấm Pronunciation khung vàng 2 nút kia trắng; 0 lỗi console; đã dọn draft test localStorage.
+
 ## ⭐ HANDOFF — TIẾP TỤC NGÀY MAI (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7.

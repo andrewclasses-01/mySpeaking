@@ -134,9 +134,9 @@ tailwind.config = {
   <header class="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-lg lg:shrink-0">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
       <div class="flex items-center gap-2.5 mr-auto">
-        <i data-lucide="clapperboard" class="w-6 h-6"></i>
+        <img src="img/logo-chibi.png" alt="Andrew Classes" class="w-10 h-10 rounded-full ring-2 ring-white/50 shadow shrink-0">
         <div>
-          <div class="font-extrabold leading-tight">SPEAKING TEAM CHECK</div>
+          <div class="font-extrabold leading-tight">ANDREW CLASSES</div>
           <div id="hdTopic" class="text-xs text-indigo-100"></div>
         </div>
       </div>
@@ -166,13 +166,13 @@ tailwind.config = {
         <div class="video-shell rounded-2xl overflow-hidden" id="videoContainer"></div>
 
         <!-- Always-visible player bar (custom — NEVER auto-hides, unlike native video controls) -->
-        <div id="videoCtrl" class="hidden mt-3 items-center gap-2.5 rounded-2xl bg-slate-900 px-3 py-2.5">
-          <button id="vcPlay" class="w-11 h-11 shrink-0 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white flex items-center justify-center">
+        <div id="videoCtrl" class="hidden mt-3 items-center gap-2.5 rounded-2xl bg-slate-50 border border-slate-200 px-3 py-2.5">
+          <button id="vcPlay" class="w-11 h-11 shrink-0 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white flex items-center justify-center shadow shadow-indigo-600/30">
             <i data-lucide="play" class="w-5 h-5 pointer-events-none"></i>
           </button>
-          <span id="vcCur" class="font-mono text-sm font-bold text-white tabular-nums shrink-0">0:00</span>
-          <input id="vcSeek" type="range" min="0" max="1000" value="0" class="flex-1 min-w-0 accent-indigo-500 cursor-pointer">
-          <span id="vcDur" class="font-mono text-sm text-slate-400 tabular-nums shrink-0">0:00</span>
+          <span id="vcCur" class="font-mono text-base font-bold text-slate-900 tabular-nums shrink-0">0:00</span>
+          <input id="vcSeek" type="range" min="0" max="1000" value="0" class="flex-1 min-w-0 accent-rose-600 cursor-pointer">
+          <span id="vcDur" class="font-mono text-base text-slate-500 tabular-nums shrink-0">0:00</span>
         </div>
 
         <!-- Backup stopwatch (only shows when Drive can't play directly) -->
@@ -200,25 +200,22 @@ tailwind.config = {
 
       <!-- Tabs -->
       <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-1.5 flex gap-1.5 lg:shrink-0">
-        <button data-tab="errors" class="tabBtn flex-1 rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition">
+        <!-- Mistakes chiếm 80%, Time chiếm 20% (flex-[4]/flex-[1]) -->
+        <button data-tab="errors" class="tabBtn flex-[4] rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition">
           <i data-lucide="search-check" class="w-4 h-4"></i> Mistakes <span id="tabErrCount" class="bg-rose-500 text-white text-xs rounded-full px-2 py-0.5 hidden"></span>
         </button>
-        <button data-tab="timer" class="tabBtn flex-1 rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition">
-          <i data-lucide="timer" class="w-4 h-4"></i> Speaking time
+        <button data-tab="timer" class="tabBtn flex-[1] rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="timer" class="w-4 h-4"></i> Time
         </button>
       </div>
 
       <!-- MISTAKES TAB -->
       <div id="tab-errors" class="space-y-4">
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:shrink-0">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="font-extrabold flex items-center gap-2"><i data-lucide="flag" class="w-5 h-5 text-rose-500"></i> Log a mistake</h2>
-            <button id="btnGrabTime" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition text-white rounded-xl px-4 py-2 text-sm font-bold flex items-center gap-1.5 shadow shadow-indigo-600/30">
-              <i data-lucide="alarm-clock" class="w-4 h-4"></i> Grab timestamp
-            </button>
-          </div>
+          <!-- MIN/SEC tự chạy theo video khi đang phát; pause thì chỉnh tay được -->
+          <h2 class="font-extrabold flex items-center gap-2 mb-3"><i data-lucide="alarm-clock" class="w-5 h-5 text-rose-500"></i> TIME OF THE MISTAKE</h2>
 
-          <div class="grid grid-cols-3 gap-3 mb-3">
+          <div class="grid grid-cols-2 gap-3 mb-3">
             <div>
               <label class="block text-xs font-bold text-slate-500 mb-1">MIN</label>
               <input id="fMin" type="number" min="0" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-center font-mono text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
@@ -226,10 +223,6 @@ tailwind.config = {
             <div>
               <label class="block text-xs font-bold text-slate-500 mb-1">SEC</label>
               <input id="fSec" type="number" min="0" max="59" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-center font-mono text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-500 mb-1">SECTION</label>
-              <input id="fSection" type="text" placeholder="e.g. 2" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
           </div>
 
@@ -240,10 +233,11 @@ tailwind.config = {
 
           <div class="mb-3">
             <label class="block text-xs font-bold text-slate-500 mb-1.5">MISTAKE TYPE</label>
+            <!-- Mặc định cả 3 nền TRẮNG; bấm vào mới có KHUNG VÀNG phân biệt. Icon Lucide hiện đại thay emoji -->
             <div class="grid grid-cols-3 gap-2" id="errTypeBtns">
-              <button data-type="NGỮ PHÁP" class="errType rounded-xl border-2 px-1 py-2.5 text-xs sm:text-sm font-bold leading-tight transition border-blue-200 bg-blue-50 text-blue-700">✏️ Grammar</button>
-              <button data-type="PHÁT ÂM" class="errType rounded-xl border-2 px-1 py-2.5 text-xs sm:text-sm font-bold leading-tight transition border-emerald-200 bg-emerald-50 text-emerald-700">🔊 Pronunciation</button>
-              <button data-type="THÔNG TIN" class="errType rounded-xl border-2 px-1 py-2.5 text-xs sm:text-sm font-bold leading-tight transition border-amber-200 bg-amber-50 text-amber-700">📋 Information</button>
+              <button data-type="NGỮ PHÁP" class="errType rounded-xl border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition flex flex-col items-center gap-1 border-slate-200 bg-white text-slate-700 hover:border-slate-300"><i data-lucide="pencil-line" class="w-5 h-5 text-blue-600 pointer-events-none"></i>Grammar</button>
+              <button data-type="PHÁT ÂM" class="errType rounded-xl border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition flex flex-col items-center gap-1 border-slate-200 bg-white text-slate-700 hover:border-slate-300"><i data-lucide="audio-lines" class="w-5 h-5 text-emerald-600 pointer-events-none"></i>Pronunciation</button>
+              <button data-type="THÔNG TIN" class="errType rounded-xl border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition flex flex-col items-center gap-1 border-slate-200 bg-white text-slate-700 hover:border-slate-300"><i data-lucide="file-text" class="w-5 h-5 text-amber-500 pointer-events-none"></i>Information</button>
             </div>
           </div>
 
@@ -325,7 +319,7 @@ tailwind.config = {
 </div>
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
-<script src="config.js?v=7"></script>
-<script src="js/app.js?v=7"></script>
+<script src="config.js?v=8"></script>
+<script src="js/app.js?v=8"></script>
 </body>
 </html>

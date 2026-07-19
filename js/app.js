@@ -100,9 +100,18 @@
     if (video.mode === 'youtube' && video.yt && video.ready) { try { return video.yt.getDuration() || 0; } catch (e) { return 0; } }
     return 0;
   }
+  // Video ĐANG PHÁT tới đâu → ô MIN/SEC chạy theo tới đó; PAUSE thì dừng để HS chỉnh tay
+  function syncTimeFields(cur) {
+    const s = Math.max(0, Math.floor(cur || 0));
+    $('fMin').value = Math.floor(s / 60);
+    $('fSec').value = s % 60;
+  }
   function vcAttachHtml5(v) {
     vcShow();
-    v.addEventListener('timeupdate', () => vcUpdate(v.currentTime, v.duration));
+    v.addEventListener('timeupdate', () => {
+      vcUpdate(v.currentTime, v.duration);
+      if (!v.paused) syncTimeFields(v.currentTime);
+    });
     v.addEventListener('durationchange', () => vcUpdate(v.currentTime, v.duration));
     v.addEventListener('play', () => vcSetPlaying(true));
     v.addEventListener('pause', () => vcSetPlaying(false));
@@ -114,8 +123,10 @@
     clearInterval(vc.poll);
     vc.poll = setInterval(() => {
       try {
+        const playing = video.yt.getPlayerState() === 1;
         vcUpdate(video.yt.getCurrentTime() || 0, video.yt.getDuration() || 0);
-        vcSetPlaying(video.yt.getPlayerState() === 1);
+        vcSetPlaying(playing);
+        if (playing) syncTimeFields(video.yt.getCurrentTime() || 0);
       } catch (e) {}
     }, 300);
   }
@@ -231,6 +242,7 @@
   function swRender() {
     const s = Math.floor(swNow());
     $('swDisplay').textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    if (sw.running) syncTimeFields(s);   // chế độ đồng hồ dự phòng: MIN/SEC cũng chạy theo
   }
   function swToggle() {
     if (sw.running) {
@@ -255,18 +267,17 @@
   }
 
   // ═══════════════ FORM BẮT LỖI ═══════════════
-  // Chọn HS có lỗi = DÃY NÚT TÊN xếp đều — bấm ai người đó sáng, 1 thời điểm chỉ 1 tên
-  // (1 người nói tại 1 thời điểm). fWhoSel = tên đang chọn ('' = chưa chọn, '__other' = tên khác).
+  // Chọn HS có lỗi = DÃY NÚT TÊN — CHỈ các thành viên đã xác định (không Whole team / Someone else).
+  // Luôn xếp vừa 1 HÀNG: flex + flex-1 chia đều, chữ nhỏ, truncate chống tràn.
+  // Bấm ai người đó sáng, 1 thời điểm chỉ 1 tên (1 người nói tại 1 thời điểm).
   let fWhoSel = '';
   function buildStudentField() {
     const wrap = $('fStudentWrap');
     if (state.members.length) {
-      const btns = state.members.concat(['Whole team', '__other']).map((n) => {
-        const label = n === '__other' ? 'Someone else…' : n;
-        return '<button type="button" data-who="' + escapeHtml(n) + '" class="whoBtn">' + escapeHtml(label) + '</button>';
-      }).join('');
-      wrap.innerHTML = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-2">' + btns + '</div>' +
-        '<input id="fWhoOther" type="text" placeholder="Name of the student" class="hidden mt-2 w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">';
+      const btns = state.members.map((n) =>
+        '<button type="button" data-who="' + escapeHtml(n) + '" class="whoBtn">' + escapeHtml(n) + '</button>'
+      ).join('');
+      wrap.innerHTML = '<div class="flex gap-1.5">' + btns + '</div>';
       renderWhoBtns();
     } else {
       wrap.innerHTML = '<input id="fWho" type="text" placeholder="Name of the student" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">';
@@ -275,43 +286,41 @@
   function renderWhoBtns() {
     document.querySelectorAll('.whoBtn').forEach((b) => {
       const on = b.dataset.who === fWhoSel;
-      b.className = 'whoBtn rounded-xl border-2 px-2 py-2.5 text-xs sm:text-sm font-bold leading-tight transition truncate ' +
+      b.className = 'whoBtn flex-1 min-w-0 rounded-lg border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition truncate text-center ' +
         (on ? 'border-indigo-600 bg-indigo-600 text-white shadow shadow-indigo-600/30'
             : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300');
     });
-    const other = $('fWhoOther');
-    if (other) other.classList.toggle('hidden', fWhoSel !== '__other');
   }
   function getWho() {
     if (!state.members.length) { const el = $('fWho'); return el ? el.value.trim() : ''; }
-    if (fWhoSel === '__other') { const o = $('fWhoOther'); return o ? o.value.trim() : ''; }
     return fWhoSel;
   }
   function setWho(val) {
     if (!state.members.length) { const el = $('fWho'); if (el) el.value = val; return; }
-    if (!val) fWhoSel = '';
-    else if (state.members.includes(val) || val === 'Whole team') fWhoSel = val;
-    else { fWhoSel = '__other'; const o = $('fWhoOther'); if (o) o.value = val; }
+    fWhoSel = state.members.includes(val) ? val : '';
     renderWhoBtns();
   }
 
+  // Nút loại lỗi: mặc định cả 3 NỀN TRẮNG, chọn thì KHUNG VÀNG (badge trong danh sách vẫn giữ màu riêng)
+  const TYPE_ON = 'border-amber-400 bg-amber-50 text-slate-900 shadow shadow-amber-200';
+  const TYPE_OFF = 'border-slate-200 bg-white text-slate-700 hover:border-slate-300';
   const TYPE_STYLE = {
-    'NGỮ PHÁP': { on: 'border-blue-600 bg-blue-600 text-white', off: 'border-blue-200 bg-blue-50 text-blue-700', badge: 'bg-blue-100 text-blue-700' },
-    'PHÁT ÂM': { on: 'border-emerald-600 bg-emerald-600 text-white', off: 'border-emerald-200 bg-emerald-50 text-emerald-700', badge: 'bg-emerald-100 text-emerald-700' },
-    'THÔNG TIN': { on: 'border-amber-500 bg-amber-500 text-white', off: 'border-amber-200 bg-amber-50 text-amber-700', badge: 'bg-amber-100 text-amber-700' },
+    'NGỮ PHÁP': { badge: 'bg-blue-100 text-blue-700' },
+    'PHÁT ÂM': { badge: 'bg-emerald-100 text-emerald-700' },
+    'THÔNG TIN': { badge: 'bg-amber-100 text-amber-700' },
   };
   // English display labels for the mistake types (stored values stay Vietnamese to match the Excel template)
   const TYPE_LABEL = { 'NGỮ PHÁP': 'Grammar', 'PHÁT ÂM': 'Pronunciation', 'THÔNG TIN': 'Information' };
   const typeLabel = (t) => TYPE_LABEL[t] || t;
   function renderTypeBtns() {
     document.querySelectorAll('.errType').forEach((b) => {
-      const t = b.dataset.type;
-      b.className = 'errType rounded-xl border-2 px-1 py-2.5 text-xs sm:text-sm font-bold leading-tight transition ' + (fType === t ? TYPE_STYLE[t].on : TYPE_STYLE[t].off);
+      b.className = 'errType rounded-xl border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition flex flex-col items-center gap-1 ' +
+        (fType === b.dataset.type ? TYPE_ON : TYPE_OFF);
     });
   }
 
   function clearErrForm() {
-    $('fMin').value = ''; $('fSec').value = ''; $('fSection').value = '';
+    // KHÔNG xoá MIN/SEC: chúng chạy theo video (và giữ mốc hiện tại khi pause để bắt lỗi tiếp)
     $('fDetail').value = ''; $('fExplain').value = '';
     fType = ''; renderTypeBtns();
     editingIndex = -1;
@@ -326,7 +335,7 @@
     const err = {
       min: $('fMin').value === '' ? '' : Math.max(0, parseInt($('fMin').value, 10) || 0),
       sec: $('fSec').value === '' ? '' : Math.max(0, parseInt($('fSec').value, 10) || 0),
-      section: $('fSection').value.trim(),
+      section: '',   // ô SECTION đã bỏ (chặng 11) — giữ field rỗng để cấu trúc Excel/Sheet không đổi
       who: getWho(),
       type: fType,
       detail: detail,
@@ -658,7 +667,8 @@
   function switchTab(tab) {
     document.querySelectorAll('.tabBtn').forEach((b) => {
       const on = b.dataset.tab === tab;
-      b.className = 'tabBtn flex-1 rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition ' +
+      const w = b.dataset.tab === 'errors' ? 'flex-[4]' : 'flex-[1]';   // Mistakes 80% / Time 20%
+      b.className = 'tabBtn ' + w + ' rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition ' +
         (on ? 'bg-indigo-600 text-white shadow' : 'text-slate-500 hover:bg-slate-100');
     });
     $('tab-errors').classList.toggle('hidden', tab !== 'errors');
@@ -721,14 +731,7 @@
       else if (video.mode === 'youtube' && video.yt && video.ready) { try { video.yt.seekTo(t, true); } catch (e2) {} }
     });
 
-    $('btnGrabTime').addEventListener('click', () => {
-      const t = getVideoTime();
-      if (t == null) { toast('Couldn\'t read the video time. Press play first!', 'err'); return; }
-      const s = Math.floor(t);
-      $('fMin').value = Math.floor(s / 60);
-      $('fSec').value = s % 60;
-      toast('⏱ Grabbed ' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'), 'info');
-    });
+    // (nút Grab timestamp đã bỏ — MIN/SEC tự chạy theo video, xem syncTimeFields)
 
     $('btnAddErr').addEventListener('click', addOrUpdateError);
     $('btnCancelEdit').addEventListener('click', clearErrForm);
@@ -739,7 +742,7 @@
       if (edit) {
         const i = +edit.dataset.edit;
         const e = state.errors[i];
-        $('fMin').value = e.min; $('fSec').value = e.sec; $('fSection').value = e.section;
+        $('fMin').value = e.min; $('fSec').value = e.sec;
         setWho(e.who); fType = e.type; renderTypeBtns();
         $('fDetail').value = e.detail; $('fExplain').value = e.explain;
         editingIndex = i;
