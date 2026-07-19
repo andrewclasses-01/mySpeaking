@@ -245,17 +245,18 @@ Bump cache `?v=10`, backup `Backup/pre-chang13/`. Chi tiết:
 
 ## ⭐ HANDOFF — TIẾP TỤC NGÀY MAI (session mới)
 
-**Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7.
+**Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; Drive API key = chặng 9; màn bắt lỗi hiện tại = chặng 10→13 (đọc lần lượt để hiểu vì sao ra thiết kế này).
 
-**Đang ở đâu:** Làm **CHẶNG 1 (web học sinh)** trong lộ trình 4 chặng. Web HS gần xong, thầy đã duyệt tới chặng 7 ("ok rồi").
+**Đang ở đâu:** Làm **CHẶNG 1 (web học sinh)** trong lộ trình 4 chặng. Web HS đã qua 4 đợt tinh chỉnh màn bắt lỗi theo thầy (chặng 10-13), thầy đã test và nói **"tạm được rồi"** (19/07/2026) — phần web HS coi như ổn định chờ 2 việc hạ tầng (Apps Script + GitHub Pages) hoặc thầy nghĩ thêm yêu cầu mới.
 
 **Chạy thử:** `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking"` → http://localhost:8123 (hoặc preview tên `myspeaking`). KHÔNG cần node/build.
 - Đăng nhập lớp TEST: **Your class = `B1AH`**, **Class code = `germs`** → chọn tên → tích cam kết → Start.
 
 **Trạng thái Chặng 1:**
-- ✅ XONG: UI English-only; 1 link + đăng nhập lớp (gõ classCode+code, sai→pop-up); chọn tên bằng ô select; màn xác nhận có ảnh HS (tạm chữ cái đầu) + bảng cam kết bắt buộc tích; logo ANDREW CLASSES; fix mobile; cache-busting `?v` (TĂNG mỗi lần sửa app.js/config.js — **hiện v=6**; bẫy đã gặp ở chặng 8: đổi tên biến config nhưng quên bump v → trình duyệt chạy bản cache cũ); classes.json seed B1AH-GERMS; Code.gs thêm cột LỚP; **DRIVE_API_KEY đã có + test OK (chặng 9): video Drive >100MB phát trực tiếp, ⏱ Grab lấy đúng từng giây**.
-- ⏳ CÒN: (a) **Thầy** deploy Apps Script → điền SCRIPT_URL vào config.js (HUONG DAN TRIEN KHAI.md Bước 1); (b) push GitHub Pages (gh login `andrewclasses-code`, chờ thầy chốt tên repo/public) — **NHỚ trước khi push: giới hạn API key theo website `*.github.io` (xem chặng 9)**; (c) thầy có thể còn tinh chỉnh chính màn BẮT LỖI bên trong.
-- ⚠️ Ảnh HS = chữ cái đầu (chờ ảnh thật qua `photos` trong classes.json). Mapping video→đội GIẢ ĐỊNH theo thứ tự. `teacher.html` là file CŨ không dùng.
+- ✅ XONG (nền, chặng 4-9): UI English-only (dữ liệu lưu + Excel GIỮ tiếng Việt khớp mẫu); 1 link + đăng nhập lớp (gõ classCode+code, sai→pop-up); chọn tên ô select; màn xác nhận ảnh HS (tạm chữ cái đầu) + cam kết bắt buộc tích; classes.json seed B1AH-GERMS; Code.gs thêm cột LỚP; **DRIVE_API_KEY trong config.js đã test OK — video Drive >100MB phát TRỰC TIẾP trong trình phát của app** (Google Cloud project `myspeaking-502901`).
+- ✅ XONG (màn bắt lỗi, chặng 10-13 — thầy đã test): **bố cục GHIM** (desktop khoá 100dvh chỉ danh sách lỗi cuộn, mobile cụm video sticky top); **khung điều khiển video LUÔN HIỆN** (play/tua/thời gian, nền sáng, thanh đã-chạy màu ĐỎ); header logo CHIBI + ANDREW CLASSES (**bấm logo về trang chủ**, còn lỗi chưa submit thì pop-up Stay/Go back); dòng dưới video = Lớp | Đội | thành viên; form thứ tự **STUDENT → TIME → TYPE → MISTAKE* → EXPLANATION*** — STUDENT = nút tên (chỉ thành viên, 1 hàng, chọn = khung VÀNG) + **khung giờ nói min:sec→min:sec dưới mỗi tên** (mobile 2 tầng); **TIME 2 CHIỀU với video** (phát → MIN/SEC chạy theo; pause gõ tay + Enter/blur → video nhảy tới); **tự sáng tên HS theo khoảng giờ nói** khi video chạy; TYPE = icon Lucide nền trắng, chọn = khung vàng; **Submit chặn 3 tầng**: thiếu giờ (viền đỏ ô thiếu) → giờ sai (end≤start, đan xen — báo đúng tên) → modal xác nhận; Export (Excel vẫn khớp mẫu 100%, SECTION để trống).
+- ⏳ CÒN: (a) **Thầy** deploy Apps Script → điền SCRIPT_URL vào config.js (HUONG DAN TRIEN KHAI.md Bước 1) — chưa có thì nút Submit báo dùng Export (đúng thiết kế); (b) push GitHub Pages (gh login `andrewclasses-code`, chờ thầy chốt tên repo/public) — **⚠️ NHỚ TRƯỚC KHI PUSH: giới hạn API key theo website `*.github.io`** (Google Cloud Console → Credentials → API key → Application restrictions → Websites); (c) thầy có thể còn nghĩ thêm yêu cầu cho màn bắt lỗi.
+- ⚠️ Ảnh HS = chữ cái đầu (chờ ảnh thật qua `photos` trong classes.json). Mapping video→đội GIẢ ĐỊNH theo thứ tự. `teacher.html` là file CŨ không dùng. Cache-busting: **hiện `?v=10`** — TĂNG mỗi lần sửa app.js/config.js. Tài khoản Google Cloud thầy còn 1 project mySpeaking TRÙNG THỪA (vô hại, dọn khi tiện). Backup từng chặng ở `Backup/pre-chang10/12/13`.
 
 **Lộ trình tiếp (thầy chốt 1→2→3→4):**
 - Chặng 2: **app MÁY TÍNH (Electron, như myBoard/myActivity)** — nút "sắp xếp folder + tạo file chấm chéo" (thay khâu tay skill sapxepspeaking). KHI BẮT ĐẦU: gọi skill `kienthucbuildapp`, code trên `E:\LAP TRINH APP\mySpeaking` + bare repo/dữ liệu ở `D:\APP AND DATA\mySpeaking`, chờ "ok build".
