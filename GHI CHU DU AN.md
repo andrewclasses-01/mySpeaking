@@ -384,6 +384,14 @@ Sheet cũ "SPEAKING CHECK - BÀI NỘP" (mô hình 1 sheet phẳng) nay KHÔNG c
 - **Verify LIVE:** config trả đúng 4 đội + video thật; **video Team 2 phát trực tiếp trên live** (readyState 4, duration 368s "Are All Germs Bad?", KHÔNG rơi dự phòng, nguồn Drive API). **➡️ Bài B1AH GERMS SẴN SÀNG — thầy gửi lớp làm được ngay** (link https://andrewclasses-01.github.io/mySpeaking/, lớp `B1AH`, mã `germs`).
 - Còn lại Bước 5 (7 lớp kia) như trên. Sheet kết quả B1AH đã sạch (chỉ header GERMS + TIME).
 
+### ⚠️ SỰ CỐ VIDEO RƠI DỰ PHÒNG + CHỐT CHUYỂN SANG YOUTUBE (19/7)
+- **Triệu chứng:** thầy mở live → trình phát rơi dự phòng (iframe). Em tái hiện được trên Chrome thật (app rơi iframe).
+- **Chẩn đoán (chắc chắn, đã đo):** 4 video đều public + faststart (moov đầu file); metadata API trả **200** (key tốt); nhưng **luồng tải `alt=media` bị chặn** (lúc đầu phiên còn 206, sau nhiều lượt tải → "Failed to fetch" / thẻ video lỗi **code 4**). ⇒ **Google giới hạn lượt/băng thông TẢI mỗi file Drive public** (file gốc 420–552MB ~10Mbps quá nặng). **1 lớp 15 HS × 500MB qua 1 API key → chắc chắn đụng trần** ⇒ rơi dự phòng hàng loạt. Giới hạn của Google, KHÔNG chỉnh được ⇒ vá lặt vặt (tăng timeout) không triệt để.
+- **Thầy CHỐT: ① YouTube unlisted** (dù trước đây chọn Drive — giới hạn tải này chính là lý do YouTube tồn tại cho phát cả lớp). App ĐÃ hỗ trợ sẵn mode `youtube` (IFrame API, getCurrentTime chính xác → bấm giờ tự động vẫn chạy).
+- **CÁCH LÀM:** cột VIDEO trong LESSONS đổi từ mã Drive → **URL YouTube đầy đủ** (buildConfig để nguyên chuỗi bắt đầu `http`; parseVideoUrl nhận youtube.com/youtu.be). Chỉ cần thay 4 dòng VIDEO của B1AH GERMS bằng 4 link YouTube (map ĐÚNG đội theo tên thành viên). KHÔNG cần sửa code/app, KHÔNG deploy lại.
+- **ĐANG CHỜ:** thầy tải 4 video (ở `SPEAKING\SPEAKING GOC`) lên YouTube chế độ **Unlisted** rồi gửi 4 link kèm đội. Có link → em điền vào LESSONS (VIDEO) + verify phát trên live. (Map: T1=HOANG TIEN, T2=NGAN TRUC, T3=DIEM MY CUONG KHOI, T4=PHONG HA AN BAO CHAU.)
+- **HƯỚNG SAU (mọi lesson):** dùng YouTube unlisted cho video phát HS; Drive giữ làm kho gốc. Chặng 2 (app máy tính) có thể tự upload YouTube + lấy link (YouTube Data API) hoặc thầy upload tay.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; Drive API key = chặng 9; màn bắt lỗi hiện tại = chặng 10→13; hạ tầng live = chặng 14.
