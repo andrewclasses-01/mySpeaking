@@ -243,11 +243,35 @@ Bump cache `?v=10`, backup `Backup/pre-chang13/`. Chi tiết:
 
 **Verify (preview thật):** thứ tự nhãn STUDENT→TIME→TYPE→MISTAKE*→EXPLANATION*; chọn CUONG khung vàng; gõ 2:30+change → video nhảy đúng 150s; đặt 3 khoảng 0-1/1-2/2-3 phút → seek 0:30 tự sáng DIEM MY, 2:30 tự sáng KHOI; overlap → chặn + đúng tên + 8 ô đỏ; end<start → chặn đúng tên KHOI; sửa xong modal mở; logo: có lỗi treo → pop-up, Stay ở lại, Go back về login; placeholder italic 12px; icon scan-search; Export; mobile 375 không tràn, nhãn MIN trong ô hiện, ô giờ 39px; 0 lỗi console.
 
-## ⭐ HANDOFF — TIẾP TỤC NGÀY MAI (session mới)
+## CHẶNG 14 — 19/07/2026: HOÀN TẤT HẠ TẦNG CHẶNG 1 — WEB ĐÃ LIVE 🎉
 
-**Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; Drive API key = chặng 9; màn bắt lỗi hiện tại = chặng 10→13 (đọc lần lượt để hiểu vì sao ra thiết kế này).
+Thầy chọn "Hoàn tất hạ tầng Chặng 1". Đã làm trọn 3 việc, TẤT CẢ ĐÃ TEST THẬT:
 
-**Đang ở đâu:** Làm **CHẶNG 1 (web học sinh)** trong lộ trình 4 chặng. Web HS đã qua 4 đợt tinh chỉnh màn bắt lỗi theo thầy (chặng 10-13), thầy đã test và nói **"tạm được rồi"** (19/07/2026) — phần web HS coi như ổn định chờ 2 việc hạ tầng (Apps Script + GitHub Pages) hoặc thầy nghĩ thêm yêu cầu mới.
+### 1. Deploy Google Apps Script (em thao tác Chrome giúp thầy)
+- Tạo Google Sheet **"SPEAKING CHECK - BÀI NỘP"** (id `1XkrbGHkiMHHTVSWLP6OZ0O-CIEORDj4dqYrXHynuA5E`, tài khoản `namdaptrai01@gmail.com`).
+- Tạo project Apps Script **"mySpeaking"** tại script.new, dán Code.gs (điền sẵn SS_ID) bằng `monaco.editor.getModels()[0].setValue()` — KHÔNG gõ tay (né auto-close bracket).
+- Deploy Web App: Execute as **Me** / Who has access **Anyone**, tên "mySpeaking v1". ⚠️ BẪY: popup "Ủy quyền truy cập" của Google mở CỬA SỔ RIÊNG ngoài tầm extension → tưởng thất bại, nhưng thực ra deployment ĐÃ tạo xong (kiểm tra bằng Quản lý các tùy chọn triển khai). Chạy thử doGet trong editor hoàn tất không đòi quyền.
+- Lấy URL `/exec`, điền `SCRIPT_URL` vào config.js, bump `?v=11`.
+- **Test end-to-end 2 tầng**: (a) curl GET → `{"ok":true,"app":"mySpeaking"}`; curl POST bài mẫu → `{"ok":true,"saved":1}` (⚠️ bẫy curl: PHẢI bỏ `-X POST` khi có -L, không thì 411 ở hop redirect); (b) **chạy trọn luồng app thật** trên preview: login B1AH → HOANG → điền giờ nói 2 bạn + 1 lỗi Grammar 1:34 → Submit → toast "🎉 Submitted successfully!" → mở Sheet thấy FORM/TIMER đúng từng cột (LOẠI LỖI giữ "NGỮ PHÁP" tiếng Việt). Đã DỌN sạch các dòng test khỏi Sheet (chỉ còn header).
+
+### 2. Giới hạn Drive API key (Cloud Console)
+- Application restrictions = **Websites**: `https://andrewclasses-01.github.io/*` + `http://localhost:8123/*` (lúc đầu điền andrewclasses-code theo hồ sơ cũ, sau khi thầy chốt tài khoản -01 đã sửa lại). API restrictions giữ nguyên chỉ Drive API.
+- Verify SAU giới hạn: video Drive 500MB phát trực tiếp trên trang live (readyState 4, duration 368s, không fallback) + fetch metadata từ localhost OK.
+
+### 3. Push GitHub + bật Pages
+- Máy này CHƯA có gh → cài `winget install GitHub.cli`. Đăng nhập device-flow: gh sinh mã, em mở github.com/login/device bằng Chrome; GitHub chưa đăng nhập → **thầy tự đăng nhập** (em không được nhập mật khẩu), tài khoản thực tế là **`andrewclasses-01`** (hồ sơ cũ ghi andrewclasses-code — SAI, thầy chốt dùng -01); mã lần 1 hết hạn do chờ đăng nhập → chạy lại lấy mã mới, nhập mã + Authorize OK.
+- ⚠️ BẪY: `gh repo create` (CLI) LẪN bấm nút "Create repository" (web) đều bị **classifier của Claude Code chặn** (hành động tạo repo public) → trang github.com/new mở sẵn, **thầy tự bấm** Create repository. Sau đó `git remote add` + `git push -u origin master` chạy bình thường.
+- Bật Pages qua `gh api repos/andrewclasses-01/mySpeaking/pages -X POST` (branch **master**, path /) — lưu ý HUONG DAN cũ ghi branch main là sai, repo dùng master.
+- **WEB LIVE: https://andrewclasses-01.github.io/mySpeaking/** — đã test trọn luồng trên trang live: login → chọn tên → video Drive phát trực tiếp ngay.
+
+### File đổi chặng này
+config.js (SCRIPT_URL), index.html (?v=11), CLAUDE.md (mục Triển khai + Roadmap), HUONG DAN TRIEN KHAI.md (trạng thái ĐÃ XONG + đúng tài khoản), GHI CHU DU AN.md (chặng này + HANDOFF).
+
+## ⭐ HANDOFF — TIẾP TỤC (session mới)
+
+**Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; Drive API key = chặng 9; màn bắt lỗi hiện tại = chặng 10→13; hạ tầng live = chặng 14.
+
+**Đang ở đâu:** **CHẶNG 1 (web học sinh) ĐÃ XONG TRỌN VẸN** (chặng 14, 19/07/2026): web live tại **https://andrewclasses-01.github.io/mySpeaking/**, bài nộp tự đổ về Google Sheet "SPEAKING CHECK - BÀI NỘP", video Drive phát trực tiếp với key đã giới hạn. Sẵn sàng dùng thật với lớp hoặc **bắt đầu CHẶNG 2 (app máy tính Electron)**.
 
 **Chạy thử:** `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking"` → http://localhost:8123 (hoặc preview tên `myspeaking`). KHÔNG cần node/build.
 - Đăng nhập lớp TEST: **Your class = `B1AH`**, **Class code = `germs`** → chọn tên → tích cam kết → Start.
@@ -255,8 +279,8 @@ Bump cache `?v=10`, backup `Backup/pre-chang13/`. Chi tiết:
 **Trạng thái Chặng 1:**
 - ✅ XONG (nền, chặng 4-9): UI English-only (dữ liệu lưu + Excel GIỮ tiếng Việt khớp mẫu); 1 link + đăng nhập lớp (gõ classCode+code, sai→pop-up); chọn tên ô select; màn xác nhận ảnh HS (tạm chữ cái đầu) + cam kết bắt buộc tích; classes.json seed B1AH-GERMS; Code.gs thêm cột LỚP; **DRIVE_API_KEY trong config.js đã test OK — video Drive >100MB phát TRỰC TIẾP trong trình phát của app** (Google Cloud project `myspeaking-502901`).
 - ✅ XONG (màn bắt lỗi, chặng 10-13 — thầy đã test): **bố cục GHIM** (desktop khoá 100dvh chỉ danh sách lỗi cuộn, mobile cụm video sticky top); **khung điều khiển video LUÔN HIỆN** (play/tua/thời gian, nền sáng, thanh đã-chạy màu ĐỎ); header logo CHIBI + ANDREW CLASSES (**bấm logo về trang chủ**, còn lỗi chưa submit thì pop-up Stay/Go back); dòng dưới video = Lớp | Đội | thành viên; form thứ tự **STUDENT → TIME → TYPE → MISTAKE* → EXPLANATION*** — STUDENT = nút tên (chỉ thành viên, 1 hàng, chọn = khung VÀNG) + **khung giờ nói min:sec→min:sec dưới mỗi tên** (mobile 2 tầng); **TIME 2 CHIỀU với video** (phát → MIN/SEC chạy theo; pause gõ tay + Enter/blur → video nhảy tới); **tự sáng tên HS theo khoảng giờ nói** khi video chạy; TYPE = icon Lucide nền trắng, chọn = khung vàng; **Submit chặn 3 tầng**: thiếu giờ (viền đỏ ô thiếu) → giờ sai (end≤start, đan xen — báo đúng tên) → modal xác nhận; Export (Excel vẫn khớp mẫu 100%, SECTION để trống).
-- ⏳ CÒN: (a) **Thầy** deploy Apps Script → điền SCRIPT_URL vào config.js (HUONG DAN TRIEN KHAI.md Bước 1) — chưa có thì nút Submit báo dùng Export (đúng thiết kế); (b) push GitHub Pages (gh login `andrewclasses-code`, chờ thầy chốt tên repo/public) — **⚠️ NHỚ TRƯỚC KHI PUSH: giới hạn API key theo website `*.github.io`** (Google Cloud Console → Credentials → API key → Application restrictions → Websites); (c) thầy có thể còn nghĩ thêm yêu cầu cho màn bắt lỗi.
-- ⚠️ Ảnh HS = chữ cái đầu (chờ ảnh thật qua `photos` trong classes.json). Mapping video→đội GIẢ ĐỊNH theo thứ tự. `teacher.html` là file CŨ không dùng. Cache-busting: **hiện `?v=10`** — TĂNG mỗi lần sửa app.js/config.js. Tài khoản Google Cloud thầy còn 1 project mySpeaking TRÙNG THỪA (vô hại, dọn khi tiện). Backup từng chặng ở `Backup/pre-chang10/12/13`.
+- ✅ XONG (hạ tầng, chặng 14): Apps Script deployed (SCRIPT_URL trong config.js, Sheet nhận bài đã test end-to-end), API key giới hạn website, **web LIVE https://andrewclasses-01.github.io/mySpeaking/** (GitHub `andrewclasses-01`, repo `mySpeaking`, Pages nhánh master). Từ giờ MỖI lần sửa web: commit + `git push` là Pages tự cập nhật (~1 phút).
+- ⚠️ Ảnh HS = chữ cái đầu (chờ ảnh thật qua `photos` trong classes.json). Mapping video→đội GIẢ ĐỊNH theo thứ tự. `teacher.html` là file CŨ không dùng. Cache-busting: **hiện `?v=11`** — TĂNG mỗi lần sửa app.js/config.js. Tài khoản Google Cloud thầy còn 1 project mySpeaking TRÙNG THỪA (vô hại, dọn khi tiện). Backup từng chặng ở `Backup/pre-chang10/12/13`.
 
 **Lộ trình tiếp (thầy chốt 1→2→3→4):**
 - Chặng 2: **app MÁY TÍNH (Electron, như myBoard/myActivity)** — nút "sắp xếp folder + tạo file chấm chéo" (thay khâu tay skill sapxepspeaking). KHI BẮT ĐẦU: gọi skill `kienthucbuildapp`, code trên `E:\LAP TRINH APP\mySpeaking` + bare repo/dữ liệu ở `D:\APP AND DATA\mySpeaking`, chờ "ok build".

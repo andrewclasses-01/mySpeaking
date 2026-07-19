@@ -1,46 +1,54 @@
 # HƯỚNG DẪN TRIỂN KHAI mySpeaking
 
-## Bước 1 — Nối Google Sheets (làm 1 lần, ~5 phút)
-1. Tạo 1 Google Sheet mới, đặt tên ví dụ **SPEAKING CHECK - BÀI NỘP**.
-2. Copy **ID** của Sheet (đoạn giữa `/d/` và `/edit` trên thanh địa chỉ).
-3. Vào https://script.google.com → **New project** → xóa code mặc định, dán toàn bộ nội dung file `apps-script/Code.gs` vào.
-4. Sửa dòng `var SS_ID = '...'` → dán ID Sheet vừa copy.
-5. **Deploy → New deployment → Web app**:
-   - Execute as: **Me**
-   - Who has access: **Anyone**
-   → bấm Deploy, cấp quyền, copy **Web app URL** (dạng `https://script.google.com/macros/s/AKfycb…/exec`).
-6. Mở `config.js` trong repo, dán URL vào `SCRIPT_URL`, lưu, push lên GitHub.
-7. Test nhanh: mở URL `/exec` trên trình duyệt → thấy `{"ok":true,"app":"mySpeaking"}` là được.
+> ✅ **TẤT CẢ CÁC BƯỚC DƯỚI ĐÂY ĐÃ LÀM XONG ngày 19/07/2026 (chặng 14).**
+> Web đang chạy tại: **https://andrewclasses-01.github.io/mySpeaking/**
+> File này giữ lại để tra cứu khi cần làm lại (đổi tài khoản, key hỏng, deploy lại...).
 
-> Mỗi bài HS nộp sẽ thành các dòng trong sheet **FORM** (mỗi dòng 1 lỗi, kèm ngày giờ + người check) và sheet **TIMER** (mỗi dòng 1 bạn). Muốn ra đúng file mẫu từng HS thì HS bấm thêm nút **Xuất Excel** trong app.
+## Hiện trạng (chặng 14)
+| Hạng mục | Giá trị |
+|---|---|
+| Web học sinh (GitHub Pages) | https://andrewclasses-01.github.io/mySpeaking/ |
+| GitHub | tài khoản `andrewclasses-01`, repo public `mySpeaking`, Pages nhánh `master` path `/` |
+| Google Sheet nhận bài | "SPEAKING CHECK - BÀI NỘP" — id `1XkrbGHkiMHHTVSWLP6OZ0O-CIEORDj4dqYrXHynuA5E` (tài khoản namdaptrai01@gmail.com) |
+| Apps Script | project "mySpeaking", Web App v1, Execute as Me / Anyone — URL /exec đã điền vào `SCRIPT_URL` trong config.js |
+| Drive API key | project Cloud `myspeaking-502901`, giới hạn Websites: `https://andrewclasses-01.github.io/*` + `http://localhost:8123/*`, chỉ Drive API |
 
-## Bước 1b (tùy chọn) — Drive API key để phát trực tiếp video Drive lớn
-Video Drive **>100MB** bị Google chặn phát trực tiếp trên trình duyệt (trang "Virus scan warning") → app sẽ tự chuyển sang chế độ iframe + đồng hồ bấm giờ (vẫn dùng được, nhưng mốc thời gian phải canh tay). Muốn phát trực tiếp + lấy mốc thời gian chính xác với video Drive lớn:
-1. Vào https://console.cloud.google.com → tạo project (hoặc dùng project có sẵn).
-2. **APIs & Services → Library** → tìm **Google Drive API** → Enable.
-3. **APIs & Services → Credentials → Create credentials → API key** → copy key.
-4. (Nên làm) Bấm vào key → **Application restrictions: Websites** → thêm `https://andrewclasses-code.github.io/*` và `http://localhost:8123/*`; **API restrictions** → chỉ chọn Google Drive API.
-5. Dán key vào `DRIVE_API_KEY` trong `config.js`, push lên GitHub.
+## Bước 1 — Nối Google Sheets (ĐÃ XONG — cách làm)
+1. Tạo 1 Google Sheet mới (VD **SPEAKING CHECK - BÀI NỘP**), copy **ID** (đoạn giữa `/d/` và `/edit`).
+2. Vào https://script.google.com → **New project** → dán toàn bộ `apps-script/Code.gs`.
+3. Sửa dòng `var SS_ID = '...'` → dán ID Sheet.
+4. **Deploy → New deployment → Web app**: Execute as **Me**, Who has access **Anyone** → Deploy, cấp quyền, copy **Web app URL** (`.../exec`).
+5. Dán URL vào `SCRIPT_URL` trong `config.js`, TĂNG số `?v=` trong index.html, commit + push.
+6. Test: mở URL `/exec` → thấy `{"ok":true,"app":"mySpeaking"}` là được.
 
-> Nếu dùng YouTube thì KHÔNG cần bước này. Video Drive phải share "Bất kỳ ai có link".
+> Mỗi bài HS nộp = các dòng trong sheet **FORM** (mỗi dòng 1 lỗi) + **TIMER** (mỗi dòng 1 bạn), script tự tạo sheet + header lần đầu. Muốn file đúng mẫu từng HS thì HS bấm thêm nút **Export** trong app.
 
-## Bước 2 — Đưa lên GitHub Pages
+## Bước 1b — Drive API key (ĐÃ XONG — cách làm)
+Video Drive >100MB bị chặn phát trực tiếp (trang virus scan) nếu không có key. Cách tạo:
+1. https://console.cloud.google.com → tạo project → **APIs & Services → Library** → bật **Google Drive API**.
+2. **Credentials → Create credentials → API key**.
+3. Bấm vào key → **Application restrictions: Websites** → thêm `https://andrewclasses-01.github.io/*` và `http://localhost:8123/*`; **API restrictions** → chỉ Google Drive API.
+4. Dán key vào `DRIVE_API_KEY` trong `config.js`.
+
+> Video Drive phải share "Bất kỳ ai có link". Nếu key hỏng app tự rơi về chế độ iframe + đồng hồ (HS vẫn dùng được).
+
+## Bước 2 — GitHub Pages (ĐÃ XONG — cách làm)
 ```
 cd "D:\APP AND DATA\mySpeaking"
-git add -A && git commit -m "mySpeaking"
-gh repo create mySpeaking --public --source . --push
-gh api repos/andrewclasses-code/mySpeaking/pages -X POST -f "source[branch]=main" -f "source[path]=/"
+git add -A ; git commit -m "..."
+# repo đã có remote origin = https://github.com/andrewclasses-01/mySpeaking.git
+git push
 ```
-Sau ~1 phút app chạy tại: `https://andrewclasses-code.github.io/mySpeaking/`
+Pages đã bật (nhánh **master**, path `/`) — chỉ cần push là web tự cập nhật sau ~1 phút.
+Lần đầu làm lại từ đầu: tạo repo public trên github.com/new rồi
+`gh api repos/andrewclasses-01/mySpeaking/pages -X POST -f "source[branch]=master" -f "source[path]=/"`
 
-## Bước 3 — Mỗi buổi check
-1. Upload video lên **YouTube, chế độ "Không công khai" (Unlisted)** — khuyên dùng. (Video Drive vẫn dùng được: share "Bất kỳ ai có link".)
-2. Mở `https://andrewclasses-code.github.io/mySpeaking/teacher.html`.
-3. Dán link video, điền chủ đề, đội được check, danh sách thành viên → **Tạo link**.
-4. Gửi link vào Zalo lớp hoặc chiếu QR lên màn hình cho HS quét.
-5. HS điền tên → soi video → bắt lỗi → **Nộp bài**. Thầy mở Google Sheet là thấy toàn bộ.
+## Mỗi buổi check (mô hình 1 LINK CHUNG từ chặng 6)
+1. Cập nhật `data/classes.json` (lớp, mã, đội, thành viên, link video Drive/YouTube, cặp chấm chéo) → commit + push.
+2. Gửi HS đúng 1 link: **https://andrewclasses-01.github.io/mySpeaking/** — HS gõ tên lớp + mã lớp, chọn tên, tích cam kết, bắt lỗi, **Submit**.
+3. Thầy mở Google Sheet "SPEAKING CHECK - BÀI NỘP" xem toàn bộ bài nộp.
 
 ## Lưu ý
-- Đổi video/đội KHÔNG cần sửa code — chỉ cần tạo link mới bằng teacher.html.
-- Nếu chưa điền SCRIPT_URL, app vẫn dùng được: HS bấm **Xuất Excel** và gửi file cho thầy.
-- Video Drive: app tự thử phát trực tiếp (lấy mốc thời gian chính xác); nếu Google chặn, app tự chuyển sang chế độ đồng hồ bấm giờ — HS bấm ▶ video và ▶ đồng hồ cùng lúc.
+- MỖI lần sửa `app.js`/`config.js` phải TĂNG số `?v=` trong index.html (chống cache) rồi mới push.
+- Nếu chưa/mất SCRIPT_URL, app vẫn dùng được: HS bấm **Export** gửi file Excel cho thầy.
+- `teacher.html` là file cũ (mô hình link ?d= đã bỏ) — không dùng.

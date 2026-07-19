@@ -54,12 +54,16 @@ teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo
 - **Submit chặn 3 tầng**: (1) thiếu ô giờ → viền đỏ + toast; (2) giờ sai — end≤start hoặc 2 HS đan xen → toast nêu đúng tên (`validateTimerRanges`); (3) modal xác nhận. Excel/payload KHÔNG đổi cấu trúc (SECTION rỗng, timers {name,sMin..}).
 - **Header**: logo chibi (`img/logo-chibi.png` 128px) + ANDREW CLASSES; BẤM logo = về trang chủ, còn lỗi chưa submit → pop-up `#leaveModal`. Nút Export (Excel) + Submit.
 
-## Triển khai
-Xem `HUONG DAN TRIEN KHAI.md` (Apps Script + GitHub Pages). GitHub: tài khoản `andrewclasses-code`.
+## Triển khai — ĐÃ LIVE (chặng 14, 19/07/2026)
+- **Web HS**: https://andrewclasses-01.github.io/mySpeaking/ — GitHub tài khoản **`andrewclasses-01`** (KHÔNG phải andrewclasses-code như dự kiến cũ — thầy chốt lại chặng 14), repo public `mySpeaking`, Pages nhánh `master` path `/`. Push bằng git thường (gh CLI đã cài + login trên máy này; `gh repo create` bị classifier chặn → tạo repo qua web, teacher bấm).
+- **Apps Script**: project "mySpeaking" (tài khoản Google `namdaptrai01@gmail.com`), Web App v1 Execute as Me / Anyone. SCRIPT_URL đã điền config.js. Sheet nhận bài: "SPEAKING CHECK - BÀI NỘP" id `1XkrbGHkiMHHTVSWLP6OZ0O-CIEORDj4dqYrXHynuA5E` (script tự tạo sheet FORM/TIMER + header).
+- **Drive API key**: đã giới hạn Websites = `https://andrewclasses-01.github.io/*` + `http://localhost:8123/*`, API = chỉ Drive API. Đã test key hoạt động cả live lẫn localhost SAU giới hạn.
+- Chi tiết từng bước: `HUONG DAN TRIEN KHAI.md`.
 
 ## Roadmap
-- [x] Drive API key (chặng 9): `DRIVE_API_KEY` đã điền config.js, test OK video 441MB — ⚠️ TRƯỚC khi push GitHub Pages phải giới hạn key theo website `*.github.io` (Cloud Console → Credentials, project `myspeaking-502901`)
-- [ ] Thầy deploy Apps Script, điền SCRIPT_URL vào config.js
-- [ ] Push GitHub + bật Pages
+- [x] Drive API key (chặng 9): `DRIVE_API_KEY` đã điền config.js, test OK video 441MB
+- [x] Giới hạn API key theo website (chặng 14)
+- [x] Deploy Apps Script + điền SCRIPT_URL (chặng 14 — test end-to-end: submit từ app → Sheet OK)
+- [x] Push GitHub + bật Pages (chặng 14 — live, video Drive phát trực tiếp trên trang live)
 - [ ] (Ý tưởng) Dashboard cho thầy xem tổng hợp lỗi theo đội/loại từ Google Sheet
 - [ ] (Ý tưởng) Chấm chéo: đối chiếu lỗi các HS cùng bắt được ở cùng mốc thời gian
