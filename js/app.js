@@ -138,7 +138,7 @@
     if (d) t = Math.min(t, Math.max(0, d - 0.2));
     if (video.mode === 'html5' && video.el) video.el.currentTime = t;
     else if (video.mode === 'youtube' && video.yt && video.ready) { try { video.yt.seekTo(t, true); } catch (e) {} }
-    else if (video.mode === 'stopwatch') { sw.elapsed = t; sw.startedAt = Date.now(); swRender(); }
+    // chế độ dự phòng (iframe): không seek được video Drive — HS dùng thanh kéo + SET TIME
     vcUpdate(t, d);
     autoPickStudent(Math.floor(t));
   }
@@ -254,7 +254,9 @@
       }
       v.src = candidates[i++];
       clearTimeout(guard);
-      guard = setTimeout(() => { if (!video.ready) tryNext(); }, 15000);
+      // Chờ lâu hơn (25s): lỗi thật (403/format) đã bắn 'error' NGAY nên fallback vẫn nhanh khi hỏng;
+      // timeout chỉ cứu trường hợp mạng CHẬM tải metadata file lớn — thà chờ còn hơn rơi dự phòng nhầm.
+      guard = setTimeout(() => { if (!video.ready) tryNext(); }, 25000);
       v.load();
     }
     v.addEventListener('error', tryNext);
@@ -270,44 +272,50 @@
     tryNext();
   }
 
-  // — Fallback: iframe Drive + đồng hồ bấm giờ —
+  // — Fallback: iframe Drive + THANH KÉO tay (iframe Drive không cho JS đọc giờ phát) —
+  // HS xem giờ trên trình phát Drive, kéo thanh cho khớp, bấm SET TIME để đưa vào MIN/SEC.
   function initDriveIframe(box, id) {
-    video.mode = 'stopwatch';
+    video.mode = 'stopwatch';   // giữ tên mode = chế độ dự phòng (iframe + thanh kéo tay)
     video.el = null;
     box.innerHTML = '<iframe src="https://drive.google.com/file/d/' + id + '/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>';
-    $('stopwatchWrap').classList.remove('hidden');
-    setVideoStatus(videoInfoHtml());  // khung vàng phía trên đã giải thích chế độ đồng hồ
+    const wrap = $('stopwatchWrap');
+    wrap.classList.remove('hidden'); wrap.classList.add('flex');
+    swFill();
+    setVideoStatus(videoInfoHtml());
     refreshIcons();
   }
-
-  // — Đồng hồ bấm giờ —
-  const sw = { running: false, elapsed: 0, startedAt: 0, tick: null };
-  function swNow() { return sw.running ? sw.elapsed + (Date.now() - sw.startedAt) / 1000 : sw.elapsed; }
-  function swRender() {
-    const s = Math.floor(swNow());
-    $('swDisplay').textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
-    if (sw.running) syncTimeFields(s);   // chế độ đồng hồ dự phòng: MIN/SEC cũng chạy theo
+  // Tô phần đã qua XANH DƯƠNG trên thanh kéo dự phòng
+  function swFill() {
+    const el = $('swSeek'); if (!el) return;
+    const pct = (el.value - el.min) / (el.max - el.min) * 100;
+    el.style.background = 'linear-gradient(to right, #2563eb ' + pct + '%, #dbeafe ' + pct + '%)';
   }
-  function swToggle() {
-    if (sw.running) {
-      sw.elapsed = swNow(); sw.running = false;
-      clearInterval(sw.tick);
-      $('swToggle').innerHTML = '<i data-lucide="play" class="w-4 h-4"></i><span>Start</span>';
-    } else {
-      sw.running = true; sw.startedAt = Date.now();
-      sw.tick = setInterval(swRender, 250);
-      $('swToggle').innerHTML = '<i data-lucide="pause" class="w-4 h-4"></i><span>Pause</span>';
-    }
-    refreshIcons();
+  // Đốm sáng bay từ điểm (x0,y0) tới ô đích rồi tan
+  function flyLight(x0, y0, toEl) {
+    const b = toEl.getBoundingClientRect();
+    const x1 = b.left + b.width / 2, y1 = b.top + b.height / 2;
+    const dot = document.createElement('div');
+    dot.style.cssText = 'position:fixed;left:0;top:0;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:9999px;background:radial-gradient(circle,#93c5fd,#2563eb);box-shadow:0 0 14px 5px rgba(37,99,235,.8);z-index:9999;pointer-events:none';
+    document.body.appendChild(dot);
+    const anim = dot.animate([
+      { transform: 'translate(' + x0 + 'px,' + y0 + 'px) scale(1)', opacity: 1 },
+      { transform: 'translate(' + ((x0 + x1) / 2) + 'px,' + (Math.min(y0, y1) - 46) + 'px) scale(1.5)', opacity: 1, offset: .55 },
+      { transform: 'translate(' + x1 + 'px,' + y1 + 'px) scale(.25)', opacity: 0 }
+    ], { duration: 650, easing: 'cubic-bezier(.35,0,.2,1)' });
+    anim.onfinish = () => dot.remove();
   }
-
-  function getVideoTime() {
-    if (video.mode === 'youtube' && video.yt && video.ready) {
-      try { return video.yt.getCurrentTime(); } catch (e) { return null; }
-    }
-    if (video.mode === 'html5' && video.el) return video.el.currentTime;
-    if (video.mode === 'stopwatch') return swNow();
-    return null;
+  function flashEl(el) { el.classList.remove('time-flash'); void el.offsetWidth; el.classList.add('time-flash'); }
+  // Bấm SET TIME: đưa giờ thanh kéo → MIN/SEC kèm ánh sáng bay
+  function swSetTime() {
+    const secs = parseInt($('swSeek').value, 10) || 0;
+    const el = $('swSeek'), r = el.getBoundingClientRect();
+    const frac = (el.value - el.min) / (el.max - el.min);
+    flyLight(r.left + frac * r.width, r.top + r.height / 2, $('fMin'));
+    setTimeout(() => {
+      $('fMin').value = Math.floor(secs / 60); $('fSec').value = secs % 60;
+      flashEl($('fMin')); flashEl($('fSec'));
+      autoPickStudent(secs);
+    }, 430);
   }
 
   // ═══════════════ FORM BẮT LỖI ═══════════════
@@ -374,7 +382,7 @@
   const typeLabel = (t) => TYPE_LABEL[t] || t;
   function renderTypeBtns() {
     document.querySelectorAll('.errType').forEach((b) => {
-      b.className = 'errType rounded-lg border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition flex flex-row items-center justify-center gap-1.5 ' +
+      b.className = 'errType rounded-lg border-2 px-0.5 sm:px-1 py-2 text-[10px] sm:text-xs font-bold leading-tight transition flex flex-row items-center justify-center gap-1.5 ' +
         (fType === b.dataset.type ? TYPE_ON : TYPE_OFF);
     });
   }
@@ -384,7 +392,9 @@
   function autoGrowAll() { ['fSentence', 'fDetail', 'fExplain'].forEach((id) => autoGrow($(id))); }
 
   function clearErrForm() {
-    // KHÔNG xoá MIN/SEC: chúng chạy theo video (và giữ mốc hiện tại khi pause để bắt lỗi tiếp)
+    // XOÁ MIN/SEC sau khi thêm/sửa: tránh HS thêm 2 lỗi mà chưa chọn lại thời gian.
+    // (Video đang PHÁT sẽ tự điền lại MIN/SEC theo giờ hiện tại ngay — không sao.)
+    $('fMin').value = ''; $('fSec').value = '';
     $('fSentence').value = ''; $('fDetail').value = ''; $('fExplain').value = '';
     autoGrowAll();
     fType = ''; renderTypeBtns();
@@ -674,23 +684,41 @@
     refreshIcons();
   }
 
-  // Màn 2 — chọn tên: mỗi đội = TÊN ĐỘI (to, nổi bật) + ô select chọn tên
+  // Màn 2 — chọn tên: 2 ô CẠNH NHAU — Your Team (nạp đội) + Your Name (KHÓA đến khi chọn team)
   function renderIdentify() {
     const cls = session.class;
     $('identHeader').innerHTML =
       '<h2 class="text-lg font-extrabold text-slate-900 leading-tight">' + escapeHtml(cls.name) +
       (cls.topic ? ' — ' + escapeHtml(cls.topic) : '') + '</h2>' +
       '<p class="text-sm text-slate-500 mt-0.5">Pick your team, then choose your name.</p>';
-    $('identNames').innerHTML = (cls.teams || []).map((t) =>
-      '<div class="flex items-center gap-3">' +
-      '<span class="text-2xl font-extrabold text-slate-900 shrink-0">TEAM ' + t.team + '</span>' +
-      '<select data-team="' + t.team + '" class="pickSelect flex-1 min-w-0 rounded-xl border border-slate-300 px-3 py-2.5 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">' +
-      '<option value="">— Your name —</option>' +
-      (t.members || []).map((m) => '<option value="' + escapeHtml(m) + '">' + escapeHtml(m) + '</option>').join('') +
-      '</select></div>'
-    ).join('');
+    $('selTeam').innerHTML = '<option value="">— Team —</option>' +
+      (cls.teams || []).map((t) => '<option value="' + t.team + '">TEAM ' + t.team + '</option>').join('');
+    resetNameSelect();
     $('identPick').classList.remove('hidden');
     $('identConfirm').classList.add('hidden');
+  }
+  // Ô Your Name về rỗng + KHÓA (mờ) — dùng khi chưa chọn team
+  function resetNameSelect() {
+    const sn = $('selName');
+    sn.innerHTML = '<option value="">— Name —</option>';
+    sn.value = '';
+    sn.disabled = true;
+    sn.classList.add('bg-slate-100', 'text-slate-400');
+    sn.classList.remove('bg-white', 'text-slate-800');
+    $('selTeam').value = '';
+  }
+  // Chọn Team → nạp tên đội đó vào Your Name + MỞ KHÓA
+  function onTeamChange() {
+    const teamNo = $('selTeam').value;
+    const sn = $('selName');
+    if (!teamNo) { resetNameSelect(); return; }
+    const team = (session.class.teams || []).find((t) => String(t.team) === String(teamNo));
+    sn.innerHTML = '<option value="">— Name —</option>' +
+      ((team && team.members) || []).map((m) => '<option value="' + escapeHtml(m) + '">' + escapeHtml(m) + '</option>').join('');
+    sn.value = '';
+    sn.disabled = false;
+    sn.classList.remove('bg-slate-100', 'text-slate-400');
+    sn.classList.add('bg-white', 'text-slate-800');
   }
 
   function initialsOf(name) {
@@ -731,6 +759,7 @@
 
     $('identName').textContent = name;
     $('identTeams').innerHTML = 'You are in <b>Team ' + teamNo + '</b> · You will check <b>Team ' + pair.checked + '</b>';
+    $('identNoteTitle').textContent = name + ', Andrew has something for you.';
 
     $('chkAgree').checked = false;
     setStartEnabled(false);
@@ -784,14 +813,15 @@
     $('inpClass').addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
     $('inpCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') handleLogin(); });
     $('btnLoginErrOk').addEventListener('click', hideLoginErr);
-    // Màn chọn tên (ô select — chọn xong là sang xác nhận ngay)
+    // Màn chọn tên: chọn Your Team → mở khóa Your Name; chọn Your Name → sang xác nhận ngay
     $('btnBackLogin').addEventListener('click', () => {
       $('identifyScreen').classList.add('hidden');
       $('loginScreen').classList.remove('hidden');
     });
-    $('identNames').addEventListener('change', (ev) => {
-      const s = ev.target.closest('.pickSelect');
-      if (s && s.value) handleNamePick(s.dataset.team, s.value);
+    $('selTeam').addEventListener('change', onTeamChange);
+    $('selName').addEventListener('change', () => {
+      const teamNo = $('selTeam').value, name = $('selName').value;
+      if (teamNo && name) handleNamePick(teamNo, name);
     });
     // Cam kết: phải tích mới bấm Start được
     $('chkAgree').addEventListener('change', (e) => setStartEnabled(e.target.checked));
@@ -884,17 +914,9 @@
       autosave();
     });
 
-    $('swToggle').addEventListener('click', swToggle);
-    $('swReset').addEventListener('click', () => { sw.elapsed = 0; sw.startedAt = Date.now(); swRender(); });
-    $('swSet').addEventListener('click', () => {
-      const v = prompt('Enter the video\'s current time (min:sec), e.g. 3:25');
-      if (!v) return;
-      const m = v.match(/^(\d+)[:.](\d{1,2})$/);
-      if (!m) { toast('Wrong format, correct example: 3:25', 'err'); return; }
-      sw.elapsed = (+m[1]) * 60 + (+m[2]);
-      sw.startedAt = Date.now();
-      swRender();
-    });
+    // Thanh kéo DỰ PHÒNG: kéo → giờ hiển thị chạy theo; SET TIME → đưa vào MIN/SEC kèm ánh sáng bay
+    $('swSeek').addEventListener('input', () => { $('swCur').textContent = fmtClock(parseInt($('swSeek').value, 10) || 0); swFill(); });
+    $('swSet').addEventListener('click', swSetTime);
 
     $('btnExport').addEventListener('click', exportExcel);
     $('btnSubmit').addEventListener('click', openSubmitModal);
