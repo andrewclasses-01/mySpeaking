@@ -271,30 +271,13 @@
   // Luôn xếp vừa 1 HÀNG: flex + flex-1 chia đều, chữ nhỏ, truncate chống tràn.
   // Bấm ai người đó sáng, 1 thời điểm chỉ 1 tên (1 người nói tại 1 thời điểm).
   let fWhoSel = '';
-  // Ô nhập thời gian nói nhỏ dưới tên (min:sec → min:sec) — type=text + inputmode để không có nút spin chiếm chỗ
-  const T_IN = 'tIn w-full min-w-0 rounded-md border border-slate-300 bg-white px-0.5 py-1 text-center font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500';
-  function timerCellHtml(i) {
-    const t = state.timers[i] || { sMin: '', sSec: '', eMin: '', eSec: '' };
-    const inp = (k, ph) => '<input data-tt="' + i + ':' + k + '" type="text" inputmode="numeric" value="' + escapeHtml(t[k]) + '" placeholder="' + ph + '" class="' + T_IN + '">';
-    // Mobile: 2 tầng (bắt đầu ↓ kết thúc) cho ô đủ to để gõ; ≥640px: 1 hàng có mũi tên →
-    return '<div class="mt-1 rounded-lg bg-slate-50 border border-slate-200 px-1 py-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-0.5">' +
-      '<div class="flex items-center gap-0.5 flex-1 min-w-0">' + inp('sMin', '0') + '<span class="text-slate-400 font-bold text-[11px]">:</span>' + inp('sSec', '00') + '</div>' +
-      '<span class="hidden sm:inline text-slate-400 text-[11px] px-0.5">→</span>' +
-      '<span class="sm:hidden text-slate-300 text-[10px] leading-none text-center">↓</span>' +
-      '<div class="flex items-center gap-0.5 flex-1 min-w-0">' + inp('eMin', '0') + '<span class="text-slate-400 font-bold text-[11px]">:</span>' + inp('eSec', '00') + '</div>' +
-      '</div>';
-  }
   function buildStudentField() {
     const wrap = $('fStudentWrap');
     if (state.members.length) {
-      // mỗi thành viên = 1 CỘT: nút tên trên + khung thời gian nói dưới (from → to, BẮT BUỘC trước khi Submit)
-      const cols = state.members.map((n, i) =>
-        '<div class="flex-1 min-w-0">' +
-        '<button type="button" data-who="' + escapeHtml(n) + '" class="whoBtn">' + escapeHtml(n) + '</button>' +
-        timerCellHtml(i) +
-        '</div>'
+      const btns = state.members.map((n) =>
+        '<button type="button" data-who="' + escapeHtml(n) + '" class="whoBtn">' + escapeHtml(n) + '</button>'
       ).join('');
-      wrap.innerHTML = '<div class="flex gap-1.5">' + cols + '</div>';
+      wrap.innerHTML = '<div class="flex gap-1.5">' + btns + '</div>';
       renderWhoBtns();
     } else {
       wrap.innerHTML = '<input id="fWho" type="text" placeholder="Name of the student" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">';
@@ -303,7 +286,7 @@
   function renderWhoBtns() {
     document.querySelectorAll('.whoBtn').forEach((b) => {
       const on = b.dataset.who === fWhoSel;
-      b.className = 'whoBtn w-full min-w-0 rounded-lg border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition truncate text-center ' +
+      b.className = 'whoBtn flex-1 min-w-0 rounded-lg border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition truncate text-center ' +
         (on ? 'border-indigo-600 bg-indigo-600 text-white shadow shadow-indigo-600/30'
             : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300');
     });
@@ -347,10 +330,8 @@
 
   function addOrUpdateError() {
     const detail = $('fDetail').value.trim();
-    const explain = $('fExplain').value.trim();
-    if (!fType) { toast('Please choose a TYPE!', 'err'); return; }
-    if (!detail) { toast('Please describe the MISTAKE!', 'err'); $('fDetail').focus(); return; }
-    if (!explain) { toast('Please write the EXPLANATION!', 'err'); $('fExplain').focus(); return; }
+    if (!fType) { toast('Please choose a MISTAKE TYPE!', 'err'); return; }
+    if (!detail) { toast('Please describe THE MISTAKE!', 'err'); $('fDetail').focus(); return; }
     const err = {
       min: $('fMin').value === '' ? '' : Math.max(0, parseInt($('fMin').value, 10) || 0),
       sec: $('fSec').value === '' ? '' : Math.max(0, parseInt($('fSec').value, 10) || 0),
@@ -358,7 +339,7 @@
       who: getWho(),
       type: fType,
       detail: detail,
-      explain: explain,
+      explain: $('fExplain').value.trim(),
     };
     if (editingIndex >= 0) { state.errors[editingIndex] = err; toast('Mistake updated ✓'); }
     else { state.errors.push(err); toast('Mistake added ✓ (' + state.errors.length + ' total)'); }
@@ -389,7 +370,10 @@
     }).join('');
     $('errEmpty').style.display = state.errors.length ? 'none' : '';
 
-    // đếm theo loại (badge tab đã bỏ cùng tab bar ở chặng 12)
+    // đếm
+    const n = state.errors.length;
+    const badge = $('tabErrCount');
+    badge.textContent = n; badge.classList.toggle('hidden', !n);
     const counts = {};
     state.errors.forEach((e) => { counts[e.type] = (counts[e.type] || 0) + 1; });
     $('errStats').innerHTML = Object.keys(TYPE_STYLE)
@@ -403,33 +387,39 @@
     return String(e.min || 0).padStart(2, '0') + ':' + String(e.sec || 0).padStart(2, '0');
   }
 
-  // ═══════════════ TIMER (thời gian nói — nhập ngay dưới nút tên HS, xem timerCellHtml) ═══════════════
-  // timers LUÔN = đúng danh sách thành viên đội được chấm (không thêm/bớt/đổi tên).
-  // Khôi phục bài dở: khớp theo TÊN (0 là giá trị hợp lệ nên không dùng || '').
+  // ═══════════════ TIMER (thời gian nói) ═══════════════
   function initTimers(saved) {
-    const val = (v) => (v === undefined || v === null) ? '' : v;
-    state.timers = state.members.map((m) => {
-      const old = (saved || []).find((t) => t.name === m) || {};
-      return { name: m, sMin: val(old.sMin), sSec: val(old.sSec), eMin: val(old.eMin), eSec: val(old.eSec) };
-    });
+    if (saved && saved.length) state.timers = saved;
+    else if (state.members.length) state.timers = state.members.map((m) => ({ name: m, sMin: '', sSec: '', eMin: '', eSec: '' }));
+    else state.timers = Array.from({ length: 6 }, () => ({ name: '', sMin: '', sSec: '', eMin: '', eSec: '' }));
+    renderTimers();
   }
 
-  // BẮT BUỘC đủ 4 ô thời gian nói của MỌI thành viên mới cho Submit
-  function missingTimerFields() {
-    const miss = [];
-    state.timers.forEach((t, i) => {
-      ['sMin', 'sSec', 'eMin', 'eSec'].forEach((k) => {
-        if (String(t[k]).trim() === '') miss.push(i + ':' + k);
-      });
-    });
-    return miss;
+  function renderTimers() {
+    const wrap = $('timerRows');
+    wrap.innerHTML = state.timers.map((t, i) =>
+      '<div class="rounded-2xl border border-slate-200 p-3">' +
+      '<div class="flex items-center gap-2 mb-2">' +
+      '<span class="w-6 h-6 rounded-full bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center shrink-0">' + (i + 1) + '</span>' +
+      '<input data-tname="' + i + '" value="' + escapeHtml(t.name) + '" placeholder="Student ' + (i + 1) + '" class="flex-1 min-w-0 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-violet-500">' +
+      '<button data-tdel="' + i + '" class="p-1.5 rounded-lg hover:bg-rose-100 text-rose-400"><i data-lucide="x" class="w-4 h-4 pointer-events-none"></i></button>' +
+      '</div>' +
+      '<div class="grid grid-cols-2 gap-2">' +
+      timerHalf(i, 'START', 's') + timerHalf(i, 'END', 'e') +
+      '</div></div>'
+    ).join('');
+    refreshIcons();
   }
-  function markMissingTimers(miss) {
-    document.querySelectorAll('[data-tt]').forEach((el) => {
-      el.classList.toggle('border-rose-400', miss.includes(el.dataset.tt));
-      el.classList.toggle('ring-1', miss.includes(el.dataset.tt));
-      el.classList.toggle('ring-rose-300', miss.includes(el.dataset.tt));
-    });
+  function timerHalf(i, label, p) {
+    const t = state.timers[i];
+    return '<div class="rounded-xl bg-slate-50 p-2">' +
+      '<div class="text-[10px] font-bold text-slate-400 mb-1">' + label + '</div>' +
+      '<div class="flex items-center gap-1">' +
+      '<input data-tf="' + i + ':' + p + 'Min" type="number" min="0" value="' + t[p + 'Min'] + '" placeholder="min" class="w-full rounded-lg border border-slate-300 px-1 py-1 text-center font-mono text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">' +
+      '<span class="text-slate-400 font-bold">:</span>' +
+      '<input data-tf="' + i + ':' + p + 'Sec" type="number" min="0" max="59" value="' + t[p + 'Sec'] + '" placeholder="sec" class="w-full rounded-lg border border-slate-300 px-1 py-1 text-center font-mono text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">' +
+      '<button data-tgrab="' + i + ':' + p + '" title="Grab from video time" class="shrink-0 bg-violet-600 hover:bg-violet-700 text-white rounded-lg px-2 py-1 text-xs font-bold">⏱ Mark</button>' +
+      '</div></div>';
   }
 
   // ═══════════════ NỘP BÀI ═══════════════
@@ -439,13 +429,6 @@
 
   function openSubmitModal() {
     if (!state.errors.length) { toast('No mistakes to submit yet. Watch the video closely!', 'err'); return; }
-    // BẮT BUỘC: đủ thời gian nói (from → to) của từng thành viên dưới mỗi nút tên
-    const miss = missingTimerFields();
-    markMissingTimers(miss);
-    if (miss.length) {
-      toast('Please fill each student\'s speaking time (min:sec → min:sec) under their name!', 'err');
-      return;
-    }
     const s = $('submitSummary');
     s.innerHTML =
       '<div>👤 Checked by: <b>' + escapeHtml(state.student) + '</b>' + (state.myTeam ? ' (' + escapeHtml(state.myTeam) + ')' : '') + '</div>' +
@@ -669,8 +652,8 @@
       $('hdChecked').textContent = '🎯 ' + state.checkedTeam;
       $('hdChecked').classList.remove('hidden');
     }
-    initTimers(savedTimers);      // timers TRƯỚC — buildStudentField vẽ ô thời gian từ timers
     buildStudentField();
+    initTimers(savedTimers);
     renderErrors();
     initVideo();
 
@@ -681,13 +664,23 @@
     refreshIcons();
   }
 
-  // (switchTab đã bỏ chặng 12 — chỉ còn một khối Mistakes, thời gian nói nằm trong form)
+  function switchTab(tab) {
+    document.querySelectorAll('.tabBtn').forEach((b) => {
+      const on = b.dataset.tab === tab;
+      const w = b.dataset.tab === 'errors' ? 'flex-[4]' : 'flex-[1]';   // Mistakes 80% / Time 20%
+      b.className = 'tabBtn ' + w + ' rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition ' +
+        (on ? 'bg-indigo-600 text-white shadow' : 'text-slate-500 hover:bg-slate-100');
+    });
+    $('tab-errors').classList.toggle('hidden', tab !== 'errors');
+    $('tab-timer').classList.toggle('hidden', tab !== 'timer');
+  }
 
   // ─── Gắn sự kiện ───
   document.addEventListener('DOMContentLoaded', async () => {
     refreshIcons();
     await loadClasses();
     initLoginScreen();
+    switchTab('errors');
 
     // Màn đăng nhập lớp
     $('btnLogin').addEventListener('click', handleLogin);
@@ -707,6 +700,8 @@
     $('chkAgree').addEventListener('change', (e) => setStartEnabled(e.target.checked));
     $('btnStartCheck').addEventListener('click', start);
     $('btnBackNames').addEventListener('click', renderIdentify);
+
+    document.querySelectorAll('.tabBtn').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
     document.querySelectorAll('.errType').forEach((b) => b.addEventListener('click', () => { fType = b.dataset.type; renderTypeBtns(); }));
 
@@ -764,15 +759,37 @@
       }
     });
 
-    // Ô thời gian nói dưới nút tên (delegation cùng chỗ với whoBtn)
-    $('fStudentWrap').addEventListener('input', (ev) => {
-      const f = ev.target.closest('[data-tt]');
-      if (!f) return;
-      const parts = f.dataset.tt.split(':');
-      state.timers[+parts[0]][parts[1]] = f.value.replace(/[^0-9]/g, '');   // chỉ nhận số
-      if (f.value !== state.timers[+parts[0]][parts[1]]) f.value = state.timers[+parts[0]][parts[1]];
-      f.classList.remove('border-rose-400', 'ring-1', 'ring-rose-300');    // gỡ đánh dấu thiếu khi đã nhập
-      autosave();
+    // timer events (delegation)
+    $('timerRows').addEventListener('input', (ev) => {
+      const nameEl = ev.target.closest('[data-tname]');
+      if (nameEl) { state.timers[+nameEl.dataset.tname].name = nameEl.value; autosave(); return; }
+      const f = ev.target.closest('[data-tf]');
+      if (f) {
+        const [i, key] = f.dataset.tf.split(':');
+        state.timers[+i][key] = f.value;
+        autosave();
+      }
+    });
+    $('timerRows').addEventListener('click', (ev) => {
+      const grab = ev.target.closest('[data-tgrab]');
+      if (grab) {
+        const [i, p] = grab.dataset.tgrab.split(':');
+        const t = getVideoTime();
+        if (t == null) { toast('Couldn\'t read the video time. Press play first!', 'err'); return; }
+        const s = Math.floor(t);
+        state.timers[+i][p + 'Min'] = Math.floor(s / 60);
+        state.timers[+i][p + 'Sec'] = s % 60;
+        renderTimers(); autosave();
+      }
+      const del = ev.target.closest('[data-tdel]');
+      if (del) {
+        state.timers.splice(+del.dataset.tdel, 1);
+        renderTimers(); autosave();
+      }
+    });
+    $('btnAddTimerRow').addEventListener('click', () => {
+      state.timers.push({ name: '', sMin: '', sSec: '', eMin: '', eSec: '' });
+      renderTimers(); autosave();
     });
 
     $('swToggle').addEventListener('click', swToggle);

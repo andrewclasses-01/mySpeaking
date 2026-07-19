@@ -38,6 +38,7 @@ tailwind.config = {
   @media (min-width:1024px){
     #appScreen:not(.hidden){ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
     #tab-errors:not(.hidden){ display:flex; flex-direction:column; flex:1 1 0%; min-height:0; }
+    #tab-timer:not(.hidden){ display:flex; flex-direction:column; flex:1 1 0%; min-height:0; }
   }
 </style>
 </head>
@@ -197,11 +198,23 @@ tailwind.config = {
     <!-- ─── INPUT COLUMN ─── (desktop: cột dọc khóa chiều cao — form đứng yên, chỉ list cuộn) -->
     <div class="space-y-4 lg:min-h-0 lg:flex lg:flex-col">
 
-      <!-- (tab bar đã bỏ chặng 12 — thời gian nói nhập ngay dưới nút tên HS trong form) -->
+      <!-- Tabs -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-1.5 flex gap-1.5 lg:shrink-0">
+        <!-- Mistakes chiếm 80%, Time chiếm 20% (flex-[4]/flex-[1]) -->
+        <button data-tab="errors" class="tabBtn flex-[4] rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="search-check" class="w-4 h-4"></i> Mistakes <span id="tabErrCount" class="bg-rose-500 text-white text-xs rounded-full px-2 py-0.5 hidden"></span>
+        </button>
+        <button data-tab="timer" class="tabBtn flex-[1] rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="timer" class="w-4 h-4"></i> Time
+        </button>
+      </div>
+
       <!-- MISTAKES TAB -->
       <div id="tab-errors" class="space-y-4">
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:shrink-0">
           <!-- MIN/SEC tự chạy theo video khi đang phát; pause thì chỉnh tay được -->
+          <h2 class="font-extrabold flex items-center gap-2 mb-3"><i data-lucide="alarm-clock" class="w-5 h-5 text-rose-500"></i> TIME OF THE MISTAKE</h2>
+
           <div class="grid grid-cols-2 gap-3 mb-3">
             <div>
               <label class="block text-xs font-bold text-slate-500 mb-1">MIN</label>
@@ -214,12 +227,12 @@ tailwind.config = {
           </div>
 
           <div class="mb-3">
-            <label class="block text-xs font-bold text-slate-500 mb-1">STUDENT</label>
+            <label class="block text-xs font-bold text-slate-500 mb-1">STUDENT WITH MISTAKE</label>
             <div id="fStudentWrap"></div>
           </div>
 
           <div class="mb-3">
-            <label class="block text-xs font-bold text-slate-500 mb-1.5">TYPE</label>
+            <label class="block text-xs font-bold text-slate-500 mb-1.5">MISTAKE TYPE</label>
             <!-- Mặc định cả 3 nền TRẮNG; bấm vào mới có KHUNG VÀNG phân biệt. Icon Lucide hiện đại thay emoji -->
             <div class="grid grid-cols-3 gap-2" id="errTypeBtns">
               <button data-type="NGỮ PHÁP" class="errType rounded-xl border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition flex flex-col items-center gap-1 border-slate-200 bg-white text-slate-700 hover:border-slate-300"><i data-lucide="pencil-line" class="w-5 h-5 text-blue-600 pointer-events-none"></i>Grammar</button>
@@ -229,11 +242,11 @@ tailwind.config = {
           </div>
 
           <div class="mb-3">
-            <label class="block text-xs font-bold text-slate-500 mb-1">MISTAKE <span class="text-rose-500">*</span></label>
+            <label class="block text-xs font-bold text-slate-500 mb-1">THE MISTAKE <span class="text-rose-500">*</span></label>
             <input id="fDetail" type="text" placeholder="e.g. said 'he go' instead of 'he goes'" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
           </div>
           <div class="mb-4">
-            <label class="block text-xs font-bold text-slate-500 mb-1">EXPLANATION <span class="text-rose-500">*</span></label>
+            <label class="block text-xs font-bold text-slate-500 mb-1">EXPLANATION</label>
             <textarea id="fExplain" rows="2" placeholder="Why is it wrong? How should it be fixed?" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
           </div>
 
@@ -258,6 +271,18 @@ tailwind.config = {
               No mistakes yet. Watch closely and get started! 🔍
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- TIMER TAB -->
+      <div id="tab-timer" class="hidden">
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
+          <h2 class="font-extrabold flex items-center gap-2 mb-1"><i data-lucide="timer" class="w-5 h-5 text-violet-600"></i> Each student's speaking time</h2>
+          <p class="text-xs text-slate-500 mb-4">When someone starts speaking, tap <b>⏱ Mark</b> in the START column. When they finish, tap <b>⏱ Mark</b> in the END column.</p>
+          <div id="timerRows" class="space-y-2.5"></div>
+          <button id="btnAddTimerRow" class="mt-3 w-full border-2 border-dashed border-slate-300 hover:border-indigo-400 hover:text-indigo-600 text-slate-400 rounded-xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Add student
+          </button>
         </div>
       </div>
 
@@ -294,7 +319,7 @@ tailwind.config = {
 </div>
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
-<script src="config.js?v=9"></script>
-<script src="js/app.js?v=9"></script>
+<script src="config.js?v=8"></script>
+<script src="js/app.js?v=8"></script>
 </body>
 </html>

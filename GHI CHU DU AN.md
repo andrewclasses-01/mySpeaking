@@ -210,6 +210,22 @@ Bump cache `?v=8`. Chi tiết:
 
 **Verify (preview thật, chụp màn desktop + mobile 375):** header logo chibi + ANDREW CLASSES; play bar sáng số to thanh đỏ (0:16/8:07); login NGAN (đội 2→chấm đội 3): 3 nút DIEM MY·CUONG·KHOI đúng 1 hàng không tràn (cả mobile); tab 80/20 chữ Time; TIME OF THE MISTAKE + chỉ MIN/SEC; video phát → MIN/SEC bám từng giây (0:16=16s), pause chỉnh tay OK; bấm Pronunciation khung vàng 2 nút kia trắng; 0 lỗi console; đã dọn draft test localStorage.
 
+## CHẶNG 12 — 19/07/2026: 6 cải tiến đợt 3 — GỘP thời gian nói vào form, thêm bắt buộc
+
+Bump cache `?v=9`, backup trước ở `Backup/pre-chang12/`. Chi tiết:
+
+1. BỎ hẳn tiêu đề "TIME OF THE MISTAKE" (form mở đầu bằng MIN/SEC luôn).
+2-4. Đổi nhãn: STUDENT WITH MISTAKE→**STUDENT**, MISTAKE TYPE→**TYPE**, THE MISTAKE→**MISTAKE**.
+5. **EXPLANATION BẮT BUỘC** như MISTAKE (dấu * đỏ + chặn Add với toast "Please write the EXPLANATION!").
+6. **BỎ TAB TIME** (bỏ luôn cả tab bar — chỉ còn khối Mistakes) → thời gian nói chuyển thành **khung nhập dưới MỖI nút tên HS** trong mục STUDENT: 4 ô số (min:sec → min:sec, bắt đầu→kết thúc). **BẮT BUỘC đủ 4 ô × mọi thành viên mới Submit được** — thiếu thì: toast "Please fill each student's speaking time (min:sec → min:sec) under their name!" + 12 ô thiếu VIỀN ĐỎ, gõ vào ô nào gỡ đỏ ô đó. Không đánh dấu * (thầy dặn không cần thêm ký tự).
+   - `initTimers` viết lại: timers LUÔN = đúng members đội được chấm (bỏ thêm/bớt/sửa tên, bỏ nút ⏱ Mark); khôi phục autosave KHỚP THEO TÊN, giữ giá trị 0 (không dùng `||` vì 0 là hợp lệ).
+   - Ô nhập `type=text inputmode=numeric` (bàn phím số trên điện thoại, không nút spin chiếm chỗ), lọc chỉ nhận chữ số.
+   - **Fix mobile ngay trong chặng**: 4 ô 1 hàng ở cột hẹp 375px → mỗi ô chỉ 13px KHÔNG GÕ NỔI → đổi layout: mobile 2 TẦNG (bắt đầu ↓ kết thúc, ô 41px), ≥640px 1 hàng có mũi tên →.
+   - Dữ liệu/Excel/payload GIỮ NGUYÊN cấu trúc: state.timers vẫn {name,sMin,sSec,eMin,eSec}, sheet TIMER + cột SECTION rỗng khớp mẫu (đã verify bằng monkeypatch: TIMER 3 dòng DIEM MY/CUONG/KHOI đúng số nhập, FORM giữ NGỮ PHÁP tiếng Việt).
+   - Dọn code: bỏ switchTab/renderTimers/timerHalf/tabErrCount/btnAddTimerRow + listener cũ; start() đảo thứ tự initTimers TRƯỚC buildStudentField (ô thời gian vẽ từ timers).
+
+**Verify (preview thật):** nhãn mới đủ; thêm lỗi thiếu EXPLANATION bị chặn; Submit thiếu giờ bị chặn + 12 ô đỏ; điền đủ (mô phỏng gõ) → hết đỏ + modal mở, summary "Students timed: 3"; Excel khớp mẫu; autosave khôi phục thời gian theo tên; mobile 375 không tràn ngang, ô 41px bấm được; 0 lỗi console.
+
 ## ⭐ HANDOFF — TIẾP TỤC NGÀY MAI (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7.
