@@ -177,6 +177,40 @@ function setup() {
   return 'setup xong. config id = ' + ss.getId();
 }
 
+// ═══════════════ ONE-OFF: chuẩn bị bài GERMS THẬT cho B1AH ═══════════════
+// Quét folder SPEAKING GOC, đặt 4 video "ai có link đều xem", map đội theo TÊN THÀNH VIÊN
+// (KHÔNG theo số "TEAM N" trong tên file — có file ghi nhầm), ghi đè dòng B1AH GERMS trong LESSONS.
+function setupGermsB1AH() {
+  var goc = folderByPath(['6. SPEAKING', 'SPEAKING TEST', 'B1AH', '2026.7.17 GERMS', 'SPEAKING', 'SPEAKING GOC'], false);
+  if (!goc) throw new Error('Khong thay folder SPEAKING GOC');
+  var map = [
+    { team: 1, key: 'HOANG TIEN', members: 'HOANG; TIEN', checks: 2 },
+    { team: 2, key: 'NGAN TRUC', members: 'NGAN; TRUC', checks: 3 },
+    { team: 3, key: 'MY CUONG KHOI', members: 'DIEM MY; CUONG; KHOI', checks: 4 },
+    { team: 4, key: 'PHONG AN CHAU', members: 'PHONG; HA AN; BAO CHAU', checks: 1 },
+  ];
+  var byName = {};
+  var it = goc.getFiles();
+  while (it.hasNext()) { var f = it.next(); if (/\.mp4$/i.test(f.getName())) byName[f.getName()] = f; }
+  var rows = [], report = [];
+  map.forEach(function (m) {
+    var found = null;
+    Object.keys(byName).forEach(function (nm) { if (nm.toUpperCase().indexOf(m.key) >= 0) found = byName[nm]; });
+    if (!found) { report.push('MISSING T' + m.team + ' (' + m.key + ')'); return; }
+    found.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    rows.push(['B1AH', 'GERMS', '17/7', 'yes', m.team, found.getId(), m.members, m.checks]);
+    report.push('T' + m.team + ' <- ' + found.getName() + ' | ' + found.getId());
+  });
+  var ss = openConfigSS(false);
+  var les = ss.getSheetByName('LESSONS');
+  var data = les.getDataRange().getValues();
+  for (var r = data.length - 1; r >= 1; r--) {
+    if (String(data[r][0]).trim().toUpperCase() === 'B1AH' && String(data[r][1]).trim().toUpperCase() === 'GERMS') les.deleteRow(r + 1);
+  }
+  if (rows.length) les.getRange(les.getLastRow() + 1, 1, rows.length, 8).setValues(rows);
+  return report.join(' || ');
+}
+
 // ═══════════════ TIỆN ÍCH ═══════════════
 function openConfigSS(create) {
   var folder = folderByPath(PATH_SETTINGS, !!create);
