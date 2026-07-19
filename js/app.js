@@ -21,7 +21,7 @@
     checkedTeam: '',
     members: [],
     videoUrl: '',
-    errors: [],   // {min, sec, section, who, type, detail, explain}
+    errors: [],   // {min, sec, section, who, type, sentence, detail, explain}
     timers: [],   // {name, sMin, sSec, eMin, eSec}
     submitted: false,
   };
@@ -90,8 +90,14 @@
     $('vcPlay').innerHTML = '<i data-lucide="' + (p ? 'pause' : 'play') + '" class="w-5 h-5 pointer-events-none"></i>';
     refreshIcons();
   }
+  // Tô phần ĐÃ CHẠY màu đỏ trên thanh tua (custom range không có accent-fill sẵn)
+  function vcFill(pct) {
+    pct = Math.max(0, Math.min(100, pct || 0));
+    $('vcSeek').style.background = 'linear-gradient(to right, #e11d48 ' + pct + '%, #e2e8f0 ' + pct + '%)';
+  }
   function vcUpdate(cur, dur) {
-    if (!vc.dragging && dur) $('vcSeek').value = Math.round((cur / dur) * 1000);
+    if (!vc.dragging && dur) { $('vcSeek').value = Math.round((cur / dur) * 1000); }
+    if (!vc.dragging) vcFill(dur ? (cur / dur) * 100 : 0);
     $('vcCur').textContent = fmtClock(cur);
     $('vcDur').textContent = fmtClock(dur);
   }
@@ -144,6 +150,11 @@
     v.addEventListener('timeupdate', () => {
       vcUpdate(v.currentTime, v.duration);
       if (!v.paused) syncTimeFields(v.currentTime);
+    });
+    // Click thẳng vào thanh gốc của video (kể cả khi ĐANG DỪNG) → MIN/SEC nhảy theo ngay
+    v.addEventListener('seeked', () => {
+      vcUpdate(v.currentTime, v.duration);
+      if (v.paused) syncTimeFields(v.currentTime);
     });
     v.addEventListener('durationchange', () => vcUpdate(v.currentTime, v.duration));
     v.addEventListener('play', () => vcSetPlaying(true));
@@ -363,32 +374,49 @@
   const typeLabel = (t) => TYPE_LABEL[t] || t;
   function renderTypeBtns() {
     document.querySelectorAll('.errType').forEach((b) => {
-      b.className = 'errType rounded-xl border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition flex flex-col items-center gap-1 ' +
+      b.className = 'errType rounded-lg border-2 px-1 py-2 text-[11px] sm:text-xs font-bold leading-tight transition flex flex-row items-center justify-center gap-1.5 ' +
         (fType === b.dataset.type ? TYPE_ON : TYPE_OFF);
     });
   }
 
+  // Ô textarea (SENTENCE / MISTAKE / EXPLANATION) tự giãn cao theo nội dung để xem HẾT chữ
+  function autoGrow(el) { if (!el) return; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+  function autoGrowAll() { ['fSentence', 'fDetail', 'fExplain'].forEach((id) => autoGrow($(id))); }
+
   function clearErrForm() {
     // KHÔNG xoá MIN/SEC: chúng chạy theo video (và giữ mốc hiện tại khi pause để bắt lỗi tiếp)
-    $('fDetail').value = ''; $('fExplain').value = '';
+    $('fSentence').value = ''; $('fDetail').value = ''; $('fExplain').value = '';
+    autoGrowAll();
     fType = ''; renderTypeBtns();
     editingIndex = -1;
     $('btnAddErrLabel').textContent = 'Add this mistake';
     $('btnCancelEdit').classList.add('hidden');
   }
 
+  // Khi THÊM lỗi mới: LUÔN lùi 3 giây (HS nghe thấy lỗi rồi mới gõ nên mốc thật sớm hơn ~3s).
+  // KHÔNG lùi khi SỬA lỗi cũ (mốc đã được lùi từ lần thêm rồi).
+  const REWIND_SEC = 3;
   function addOrUpdateError() {
+    const sentence = $('fSentence').value.trim();
     const detail = $('fDetail').value.trim();
     const explain = $('fExplain').value.trim();
     if (!fType) { toast('Please choose a TYPE!', 'err'); return; }
+    if (!sentence) { toast('Please write the SENTENCE that has the mistake!', 'err'); $('fSentence').focus(); return; }
     if (!detail) { toast('Please describe the MISTAKE!', 'err'); $('fDetail').focus(); return; }
     if (!explain) { toast('Please write the EXPLANATION!', 'err'); $('fExplain').focus(); return; }
+
+    let mn = $('fMin').value === '' ? '' : Math.max(0, parseInt($('fMin').value, 10) || 0);
+    let sc = $('fSec').value === '' ? '' : Math.max(0, parseInt($('fSec').value, 10) || 0);
+    if (editingIndex < 0 && mn !== '' && sc !== '') {
+      const tot = Math.max(0, mn * 60 + sc - REWIND_SEC);   // LUÔN lùi 3s khi thêm mới
+      mn = Math.floor(tot / 60); sc = tot % 60;
+    }
     const err = {
-      min: $('fMin').value === '' ? '' : Math.max(0, parseInt($('fMin').value, 10) || 0),
-      sec: $('fSec').value === '' ? '' : Math.max(0, parseInt($('fSec').value, 10) || 0),
+      min: mn, sec: sc,
       section: '',   // ô SECTION đã bỏ (chặng 11) — giữ field rỗng để cấu trúc Excel/Sheet không đổi
       who: getWho(),
       type: fType,
+      sentence: sentence,   // MỚI (chặng 15): câu chứa lỗi
       detail: detail,
       explain: explain,
     };
@@ -416,6 +444,7 @@
         '<button data-del="' + i + '" class="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500"><i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i></button>' +
         '</span></div>' +
         '<div class="mt-1.5 text-sm font-semibold text-slate-800">' + escapeHtml(e.detail) + '</div>' +
+        (e.sentence ? '<div class="mt-0.5 text-xs italic text-slate-500">“' + escapeHtml(e.sentence) + '”</div>' : '') +
         (e.explain ? '<div class="mt-0.5 text-xs text-slate-500">💡 ' + escapeHtml(e.explain) + '</div>' : '') +
         '</div>';
     }).join('');
@@ -589,12 +618,12 @@
     XLSX.utils.book_append_sheet(wb, wsT, 'TIMER');
 
     // Sheet FORM
-    const formAoa = [['PHÚT', 'GIÂY', 'ĐOẠN', 'HS CÓ LỖI', 'LOẠI LỖI', 'LỖI CỤ THỂ', 'GIẢI THÍCH LỖI']];
+    const formAoa = [['PHÚT', 'GIÂY', 'ĐOẠN', 'HS CÓ LỖI', 'LOẠI LỖI', 'CÂU CHỨA LỖI', 'LỖI CỤ THỂ', 'GIẢI THÍCH LỖI']];
     state.errors.slice().sort((a, b) => tSec(a) - tSec(b)).forEach((e) => {
-      formAoa.push([num(e.min), num(e.sec), e.section, e.who, e.type, e.detail, e.explain]);
+      formAoa.push([num(e.min), num(e.sec), e.section, e.who, e.type, e.sentence, e.detail, e.explain]);
     });
     const wsF = XLSX.utils.aoa_to_sheet(formAoa);
-    wsF['!cols'] = [{ wch: 6 }, { wch: 6 }, { wch: 8 }, { wch: 16 }, { wch: 12 }, { wch: 40 }, { wch: 45 }];
+    wsF['!cols'] = [{ wch: 6 }, { wch: 6 }, { wch: 8 }, { wch: 16 }, { wch: 12 }, { wch: 42 }, { wch: 40 }, { wch: 45 }];
     XLSX.utils.book_append_sheet(wb, wsF, 'FORM');
 
     const name = 'SPEAKING CHECK' +
@@ -771,6 +800,9 @@
 
     document.querySelectorAll('.errType').forEach((b) => b.addEventListener('click', () => { fType = b.dataset.type; renderTypeBtns(); }));
 
+    // Ô SENTENCE / MISTAKE / EXPLANATION tự giãn cao khi gõ để xem hết chữ
+    ['fSentence', 'fDetail', 'fExplain'].forEach((id) => $(id).addEventListener('input', (e) => autoGrow(e.target)));
+
     // Nút chọn HS có lỗi (delegation — wrap tồn tại sẵn, nút dựng lại sau mỗi buildStudentField)
     $('fStudentWrap').addEventListener('click', (ev) => {
       const b = ev.target.closest('.whoBtn');
@@ -788,6 +820,7 @@
     });
     $('vcSeek').addEventListener('input', (e) => {
       vc.dragging = true;
+      vcFill(e.target.value / 10);   // 0..1000 → 0..100% — phần đã chạy đỏ theo tay kéo
       $('vcCur').textContent = fmtClock((e.target.value / 1000) * vcDuration());  // xem trước mốc khi kéo
     });
     $('vcSeek').addEventListener('change', (e) => {
@@ -795,6 +828,7 @@
       const t = (e.target.value / 1000) * vcDuration();
       if (video.mode === 'html5' && video.el) video.el.currentTime = t;
       else if (video.mode === 'youtube' && video.yt && video.ready) { try { video.yt.seekTo(t, true); } catch (e2) {} }
+      syncTimeFields(t);   // kéo thanh tua (KỂ CẢ khi video đang DỪNG) → MIN/SEC nhảy theo ngay
     });
 
     // Chỉnh tay MIN/SEC: Enter hoặc click ra ngoài → video nhảy theo (2 chiều với syncTimeFields)
@@ -823,11 +857,12 @@
         const e = state.errors[i];
         $('fMin').value = e.min; $('fSec').value = e.sec;
         setWho(e.who); fType = e.type; renderTypeBtns();
-        $('fDetail').value = e.detail; $('fExplain').value = e.explain;
+        $('fSentence').value = e.sentence || ''; $('fDetail').value = e.detail; $('fExplain').value = e.explain;
+        autoGrowAll();
         editingIndex = i;
         $('btnAddErrLabel').textContent = 'Save changes';
         $('btnCancelEdit').classList.remove('hidden');
-        $('fDetail').focus();
+        $('fSentence').focus();
       }
       if (del) {
         const i = +del.dataset.del;
