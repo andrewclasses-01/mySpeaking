@@ -360,7 +360,17 @@ Thầy cùng em nghiên cứu + tư vấn để CHỐT cấu trúc dữ liệu c
 - **Tài khoản nhà:** `namdaptrai01@gmail.com`; có cơ chế dự phòng đổi tài khoản như trên (thầy nói nếu đổi sẽ mirror y nguyên ổ D lên).
 - **An toàn:** folder `mySpeaking Data` nằm trong repo web public → phải **.gitignore** (dữ liệu lớp chỉ ở Drive riêng, không lên GitHub Pages).
 
-> Trạng thái: **THIẾT KẾ đã chốt, CHƯA code.** Chờ thầy "ok build" mới bắt tay (theo quy trình). Sheet cũ "SPEAKING CHECK - BÀI NỘP" (mô hình 1 sheet phẳng) sẽ được thay bằng mô hình mới này.
+> ~~Trạng thái: THIẾT KẾ đã chốt, CHƯA code.~~ → **ĐÃ BUILD XONG + TEST LIVE ĐẠT (19/7, thầy "ok build").** Xem phần dưới.
+
+### ✅ ĐÃ BUILD + DEPLOY + TEST LIVE (19/7/2026, `?v=15`)
+- **Web `js/app.js`**: `loadClasses()` đọc config LIVE từ `SCRIPT_URL?config=1` (dự phòng `data/classes.json`); TYPE lưu TIẾNG ANH (Grammar/Pronunciation/Information — sửa cả `index.html` data-type + TYPE_STYLE, `typeLabel`=identity); state + payload thêm `classCode/lesson/videoId`; `handleNamePick` set các khóa này; `exportExcel` đổi sang mẫu tiếng Anh (TIMER: STUDENT/MIN START/SEC START/MIN END/SEC END; FORM: NO/MIN/SEC/STUDENT/TYPE/SENTENCE/MISTAKE/EXPLANATION/CHECKER). Bump `?v=15`. Đã test local (8123) + LIVE OK.
+- **`apps-script/Code.gs`** viết lại 232 dòng (bỏ SS_ID cũ): `doGet(?config=1)`→`buildConfig()` đọc CLASSES+LESSONS; `doPost` route classCode→file lớp (tìm theo folder+tên)→sheet tên LESSON + sheet TIME, sinh SUBMISSION ID (`yyMMdd-HHmmss-nnn`); `setup()` tạo folder+file+seed; tiện ích folderByPath/fileByName/getSheet/sanitizeName/makeSid. **Đã dán qua Monaco setValue, chạy setup() (thầy cấp quyền OAuth), Deploy Phiên bản 2** (URL GIỮ NGUYÊN = SCRIPT_URL cũ trong config.js).
+- **Google Drive (tài khoản namdaptrai01, = ổ D: mirror)**: `setup()` đã tạo `mySpeaking Data/mySpeaking Settings/MYSPEAKING - CẤU HÌNH` (sheet CLASSES seed 8 lớp — chỉ B1AH có CODE=germs + RESULT FILE; sheet LESSONS seed GERMS 4 đội) + `mySpeaking Sheets/B1AH` (doc_id `1VG3JWosFJQKpy_3cpmVW7RoMGN3FPdUB7UXyB3vM3t8`). File `.gsheet` đã mirror về ổ D:.
+- **TEST LIVE end-to-end (https://andrewclasses-01.github.io/mySpeaking/)**: login B1AH/germs → config từ bộ não (4 đội) → HOANG (T1→chấm T2) → thêm lỗi Grammar 1:30 (lưu 1:27 lùi 3s) + giờ nói NGAN/TRUC → Submit → **"Submitted successfully"**. Kiểm tra file B1AH: **sheet "GERMS"** (bảng bắt lỗi, 13 cột, TYPE="Grammar", videoId, SUBMISSION ID `260719-194607-338`) + **sheet "TIME"** (2 dòng NGAN/TRUC, cùng SUBMISSION ID) — ĐÚNG KHUNG. Đã XOÁ dữ liệu test khỏi 2 sheet (giữ header) + dọn localStorage.
+- **CÒN LẠI (Bước 5 — nhân ra 8 lớp):** với mỗi lớp còn lại (A1A/A1B/A1C/A2A/A2B/B2A/B2B): điền CODE + (khi ra bài) thêm dòng LESSONS + tạo 1 file kết quả tên đúng lớp trong `mySpeaking Sheets` (RESULT FILE mặc định = tên lớp; có thể để app máy tính tự tạo sau, hoặc chạy tay). File B1AH còn sheet "Trang tính1" rỗng (vô hại). Bẫy nhỏ: localStorage nháp CŨ trên máy HS có thể mang type tiếng Việt (chỉ ảnh hưởng máy từng test bản cũ — phiên mới sạch).
+- Cache-busting hiện **`?v=15`**. SCRIPT_URL không đổi (deploy Phiên bản 2 cùng deployment).
+
+Sheet cũ "SPEAKING CHECK - BÀI NỘP" (mô hình 1 sheet phẳng) nay KHÔNG còn dùng (bộ não đã route sang file lớp) — có thể xoá khi tiện.
 
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
