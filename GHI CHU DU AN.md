@@ -395,9 +395,11 @@ Sheet cũ "SPEAKING CHECK - BÀI NỘP" (mô hình 1 sheet phẳng) nay KHÔNG c
 
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
-**Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; Drive API key = chặng 9; màn bắt lỗi hiện tại = chặng 10→13; hạ tầng live = chặng 14.
+**Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.
 
-**Đang ở đâu:** **CHẶNG 1 (web học sinh) XONG + đã qua 3 đợt tinh chỉnh giao diện (chặng 14→16b, 19/07/2026)**: web live tại **https://andrewclasses-01.github.io/mySpeaking/**, bài nộp tự đổ về Google Sheet "SPEAKING CHECK - BÀI NỘP", video Drive phát trực tiếp. Thầy nói **"ok rồi"** — dừng tinh chỉnh web. **➡️ VIỆC NGAY SESSION SAU: THỐNG NHẤT KHUNG DỮ LIỆU** (xem mục ⭐ KHUNG DỮ LIỆU bên dưới) rồi mới sang Chặng 2 (app máy tính Electron).
+**Đang ở đâu (mới nhất 19/07/2026 — CHẶNG 17 XONG):** Web live **https://andrewclasses-01.github.io/mySpeaking/** đã chạy **khung dữ liệu MỚI**: đọc bài LIVE từ Apps Script `?config=1` (file CẤU HÌNH Google Sheet: sheet CLASSES + LESSONS), TYPE lưu **tiếng Anh** (Grammar/Pronunciation/Information), bài nộp route về **file mỗi lớp → sheet tên LESSON + sheet TIME**, có SUBMISSION ID/videoId. Apps Script đã **deploy Phiên bản 2** (SCRIPT_URL trong config.js GIỮ NGUYÊN). Dữ liệu ở Drive tài khoản **namdaptrai01** (= ổ D: mirror): `D:\APP AND DATA\mySpeaking\mySpeaking Data\{mySpeaking Settings\MYSPEAKING - CẤU HÌNH, mySpeaking Sheets\<lớp>}`. **BÀI THẬT B1AH GERMS SẴN SÀNG GỬI LỚP** (video đã chuyển sang **YouTube unlisted** vì Drive giới hạn tải file lớn — xem "SỰ CỐ VIDEO" cuối chặng 17). `?v=15`.
+- ➡️ **VIỆC SESSION SAU (thầy sẽ chỉ định):** (a) **Bước 5** — nhân ra 7 lớp còn lại (A1A/A1B/A1C/A2A/A2B/B2A/B2B: điền CODE trong CLASSES + tạo file kết quả tên lớp trong mySpeaking Sheets + thêm dòng LESSONS khi ra bài + video YouTube unlisted); và/hoặc (b) **CHẶNG 2 — app máy tính Electron** (dọn folder + tạo file chấm chéo + sau này tự sinh config/upload YouTube; gọi skill `kienthucbuildapp`, code E:\LAP TRINH APP\mySpeaking + bare repo/dữ liệu D:, CHỜ "ok build").
+- ⚠️ Mục "⭐ KHUNG DỮ LIỆU" bên dưới (viết lúc CHƯA code) chỉ để tham khảo lịch sử — trạng thái THẬT đã ở CHẶNG 17.
 
 **Chạy thử:** `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking"` → http://localhost:8123 (hoặc preview tên `myspeaking`). KHÔNG cần node/build.
 - Đăng nhập lớp TEST: **Your class = `B1AH`**, **Class code = `germs`** → chọn tên → tích cam kết → Start.

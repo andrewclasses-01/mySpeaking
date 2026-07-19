@@ -1,5 +1,11 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> ⚠️ **CẬP NHẬT 19/07/2026 — ĐỌC `GHI CHU DU AN.md` mục CHẶNG 17 + ⭐HANDOFF TRƯỚC.** Từ chặng 17, mô hình dữ liệu đã ĐỔI so với phần lớn mô tả cũ bên dưới file này:
+> - **Cấu hình bài đọc LIVE** từ Apps Script `?config=1` (file Google Sheet "MYSPEAKING - CẤU HÌNH": CLASSES + LESSONS) — KHÔNG còn dùng `data/classes.json` (chỉ còn là dự phòng).
+> - **Dữ liệu lưu = TIẾNG ANH** (TYPE = Grammar/Pronunciation/Information); bài nộp route về **file mỗi lớp → sheet tên LESSON + sheet TIME chung** (KHÔNG còn 1 Sheet phẳng "SPEAKING CHECK - BÀI NỘP"); Excel export khớp mẫu tiếng Anh mới.
+> - **Video phát cho HS = YouTube unlisted** (KHÔNG còn phát Drive trực tiếp — Drive giới hạn tải file lớn; Drive chỉ giữ kho gốc). App tự nhận link youtube/youtu.be trong cột VIDEO của LESSONS.
+> - Dữ liệu ở Drive tài khoản **namdaptrai01** (= ổ D: mirror): `D:\APP AND DATA\mySpeaking\mySpeaking Data\`.
+
 ## Mục đích
 App web tĩnh (GitHub Pages) cho học sinh xem video thuyết trình speaking của đội bạn và **bắt lỗi** (Grammar / Pronunciation / Information) + ghi **thời gian nói** của từng bạn. Dữ liệu nộp về Google Sheet của thầy, đồng thời có nút xuất file Excel đúng mẫu `SPEAKING TEAM CHECK FORM.xlsx` (2 sheet TIMER + FORM).
 
