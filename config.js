@@ -4,7 +4,7 @@
 window.MYSPEAKING_CONFIG = {
   // URL Web App của Google Apps Script (xem apps-script/Code.gs và HUONG DAN TRIEN KHAI.md)
   // Dạng: https://script.google.com/macros/s/AKfycb.../exec
-  SCRIPT_URL: "",
+  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwxN3IdwOFYDFXE9I2HHMvGty4Nb2zD1BRqHcauIKf_6vLltcSuDEIsJtyJIFUzO9HBIg/exec",
 
   // (Tùy chọn) Google Drive API key — để phát TRỰC TIẾP video Drive >100MB
   // (lấy mốc thời gian chính xác thay vì dùng đồng hồ dự phòng).
