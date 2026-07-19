@@ -458,9 +458,13 @@ thay vì thầy gõ tay Google Sheet. Thầy đã đồng ý cho bổ sung Apps 
 - `adminResults` — trả về bảng lỗi + bảng TIME của một bài (để dành cho v0.5 ĐÁNH GIÁ, khỏi phải sửa
   Apps Script thêm lần nữa).
 
-**CẦN LÀM TRÊN GOOGLE (chưa xong):** dán `Code.gs` mới đè bản cũ → chạy `taoMatKhau` → **Deploy →
-Manage deployments → Edit → New version**. **SCRIPT_URL giữ nguyên → link học sinh và mã lớp KHÔNG đổi.**
-Chưa làm thì web HS vẫn chạy bình thường, chỉ có nút "Đẩy bài" bên app máy tính là báo lỗi.
+**✅ ĐÃ DEPLOY (20/07/2026):** dán Code.gs mới → chạy `taoMatKhau` (mật khẩu vào Script Properties +
+sheet **ADMIN**) → **Deploy Phiên bản 4**. **ID triển khai GIỮ NGUYÊN → SCRIPT_URL, link học sinh và
+mã lớp KHÔNG đổi.** Kiểm ngay sau khi deploy: `?config=1` vẫn trả đúng bài **B1AH GERMS**, 4 đội, 4
+link YouTube, cặp chấm chéo nguyên vẹn — **học sinh không gián đoạn giây nào**.
+
+**Đã thử thật cửa quản trị từ app máy tính:** ra lại đúng bài GERMS (nội dung y hệt) → `ok:true`;
+cửa `adminResults` trả đúng **22 dòng lỗi + 4 dòng TIME** đang có trong file kết quả B1AH.
 
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
