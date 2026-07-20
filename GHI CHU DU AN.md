@@ -677,6 +677,17 @@ cảnh "bản live là bản cũ" như ghi chú cuối chặng 24.
 
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
+> **CHỐT NGÀY 20/07/2026 (cuối ngày).** Web ĐANG LIVE và ĐÃ ĐỦ: `?v=17`, bắt buộc **6 mục**
+> (STUDENT · TIME · TYPE · SENTENCE · MISTAKE · EXPLANATION) khi học sinh thêm lỗi — chặng 24-25.
+> Local khớp GitHub (`ddbba6e`). Bộ não Apps Script **Phiên bản 6**.
+> **Máy phòng học ĐẨY ĐƯỢC** (git dùng Credential Manager `andrewclasses-01`; đừng suy từ `gh`).
+> Bên app máy tính: **v0.6.1**, xong 4/5 màn (① ② ④ ⑤), còn màn ③ SUB — đọc
+> `GHI CHU DU AN.md` ở `E:\LAP TRINH APP\mySpeaking`, mục ⭐ BÀN GIAO.
+> ⚠️ Việc còn treo bên web: chưa có. Việc treo liên quan: file `B1AH GERMS - ALL.xlsx` bên thư mục
+> buổi đang mở trong Excel và có dòng lạc đội — xem BÀN GIAO bên app.
+
+
+
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking Web`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.
 
 **⭐ MỚI NHẤT 20/07/2026 (chốt phiên):**
