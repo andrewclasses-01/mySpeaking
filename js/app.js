@@ -360,6 +360,14 @@
         (on ? TYPE_ON : TYPE_OFF);   // chọn tên = KHUNG VÀNG y hệt phần TYPE
     });
   }
+  // Nháy viền đỏ khu vực chọn tên khi HS quên chọn (giống lối báo "thiếu ô giờ" lúc Submit)
+  function flashStudentField() {
+    const wrap = $('fStudentWrap');
+    if (!wrap) return;
+    wrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    wrap.classList.add('ring-2', 'ring-red-400', 'rounded-xl');
+    setTimeout(() => wrap.classList.remove('ring-2', 'ring-red-400', 'rounded-xl'), 1600);
+  }
   function getWho() {
     if (!state.members.length) { const el = $('fWho'); return el ? el.value.trim() : ''; }
     return fWhoSel;
@@ -410,6 +418,9 @@
     const sentence = $('fSentence').value.trim();
     const detail = $('fDetail').value.trim();
     const explain = $('fExplain').value.trim();
+    // BẮT BUỘC chọn tên HS có lỗi (chặng 24). Trước đây bỏ trống được → 39/97 dòng thật bị rỗng,
+    // bảng "BỊ PHÁT HIỆN" của app máy tính rỗng theo ⇒ không chấm cá nhân được.
+    if (!getWho()) { toast('Please choose WHO made the mistake!', 'err'); flashStudentField(); return; }
     if (!fType) { toast('Please choose a TYPE!', 'err'); return; }
     if (!sentence) { toast('Please write the SENTENCE that has the mistake!', 'err'); $('fSentence').focus(); return; }
     if (!detail) { toast('Please describe the MISTAKE!', 'err'); $('fDetail').focus(); return; }

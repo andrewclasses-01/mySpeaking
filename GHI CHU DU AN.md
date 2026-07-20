@@ -565,10 +565,41 @@ Google. **Lớp 3 đã chạy** (đo thật: `checksum=20146b86caf49501`, `suaTa
 **Đã kiểm sau deploy:** `?config=1` vẫn đúng 2 lớp B1AH + B2B → học sinh không gián đoạn.
 
 ### ⏳ VIỆC NÊN LÀM BÊN WEB (phát hiện khi làm màn ④)
-**Bắt buộc chọn "HS có lỗi" trước khi Add.** Hiện web KHÔNG bắt buộc → **39/97 dòng bỏ trống**
-(TIEN trống cả 24 dòng, DIEM MY trống 15). Bảng "BỊ PHÁT HIỆN" rỗng thì **chấm cá nhân vô nghĩa**.
-App đã có đường cứu (suy tên theo khoảng giờ nói, cứu 38/39 dòng) nhưng vá tận gốc vẫn hơn.
-Sửa xong nhớ **tăng `?v=` trong index.html**.
+~~**Bắt buộc chọn "HS có lỗi" trước khi Add.**~~ → **✅ XONG CHẶNG 24 (20/07/2026).**
+
+## CHẶNG 24 — 20/07/2026 (tối): BẮT BUỘC CHỌN "HS CÓ LỖI" TRƯỚC KHI ADD
+
+### Bối cảnh
+Làm màn ④ của app máy tính mới lộ ra: web **không bắt buộc** chọn tên HS có lỗi → dữ liệu thật
+B1AH GERMS có **39/97 dòng bỏ trống** cột này (TIEN trống cả 24 dòng, DIEM MY trống 15). Bảng
+"BỊ PHÁT HIỆN" rỗng ⇒ **chấm điểm cá nhân vô nghĩa**. App đã có đường cứu (`suy_hs_theo_gio()`,
+cứu 38/39 dòng) nhưng đó là đoán theo khoảng giờ nói — vá tận gốc ở web vẫn chắc hơn.
+
+### Việc đã làm
+- `js/app.js` — `addOrUpdateError()`: thêm chốt chặn **ĐẦU TIÊN** (trước cả TYPE, vì STUDENT là ô
+  trên cùng của form): `if (!getWho()) { toast('Please choose WHO made the mistake!'); flashStudentField(); return; }`
+- `js/app.js` — hàm mới `flashStudentField()`: cuộn khu vực chọn tên vào tầm nhìn + **nháy viền đỏ
+  1,6 giây** (`ring-2 ring-red-400`), cùng lối báo với "thiếu ô giờ" lúc Submit. Chỉ báo bằng toast
+  thì HS đang nhìn xuống dưới form dễ không hiểu thiếu gì.
+- `index.html` — nhãn `STUDENT` nay có dấu **`*`** đỏ như SENTENCE/MISTAKE/EXPLANATION.
+- `index.html` — **tăng `?v=15 → 16`** cho cả `config.js` và `app.js` (chống cache).
+
+### Verify (server 8123, đăng nhập thật B1AH/germs → HOANG → Start)
+- Điền đủ SENTENCE + MISTAKE + EXPLANATION + TYPE, **KHÔNG chọn tên** → bấm Add:
+  toast **"Please choose WHO made the mistake!"**, `fStudentWrap` mang đúng class
+  `ring-2 ring-red-400 rounded-xl`, **lỗi KHÔNG được thêm** ✓
+- Chọn tên (NGAN) rồi bấm Add lại → **"Mistake added ✓ (1 total)"**, danh sách 1 dòng ✓
+- Console **0 lỗi**.
+- ⚠️ `computer screenshot` vẫn **treo 30s** vì iframe YouTube (bẫy cũ từ chặng 1) → verify bằng
+  `read_page` + `javascript_tool`, đừng phí thời gian chụp màn ở web này.
+
+### Còn treo
+- **CHƯA PUSH ĐƯỢC** (xem chặng 21b): máy này gh đăng nhập `andrewclasses-code`, đo bằng
+  `gh api repos/andrewclasses-01/mySpeaking` → `{admin:false, push:false, pull:true}`. Lệnh
+  `git push` **treo vì bật hộp thoại đăng nhập Windows**, phải huỷ. Nay có **6 commit chờ**.
+  ➡️ Cách dứt điểm: thầy mời `andrewclasses-code` làm **Collaborator** của repo (Settings →
+  Collaborators) — 1 lần là máy lớp đẩy được mãi. Hoặc `gh auth login` bằng `andrewclasses-01`.
+  **Bản LIVE của học sinh vẫn là bản cũ cho tới khi push** — vá này chưa tới tay HS.
 
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
