@@ -636,6 +636,41 @@ Cùng buổi làm này, app máy tính lên **v0.4.3**: đếm người nộp th
 **nộp nhưng 0 lỗi** / đã nộp) — ca thật HOANG nộp 19/07 chỉ có bảng giờ, 0 lỗi. Xem
 `GHI CHU DU AN.md` bên `E:\LAP TRINH APP\mySpeaking`.
 
+## CHẶNG 26 — 20/07/2026 (tối, máy nhà): ĐẨY 7 CHẶNG TỒN ĐỌNG LÊN LIVE (chặng 21→25 tới tay HS)
+
+**Bối cảnh:** thầy yêu cầu *"push dự án mySpeaking App với phần trang web cho học sinh lên để link
+https://andrewclasses-01.github.io/mySpeaking/ chứa dữ liệu mới"*. Kho local đứng **ahead 7 commit**
+từ chặng 21 (máy lớp không đẩy được vì lẫn tài khoản — xem ghi chú cuối chặng 21b/24).
+
+### GỠ ĐƯỢC NÚT THẮT "gh sai tài khoản" — hoá ra KHÔNG phải lỗi quyền
+Đây là khám phá quan trọng nhất của chặng này, ghi lại để không mất công lần sau:
+
+- `gh` CLI trên máy đăng nhập **`andrewclasses-code`**; hỏi quyền repo bằng
+  `gh api repos/andrewclasses-01/mySpeaking` → trả `"push": false` → **tưởng là không đẩy được**,
+  nên chặng 21b–24 mới ghi "chờ mời Collaborator / đăng nhập lại".
+- Nhưng `git push` **không dùng token của `gh`** — nó lấy credential từ **Git Credential Manager**
+  của Windows. Kiểm bằng `git credential fill` → `username=andrewclasses-01` ✔ đúng chủ repo.
+- ➡️ **Quy tắc từ nay:** muốn biết có đẩy được không thì chạy **`git push --dry-run`**
+  (không gửi gì lên server), **đừng tin quyền do `gh api` báo**. Việc "mời Collaborator" ghi ở
+  chặng 24 **không cần làm nữa**.
+
+### Việc đã làm
+- `git push --dry-run origin master` → OK (thật sự có quyền ghi).
+- `git push origin master`: `e57732f..b7e6644` — đẩy trọn **7 commit** (chặng 21, 21b, 22, 23×2,
+  24, 25). Cây làm việc sạch, không có file lạ; `mySpeaking Data/` vẫn nằm trong `.gitignore`
+  nên **dữ liệu lớp không bị đưa lên GitHub công khai**.
+- Kho app máy tính (`E:\LAP TRINH APP\mySpeaking`) đã đồng bộ sẵn với trạm `D:\APP AND DATA\
+  mySpeaking App` (không có commit tồn), nên chặng này **chỉ đụng phần web**.
+
+### Verify (đo trên bản LIVE, không phải server nội bộ)
+| Kiểm | Kết quả |
+|---|---|
+| Pages build sau push | `status: built`, commit `b7e6644`, **no error** |
+| `curl` trang live (kèm cachebust) | phục vụ `app.js?v=17` và `config.js?v=17` |
+
+`?v=17` chính là số hiệu chặng 25 → **bản HS đang dùng nay đã có đủ vá bắt buộc 6 mục**, không còn
+cảnh "bản live là bản cũ" như ghi chú cuối chặng 24.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking Web`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.
@@ -730,14 +765,15 @@ Cùng buổi làm này, app máy tính lên **v0.4.3**: đếm người nộp th
 
 ## TIẾP TỤC CÔNG VIỆC Ở MÁY KHÁC / SESSION MỚI
 1. **Thư mục app tự chứa đủ mọi thứ** (D:\ đồng bộ Drive giữa 2 máy): code + hồ sơ + file mẫu (`mau/`) + Apps Script (`apps-script/Code.gs`) + hướng dẫn (`HUONG DAN TRIEN KHAI.md`). Đọc CLAUDE.md + file này trước khi sửa.
-2. **Git**: repo thường (không bare) ngay trong thư mục app, nhánh `master`, đã commit đến chặng 3. CHƯA có remote GitHub — thầy chưa xác nhận push (tài khoản `andrewclasses-code`, gh đã đăng nhập trên máy 1; máy 2 muốn push phải `gh auth login`). Lệnh push nằm trong HUONG DAN TRIEN KHAI.md Bước 2.
+2. **Git**: repo thường (không bare) ngay trong thư mục app, nhánh `master`. Remote `origin` = `https://github.com/andrewclasses-01/mySpeaking.git` (Pages công khai). Đẩy bằng `git push origin master`; credential Windows đã lưu đúng `andrewclasses-01` nên không cần `gh auth login`. **Đừng dựa vào `gh` để đoán quyền đẩy** — `gh` đăng nhập tài khoản khác (`andrewclasses-code`), xem chặng 26.
    ⚠ Vì thư mục đồng bộ qua Drive, KHÔNG làm việc git đồng thời trên 2 máy — chờ Drive đồng bộ xong mới sửa tiếp.
 3. **Chạy test**: `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking Web"` → mở http://localhost:8123 (app HS) và /teacher.html (trang thầy). Không cần node/build.
 4. **Trạng thái cấu hình**: `config.js` còn 2 chỗ TRỐNG chờ thầy — `SCRIPT_URL` (Apps Script, Bước 1) và `DRIVE_API_KEY` (tùy chọn, Bước 1b). Chưa có SCRIPT_URL thì nút Nộp bài báo hướng dẫn dùng Xuất Excel (đúng thiết kế, không phải bug).
 5. **Đã verify**: luồng HS đầy đủ (YouTube + Drive fallback), teacher.html tạo link/QR, xuất Excel đúng mẫu, autosave/khôi phục. **Chưa verify**: nộp bài end-to-end vào Google Sheet (chờ SCRIPT_URL), Drive API key với file lớn (chờ key), giao diện điện thoại.
 
 ### VIỆC ĐANG CHỜ
-1. **Thầy deploy Apps Script** (theo `HUONG DAN TRIEN KHAI.md` hoặc đầu file `apps-script/Code.gs`): tạo Google Sheet nhận bài → dán ID vào Code.gs → deploy Web App (Execute as Me / Anyone) → dán URL `/exec` vào `SCRIPT_URL` trong `config.js`. Khi chưa có URL này, nút Nộp bài sẽ báo dùng Xuất Excel thay thế.
-2. **Push GitHub + bật Pages** (tài khoản `andrewclasses-code` đã đăng nhập gh trên máy này) — đang chờ thầy đồng ý tên repo/công khai.
-3. ~~Test thật với 1 video Drive lớn~~ → ĐÃ TEST chặng 2 (fallback OK). Còn chờ: thầy tạo DRIVE_API_KEY (Bước 1b) rồi test lại đường phát trực tiếp qua Drive API với video >100MB.
+1. ~~**Thầy deploy Apps Script**~~ → **XONG**: `SCRIPT_URL` và `DRIVE_API_KEY` đều đã có trong `config.js`; tuyến nộp bài chạy thật từ chặng 22 (lớp B2B).
+2. ~~**Push GitHub + bật Pages**~~ → **XONG (chặng 26, 20/07/2026)**: repo `andrewclasses-01/mySpeaking`, nhánh `master`, Pages live tại https://andrewclasses-01.github.io/mySpeaking/ (đã verify phục vụ `?v=17`).
+   ⚠ **Đẩy tiếp về sau:** cứ `git push origin master` bình thường — credential Windows đã là `andrewclasses-01`. Nếu nghi ngờ quyền thì thử `git push --dry-run`, ĐỪNG tin `gh api ... .permissions` (token `gh` là tài khoản `andrewclasses-code`, luôn báo `push:false` — xem chặng 26).
+3. ~~Test thật với 1 video Drive lớn~~ → ĐÃ TEST chặng 2 (fallback OK). Đã có DRIVE_API_KEY; còn chờ test lại đường phát trực tiếp qua Drive API với video >100MB.
 4. Test trên điện thoại (layout đã responsive nhưng chưa soi kỹ màn nhỏ).
