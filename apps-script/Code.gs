@@ -45,6 +45,9 @@ var CONFIG_NAME   = 'MYSPEAKING - CẤU HÌNH';
 
 var LESSONS_HEADERS = ['CLASS', 'LESSON', 'DATE', 'ACTIVE', 'TEAM', 'VIDEO', 'MEMBERS', 'CHECKS'];
 var CLASSES_HEADERS = ['CLASS', 'CODE', 'NAME', 'RESULT FILE', 'STATUS'];
+// (Phiên bản 6) Nhật ký mọi lần SỬA TAY vào kho dữ liệu — xem giải thích ở mục BẢO VỆ KHO
+var AUDIT_HEADERS = ['LUC', 'NGUOI SUA', 'SHEET', 'O', 'GIA TRI CU', 'GIA TRI MOI'];
+var AUDIT_NAME = 'AUDIT (nhat ky sua tay)';
 
 var FORM_HEADERS = ['TIME', 'CHECKER', 'CHECKER TEAM', 'TEAM', 'VIDEO',
   'MIN', 'SEC', 'STUDENT', 'TYPE', 'SENTENCE', 'MISTAKE', 'EXPLANATION', 'SUBMISSION ID'];
@@ -388,6 +391,7 @@ function adminRouter(data) {
   if (data.action === 'push') return adminPush(data);
   if (data.action === 'results') return adminResults(data);
   if (data.action === 'setup') return adminSetup(data);
+  if (data.action === 'baove') return adminBaoVe(data);
   return { ok: false, error: 'LENH_LA: ' + data.action };
 }
 
@@ -398,6 +402,19 @@ function adminSetup(data) {
   try {
     var bc = chiaLessonsTheoLop();
     bc.ok = true;
+    return bc;
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
+}
+
+// ── BẢO VỆ KHO qua cửa quản trị (Phiên bản 6) ──────────────────────────────
+// App gọi { admin:1, key, action:'baove' } -> khoá cảnh báo + đặt trigger nhật ký cho MỌI file.
+// Idempotent: chạy lại không đẻ thêm trigger, không đổi gì đã đúng.
+function adminBaoVe(data) {
+  try {
+    var bc = baoVeKho();
+    bc.ok = bc.loi.length === 0;
     return bc;
   } catch (err) {
     return { ok: false, error: String(err) };
@@ -480,6 +497,100 @@ function adminPush(data) {
   };
 }
 
+// ═══════════════ BẢO VỆ KHO DỮ LIỆU (Phiên bản 6 — thầy chốt 20/07/2026) ═══════════════
+// Kho `mySpeaking Data` là dữ liệu SỐNG: chỉ được GHI THÊM từ (a) web học sinh nộp bài và
+// (b) app mySpeaking ra bài. Sửa tay trên máy/Drive là hỏng số liệu đánh giá về sau.
+//
+// ⚠️ SỰ THẬT KỸ THUẬT: thầy là CHỦ SỞ HỮU file nên Google KHÔNG cho khoá cứng chính chủ.
+// Vì vậy bảo vệ = 3 lớp THỰC TẾ (không hứa hão):
+//   (1) KHOÁ CẢNH BÁO — protect warning-only mọi sheet: mở ra gõ là Google hiện cảnh báo đỏ
+//       "bạn đang sửa vùng được bảo vệ". KHÔNG chặn cứng (chặn cứng sẽ chặn luôn cả bài nộp
+//       của học sinh vì script chạy dưới danh nghĩa thầy) — nhưng đủ để không sửa NHẦM.
+//   (2) NHẬT KÝ SỬA TAY — trigger onEdit ghi lại mọi lần sửa tay vào sheet AUDIT của chính
+//       file đó (lúc nào · ai · sheet · ô · giá trị cũ → mới). Trigger KHÔNG nổ khi script ghi
+//       -> bài nộp của học sinh không làm bẩn nhật ký; hễ có dòng AUDIT = CÓ người sửa tay.
+//   (3) MÃ KIỂM TRA — mỗi lần trích dữ liệu, bộ não trả kèm checksum + số dòng + danh sách
+//       SUBMISSION ID; app ghi vào file trích. Về sau đối chiếu là biết kho có bị đổi không.
+function baoVeKho() {
+  var bc = { file: [], trigger: [], loi: [] };
+  var ss = openConfigSS(true);
+  var ds = [{ ten: CONFIG_NAME, ss: ss }];
+
+  var sheetsFolder = folderByPath(PATH_SHEETS, true);
+  var it = sheetsFolder.getFiles();
+  while (it.hasNext()) {
+    var f = it.next();
+    if (f.getMimeType() !== MimeType.GOOGLE_SHEETS) continue;   // bỏ qua .xlsx sao lưu
+    try { ds.push({ ten: f.getName(), ss: SpreadsheetApp.openById(f.getId()) }); }
+    catch (err) { bc.loi.push(f.getName() + ': ' + err); }
+  }
+
+  for (var i = 0; i < ds.length; i++) {
+    try {
+      khoaCanhBao(ds[i].ss);
+      datTriggerSua(ds[i].ss, bc);
+      bc.file.push(ds[i].ten);
+    } catch (err) { bc.loi.push(ds[i].ten + ': ' + String(err)); }
+  }
+  return bc;
+}
+
+// Khoá CẢNH BÁO mọi sheet (trừ sheet AUDIT — để trigger còn ghi vào được cho êm)
+function khoaCanhBao(ss) {
+  var shs = ss.getSheets();
+  for (var i = 0; i < shs.length; i++) {
+    if (shs[i].getName() === AUDIT_NAME) continue;
+    var cu = shs[i].getProtections(SpreadsheetApp.ProtectionType.SHEET);
+    var p = cu.length ? cu[0] : shs[i].protect();
+    p.setDescription('mySpeaking — kho du lieu, chi ghi them tu app/web. KHONG sua tay.');
+    p.setWarningOnly(true);   // cảnh báo, KHÔNG chặn (chặn cứng sẽ chặn cả bài nộp HS)
+  }
+}
+
+// Mỗi file 1 trigger onEdit; đã có rồi thì thôi (chạy lại an toàn)
+function datTriggerSua(ss, bc) {
+  var id = ss.getId();
+  var all = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].getHandlerFunction() === 'ghiNhatKySua' && all[i].getTriggerSourceId() === id) return;
+  }
+  ScriptApp.newTrigger('ghiNhatKySua').forSpreadsheet(ss).onEdit().create();
+  bc.trigger.push(ss.getName());
+}
+
+// Trigger CÀI ĐẶT (installable) — CHỈ nổ khi CON NGƯỜI sửa, không nổ khi script ghi.
+function ghiNhatKySua(e) {
+  try {
+    if (!e || !e.range) return;
+    var sh = e.range.getSheet();
+    if (sh.getName() === AUDIT_NAME) return;              // đừng ghi lại chính nhật ký
+    var ss = sh.getParent();
+    var au = getSheet(ss, AUDIT_NAME, AUDIT_HEADERS);
+    var ai = '';
+    try { ai = (e.user && e.user.getEmail && e.user.getEmail()) || Session.getActiveUser().getEmail() || ''; } catch (_) {}
+    au.appendRow([
+      Utilities.formatDate(new Date(), 'GMT+7', 'yyyy-MM-dd HH:mm:ss'),
+      ai || '(khong ro)',
+      sh.getName(),
+      e.range.getA1Notation(),
+      (e.oldValue === undefined || e.oldValue === null) ? '' : String(e.oldValue),
+      String(e.range.getValue()),
+    ]);
+  } catch (_) { /* nhật ký hỏng thì thôi, tuyệt đối không làm hỏng thao tác của thầy */ }
+}
+
+// Mã kiểm tra cho một mảng dòng: SHA-256 rút gọn 16 ký tự (đủ để phát hiện đổi 1 ô)
+function maKiemTra(rows) {
+  var s = JSON.stringify(rows || []);
+  var b = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8);
+  var h = '';
+  for (var i = 0; i < b.length && h.length < 16; i++) {
+    var v = (b[i] < 0 ? b[i] + 256 : b[i]).toString(16);
+    h += (v.length === 1 ? '0' : '') + v;
+  }
+  return h.slice(0, 16);
+}
+
 // ── KÉO BÀI HỌC SINH NỘP (để dành cho v0.5 ĐÁNH GIÁ) ────────────────────────
 function adminResults(data) {
   var cls = String(data.classCode || '').trim();
@@ -503,6 +614,20 @@ function adminResults(data) {
   }
   out.headersErrors = FORM_HEADERS;
   out.headersTimers = TIME_HEADERS;
+
+  // (Phiên bản 6) Lớp bảo vệ số 3 — ĐÓNG BĂNG bản trích: app ghi mấy số này vào file trích,
+  // về sau trích lại mà checksum khác là biết kho đã bị đổi (dù do nộp thêm hay sửa tay).
+  out.luc = Utilities.formatDate(new Date(), 'GMT+7', 'yyyy-MM-dd HH:mm:ss');
+  out.soDongLoi = out.errors.length;
+  out.soDongTime = out.timers.length;
+  out.checksum = maKiemTra([out.errors, out.timers]);
+  var sid = {}, ds = [];
+  out.errors.forEach(function (r) { var k = String(r[12] || ''); if (k && !sid[k]) { sid[k] = 1; ds.push(k); } });
+  out.timers.forEach(function (r) { var k = String(r[9] || ''); if (k && !sid[k]) { sid[k] = 1; ds.push(k); } });
+  out.dsSubmission = ds;
+  // Có ai sửa tay file kết quả này chưa?
+  var au = ss.getSheetByName(AUDIT_NAME);
+  out.suaTay = au ? Math.max(0, au.getLastRow() - 1) : 0;
   return out;
 }
 
