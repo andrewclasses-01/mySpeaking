@@ -17,6 +17,17 @@
  *   1. Dán file này vào project Apps Script (script.google.com).
  *   2. Chạy hàm setup() 1 lần (tạo folder + file CẤU HÌNH + file lớp B1AH, cấp quyền khi được hỏi).
  *   3. Deploy → Manage deployments → Edit → New version (giữ Execute as Me / Anyone).
+ *
+ * (20/07/2026 — Phiên bản 5) MỖI LỚP MỘT SHEET LESSONS RIÊNG (thầy chốt):
+ *   • Bài của lớp X nằm ở sheet "LESSONS X" trong file CẤU HÌNH (VD "LESSONS B1AH").
+ *   • CỘT GIỮ NGUYÊN 8 cột như cũ (CLASS, LESSON, DATE, ACTIVE, TEAM, VIDEO, MEMBERS, CHECKS) —
+ *     cột CLASS trong sheet riêng nghe thừa nhưng là LƯỚI AN TOÀN: dòng dán nhầm sheet vẫn tự
+ *     khai nó thuộc lớp nào, và code cũ/mới đọc chung một khuôn.
+ *   • Sheet "LESSONS" cũ (gộp mọi lớp) sau khi chia xong được ĐỔI TÊN thành
+ *     "LESSONS CU (da chuyen)" — GIỮ NGUYÊN dữ liệu, không xoá gì.
+ *   • Đường lùi: lớp nào CHƯA có sheet riêng thì bộ não tự đọc sheet "LESSONS" cũ như trước.
+ *   • Lệnh quản trị mới `action:'setup'` (app/HTTP gọi có mật khẩu): chia sheet theo lớp + tạo
+ *     file kết quả cho MỌI lớp trong CLASSES — chạy lại bao nhiêu lần cũng an toàn (idempotent).
  */
 
 // ── Đường dẫn folder (theo TÊN, tính từ gốc My Drive) ──
@@ -31,6 +42,9 @@ var DATA_NAMES  = ['mySpeaking Data'];
 var PATH_SETTINGS = [ROOT_NAMES, WEB_NAMES, DATA_NAMES, ['mySpeaking Settings']];
 var PATH_SHEETS   = [ROOT_NAMES, WEB_NAMES, DATA_NAMES, ['mySpeaking Sheets']];
 var CONFIG_NAME   = 'MYSPEAKING - CẤU HÌNH';
+
+var LESSONS_HEADERS = ['CLASS', 'LESSON', 'DATE', 'ACTIVE', 'TEAM', 'VIDEO', 'MEMBERS', 'CHECKS'];
+var CLASSES_HEADERS = ['CLASS', 'CODE', 'NAME', 'RESULT FILE', 'STATUS'];
 
 var FORM_HEADERS = ['TIME', 'CHECKER', 'CHECKER TEAM', 'TEAM', 'VIDEO',
   'MIN', 'SEC', 'STUDENT', 'TYPE', 'SENTENCE', 'MISTAKE', 'EXPLANATION', 'SUBMISSION ID'];
@@ -58,9 +72,18 @@ function kiemTraKho() {
     out.co_file_cau_hinh = !!ss;
     if (ss) {
       var cs = ss.getSheetByName('CLASSES');
-      var ls = ss.getSheetByName('LESSONS');
       out.so_lop = cs ? Math.max(0, cs.getLastRow() - 1) : 0;
-      out.so_dong_lessons = ls ? Math.max(0, ls.getLastRow() - 1) : 0;
+      // Đếm bài trên MỌI sheet "LESSONS *" (mỗi lớp 1 sheet) + sheet "LESSONS" cũ nếu còn
+      var tong = 0, dsSheet = [];
+      ss.getSheets().forEach(function (sh) {
+        var n = sh.getName();
+        if (n === 'LESSONS' || /^LESSONS [A-Z0-9]/.test(n)) {
+          tong += Math.max(0, sh.getLastRow() - 1);
+          dsSheet.push(n);
+        }
+      });
+      out.so_dong_lessons = tong;
+      out.sheet_lessons = dsSheet;
     }
     if (sh) {
       var names = [];
@@ -130,15 +153,26 @@ function doPost(e) {
   }
 }
 
-// ═══════════════ CẤP BÀI (đọc CLASSES + LESSONS) ═══════════════
+// ═══════════════ CẤP BÀI (đọc CLASSES + sheet LESSONS của từng lớp) ═══════════════
+// Tên sheet bài của 1 lớp: "LESSONS B1AH", "LESSONS A2B"…
+function tenSheetLessons(cls) {
+  return 'LESSONS ' + String(cls || '').trim().toUpperCase();
+}
+
+// Lấy các dòng bài của 1 lớp: ưu tiên sheet riêng "LESSONS <LỚP>"; lớp chưa chia thì
+// đọc sheet "LESSONS" cũ (đường lùi — mọi dòng đều có cột CLASS nên lọc được).
+function layLessonRows(ss, cls) {
+  var sh = ss.getSheetByName(tenSheetLessons(cls));
+  if (!sh) sh = ss.getSheetByName('LESSONS');
+  return sh ? sh.getDataRange().getValues() : [];
+}
+
 function buildConfig() {
   var out = [];
   var ss = openConfigSS(false);
   if (!ss) return { classes: out };
   var CS = ss.getSheetByName('CLASSES');
-  var LS = ss.getSheetByName('LESSONS');
   var C = CS ? CS.getDataRange().getValues() : [];
-  var L = LS ? LS.getDataRange().getValues() : [];
 
   for (var i = 1; i < C.length; i++) {
     var cls = String(C[i][0] || '').trim();               // CLASS
@@ -147,6 +181,7 @@ function buildConfig() {
     var code = String(C[i][1] || '').trim();              // CODE
     var name = String(C[i][2] || '').trim() || cls;       // NAME
 
+    var L = layLessonRows(ss, cls);
     var teams = [], pairs = [], lessonName = '';
     for (var j = 1; j < L.length; j++) {
       if (String(L[j][0] || '').trim().toLowerCase() !== cls.toLowerCase()) continue;   // CLASS
@@ -199,7 +234,7 @@ function setup() {
   else { ss = SpreadsheetApp.create(CONFIG_NAME); DriveApp.getFileById(ss.getId()).moveTo(settings); }
 
   // Sheet CLASSES (seed 8 lớp; chỉ B1AH có CODE + RESULT FILE — các lớp khác thầy điền sau)
-  var cls = getSheet(ss, 'CLASSES', ['CLASS', 'CODE', 'NAME', 'RESULT FILE', 'STATUS']);
+  var cls = getSheet(ss, 'CLASSES', CLASSES_HEADERS);
   if (cls.getLastRow() < 2) {
     cls.getRange(2, 1, 8, 5).setValues([
       ['B1AH', 'germs', 'Lớp B1AH', 'B1AH', 'active'],
@@ -212,25 +247,79 @@ function setup() {
       ['B2B', '', 'Lớp B2B', 'B2B', 'active'],
     ]);
   }
-
-  // Sheet LESSONS (seed bài GERMS của B1AH — mỗi dòng 1 đội)
-  var les = getSheet(ss, 'LESSONS', ['CLASS', 'LESSON', 'DATE', 'ACTIVE', 'TEAM', 'VIDEO', 'MEMBERS', 'CHECKS']);
-  if (les.getLastRow() < 2) {
-    les.getRange(2, 1, 4, 8).setValues([
-      ['B1AH', 'GERMS', '18/7', 'yes', 1, '1esxEggI2nZ10EsRBexCsSilBV9PphR9N', 'HOANG; TIEN', 2],
-      ['B1AH', 'GERMS', '18/7', 'yes', 2, '1bra-fN4fwmHAxGrqWLRq6BFYGxWAfhSQ', 'NGAN; TRUC', 3],
-      ['B1AH', 'GERMS', '18/7', 'yes', 3, '1JrAw8sj3sdkApazLSO_-4eoGgaNBCW25', 'DIEM MY; CUONG; KHOI', 4],
-      ['B1AH', 'GERMS', '18/7', 'yes', 4, '1FZCpyGrK0R3D213kqNj1dQAeLRKGa9-X', 'PHONG; HA AN; BAO CHAU', 1],
-    ]);
-  }
   removeDefaultSheet(ss);
 
-  // File kết quả lớp B1AH (rỗng — sheet lesson + TIME sẽ tự tạo khi có bài nộp)
-  if (!fileByName(sheets, 'B1AH')) {
-    var rss = SpreadsheetApp.create('B1AH');
-    DriveApp.getFileById(rss.getId()).moveTo(sheets);
+  // (Phiên bản 5) Chia sheet bài theo lớp + tạo file kết quả cho MỌI lớp — dùng chung một hàm
+  var bc = chiaLessonsTheoLop();
+  return 'setup xong. config id = ' + ss.getId() + ' | ' + JSON.stringify(bc);
+}
+
+// ═══════════════ CHIA SHEET LESSONS THEO LỚP + TẠO FILE KẾT QUẢ (idempotent) ═══════════════
+// Chạy lại bao nhiêu lần cũng an toàn:
+//   • sheet "LESSONS <LỚP>" đã có DỮ LIỆU thì KHÔNG chép lại (tránh nhân đôi dòng);
+//   • file kết quả đã có thì không đụng;
+//   • sheet "LESSONS" cũ chỉ ĐỔI TÊN sau khi chia xong — không xoá dòng nào.
+function chiaLessonsTheoLop() {
+  var ss = openConfigSS(true);
+  var sheetsFolder = folderByPath(PATH_SHEETS, true);
+  var bc = { lop: [], sheet_moi: [], file_moi: [], dong_chuyen: 0, ghi_chu: [] };
+
+  var CS = getSheet(ss, 'CLASSES', CLASSES_HEADERS);
+  var C = CS.getDataRange().getValues();
+  var old = ss.getSheetByName('LESSONS');
+  var O = old ? old.getDataRange().getValues() : [];
+
+  // Lớp có bài trong sheet cũ mà CHƯA có trong CLASSES -> thêm dòng CLASSES cho đủ
+  var daCo = {};
+  for (var i = 1; i < C.length; i++) daCo[String(C[i][0] || '').trim().toUpperCase()] = true;
+  var thieu = {};
+  for (var r = 1; r < O.length; r++) {
+    var lopCu = String(O[r][0] || '').trim().toUpperCase();
+    if (lopCu && !daCo[lopCu]) thieu[lopCu] = true;
   }
-  return 'setup xong. config id = ' + ss.getId();
+  Object.keys(thieu).forEach(function (lop) {
+    CS.appendRow([lop, '', 'Lớp ' + lop, lop, 'active']);
+    bc.ghi_chu.push('CLASSES thêm lớp ' + lop + ' (có bài trong LESSONS cũ mà chưa khai)');
+  });
+  C = CS.getDataRange().getValues();   // đọc lại sau khi thêm
+
+  for (var k = 1; k < C.length; k++) {
+    var cls = String(C[k][0] || '').trim();
+    if (!cls) continue;
+    bc.lop.push(cls);
+
+    // 1) Sheet bài riêng của lớp
+    var tenSh = tenSheetLessons(cls);
+    var daCoSheet = !!ss.getSheetByName(tenSh);
+    var sh = getSheet(ss, tenSh, LESSONS_HEADERS);
+    if (!daCoSheet) bc.sheet_moi.push(tenSh);
+    if (sh.getLastRow() < 2 && O.length > 1) {          // sheet còn trống mới chép (idempotent)
+      var rows = [];
+      for (var m = 1; m < O.length; m++) {
+        if (String(O[m][0] || '').trim().toLowerCase() === cls.toLowerCase()) rows.push(O[m].slice(0, 8));
+      }
+      if (rows.length) {
+        sh.getRange(2, 1, rows.length, 8).setValues(rows);
+        bc.dong_chuyen += rows.length;
+      }
+    }
+
+    // 2) File kết quả của lớp (sheet lesson + TIME tự sinh khi có bài nộp đầu tiên)
+    var resultName = String(C[k][3] || '').trim() || cls;
+    if (!CS.getRange(k + 1, 4).getValue()) CS.getRange(k + 1, 4).setValue(resultName);
+    if (!fileByName(sheetsFolder, resultName)) {
+      var rss = SpreadsheetApp.create(resultName);
+      DriveApp.getFileById(rss.getId()).moveTo(sheetsFolder);
+      bc.file_moi.push(resultName);
+    }
+  }
+
+  // 3) Sheet cũ: đổi tên cho khỏi ai ghi nhầm vào — dữ liệu giữ nguyên vẹn
+  if (old) {
+    old.setName('LESSONS CU (da chuyen)');
+    bc.ghi_chu.push('Đã đổi tên sheet LESSONS cũ thành "LESSONS CU (da chuyen)" — dữ liệu còn nguyên');
+  }
+  return bc;
 }
 
 // ═══════════════ ONE-OFF: chuẩn bị bài GERMS THẬT cho B1AH ═══════════════
@@ -258,7 +347,8 @@ function setupGermsB1AH() {
     report.push('T' + m.team + ' <- ' + found.getName() + ' | ' + found.getId());
   });
   var ss = openConfigSS(false);
-  var les = ss.getSheetByName('LESSONS');
+  // (Phiên bản 5) bài B1AH giờ nằm ở sheet riêng "LESSONS B1AH"
+  var les = getSheet(ss, tenSheetLessons('B1AH'), LESSONS_HEADERS);
   var data = les.getDataRange().getValues();
   for (var r = data.length - 1; r >= 1; r--) {
     if (String(data[r][0]).trim().toUpperCase() === 'B1AH' && String(data[r][1]).trim().toUpperCase() === 'GERMS') les.deleteRow(r + 1);
@@ -297,7 +387,21 @@ function adminRouter(data) {
   if (String(data.key || '') !== key) return { ok: false, error: 'SAI_MATKHAU' };
   if (data.action === 'push') return adminPush(data);
   if (data.action === 'results') return adminResults(data);
+  if (data.action === 'setup') return adminSetup(data);
   return { ok: false, error: 'LENH_LA: ' + data.action };
+}
+
+// ── SETUP QUA CỬA QUẢN TRỊ (v Phiên bản 5) ─────────────────────────────────
+// App/HTTP gọi { admin:1, key, action:'setup' } -> chia sheet LESSONS theo lớp + tạo file kết quả
+// cho mọi lớp trong CLASSES. Idempotent — gọi lại không nhân đôi gì.
+function adminSetup(data) {
+  try {
+    var bc = chiaLessonsTheoLop();
+    bc.ok = true;
+    return bc;
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
 }
 
 // ── RA BÀI ──────────────────────────────────────────────────────────────────
@@ -314,7 +418,7 @@ function adminPush(data) {
   if (!ss) return { ok: false, error: 'CHUA_CO_FILE_CAU_HINH' };
 
   // 1) CLASSES — lớp mới thì thêm dòng luôn (khỏi phải làm tay "Bước 5" cho từng lớp)
-  var CS = getSheet(ss, 'CLASSES', ['CLASS', 'CODE', 'NAME', 'RESULT FILE', 'STATUS']);
+  var CS = getSheet(ss, 'CLASSES', CLASSES_HEADERS);
   var C = CS.getDataRange().getValues();
   var dong = 0;
   for (var i = 1; i < C.length; i++) {
@@ -338,8 +442,9 @@ function adminPush(data) {
     DriveApp.getFileById(rss.getId()).moveTo(sheetsFolder);
   }
 
-  // 3) LESSONS
-  var LS = getSheet(ss, 'LESSONS', ['CLASS', 'LESSON', 'DATE', 'ACTIVE', 'TEAM', 'VIDEO', 'MEMBERS', 'CHECKS']);
+  // 3) LESSONS — (Phiên bản 5) ghi vào SHEET RIÊNG CỦA LỚP "LESSONS <LỚP>".
+  // Lớp chưa có sheet thì getSheet tự tạo kèm header -> lớp MỚI hoàn toàn cũng chạy trơn.
+  var LS = getSheet(ss, tenSheetLessons(cls), LESSONS_HEADERS);
   var L = LS.getDataRange().getValues();
   var baiKhacDangMo = {};
   for (var r = 1; r < L.length; r++) {

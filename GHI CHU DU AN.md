@@ -466,6 +466,47 @@ link YouTube, cặp chấm chéo nguyên vẹn — **học sinh không gián đo
 **Đã thử thật cửa quản trị từ app máy tính:** ra lại đúng bài GERMS (nội dung y hệt) → `ok:true`;
 cửa `adminResults` trả đúng **22 dòng lỗi + 4 dòng TIME** đang có trong file kết quả B1AH.
 
+## CHẶNG 21 — 20/07/2026 (chiều): MỖI LỚP MỘT SHEET LESSONS RIÊNG + ĐỦ FILE KẾT QUẢ 8 LỚP (Phiên bản 5)
+
+**Thầy yêu cầu (làm tự động khi thầy vắng 2 tiếng):** *"tạo cả cấu hình và các file nhận dữ liệu cho
+tất cả các lớp còn lại… Trong file cấu hình, hãy để mỗi lớp một sheet LESSONS riêng"*.
+
+### Thiết kế
+- File CẤU HÌNH giờ có **mỗi lớp một sheet bài riêng** tên `LESSONS <LỚP>` (VD `LESSONS B1AH`).
+- **8 cột GIỮ NGUYÊN** (CLASS, LESSON, DATE, ACTIVE, TEAM, VIDEO, MEMBERS, CHECKS) — cột CLASS trong
+  sheet riêng nghe thừa nhưng là **lưới an toàn** (dòng dán nhầm sheet vẫn tự khai lớp) và code
+  cũ/mới đọc chung một khuôn.
+- Sheet `LESSONS` cũ (gộp) đổi tên **`LESSONS CU (da chuyen)`** — GIỮ nguyên dữ liệu, không xoá.
+- Đường lùi: lớp nào chưa có sheet riêng → bộ não tự đọc sheet `LESSONS` cũ như trước.
+- Lệnh quản trị mới **`action:'setup'`** = `chiaLessonsTheoLop()`: chia sheet + tạo file kết quả cho
+  MỌI lớp trong CLASSES; **idempotent** (sheet có dữ liệu không chép lại, file có không đụng).
+- `adminPush` ghi vào sheet riêng của lớp (lớp mới hoàn toàn → tự tạo sheet). `?config=1`,
+  `adminResults`, bài nộp của HS: **giao ước không đổi một byte**.
+
+### Đã làm (tự động toàn bộ qua Chrome + HTTP, không đụng phiên đăng nhập app)
+1. Sửa `apps-script/Code.gs` trong kho (bản CÓ DẤU — theo dặn dò chặng 19 "dán từ bản trong kho").
+2. Dán lên project Apps Script qua Chrome (clipboard → Monaco), lưu, **Deploy Phiên bản 5** —
+   **ID triển khai GIỮ NGUYÊN** → SCRIPT_URL/link HS/mã lớp không đổi.
+   ⚠️ Bẫy: `fetch` từ trang Apps Script về localhost bị **CSP chặn** → phải đi đường **clipboard**
+   (`Set-Clipboard` PowerShell → Ctrl+A Ctrl+V vào Monaco). Ghi lại để lần sau khỏi mò.
+3. Gọi `action:'setup'` qua HTTP (mật khẩu trong `push.json` máy này) → kết quả:
+   **8 sheet mới** `LESSONS B1AH/A1A/A1B/A1C/A2A/A2B/B2A/B2B`, **7 file kết quả mới**
+   `A1A, A1B, A1C, A2A, A2B, B2A, B2B` (B1AH đã có), **4 dòng GERMS chuyển** sang `LESSONS B1AH`,
+   sheet cũ đổi tên xong.
+
+### Đã kiểm (đo thật từng cửa, so với baseline chụp TRƯỚC khi đổi)
+| Cửa | Kết quả |
+|---|---|
+| `?config=1` | **y hệt baseline từng byte nội dung** — B1AH GERMS 4 đội, 4 link YouTube, cặp chấm chéo đủ → web HS + app không gián đoạn |
+| `?check=1` | 8 lớp · 9 sheet lessons (8 riêng + 1 cũ đã đổi tên) · 8 file kết quả |
+| `adminResults` B1AH GERMS | `ok:true` — **46 dòng lỗi + 10 dòng TIME** (HS nộp thêm từ sáng, dữ liệu nguyên vẹn) |
+| `setup` gọi LẦN 2 | `sheet_moi:[] file_moi:[] dong_chuyen:0` — **idempotent chuẩn** |
+| `adminPush` (ra lại GERMS y hệt) | `ok:true, soDoi:4` — ghi vào sheet riêng, config sau đó vẫn y hệt |
+
+**LƯU Ý CHO THẦY:** cột **CODE** (mã đăng nhập) của 7 lớp mới vẫn TRỐNG — có chủ đích: mã sẽ được
+đặt khi thầy **ra bài đầu tiên** cho lớp đó từ app máy tính (màn ② → Đẩy bài, app gửi kèm mã). Lớp
+trống CODE + chưa có bài active thì **không hiện** trên web nên không ai đăng nhập được vào lớp rỗng.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking Web`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.
@@ -487,7 +528,10 @@ cửa `adminResults` trả đúng **22 dòng lỗi + 4 dòng TIME** đang có tr
   dấu — logic y hệt. Lần sau sửa Apps Script nên **dán từ bản trong kho** cho khớp hoàn toàn.
 
 **Đang ở đâu (19/07/2026 — CHẶNG 17 XONG):** Web live **https://andrewclasses-01.github.io/mySpeaking/** đã chạy **khung dữ liệu MỚI**: đọc bài LIVE từ Apps Script `?config=1` (file CẤU HÌNH Google Sheet: sheet CLASSES + LESSONS), TYPE lưu **tiếng Anh** (Grammar/Pronunciation/Information), bài nộp route về **file mỗi lớp → sheet tên LESSON + sheet TIME**, có SUBMISSION ID/videoId. Apps Script đã **deploy Phiên bản 2** (SCRIPT_URL trong config.js GIỮ NGUYÊN). Dữ liệu ở Drive tài khoản **namdaptrai01** (= ổ D: mirror): `D:\APP AND DATA\mySpeaking Web\mySpeaking Data\{mySpeaking Settings\MYSPEAKING - CẤU HÌNH, mySpeaking Sheets\<lớp>}`. **BÀI THẬT B1AH GERMS SẴN SÀNG GỬI LỚP** (video đã chuyển sang **YouTube unlisted** vì Drive giới hạn tải file lớn — xem "SỰ CỐ VIDEO" cuối chặng 17). `?v=15`.
-- ➡️ **VIỆC SESSION SAU (thầy sẽ chỉ định):** (a) **Bước 5** — nhân ra 7 lớp còn lại (A1A/A1B/A1C/A2A/A2B/B2A/B2B: điền CODE trong CLASSES + tạo file kết quả tên lớp trong mySpeaking Sheets + thêm dòng LESSONS khi ra bài + video YouTube unlisted); và/hoặc (b) **CHẶNG 2 — app máy tính Electron** (dọn folder + tạo file chấm chéo + sau này tự sinh config/upload YouTube; gọi skill `kienthucbuildapp`, code E:\LAP TRINH APP\mySpeaking + bare repo/dữ liệu D:, CHỜ "ok build").
+- ➡️ ~~VIỆC SESSION SAU (a) nhân ra 7 lớp còn lại~~ → **✅ XONG CHẶNG 21 (20/07/2026):** đủ 8 lớp
+  (sheet `LESSONS <LỚP>` riêng + file kết quả), bộ não **Phiên bản 5**. CODE các lớp mới sẽ tự điền
+  khi ra bài đầu tiên từ app máy tính. (b) app máy tính Electron: **ĐANG CHẠY v0.3.2** ở
+  `E:\LAP TRINH APP\mySpeaking` — xong màn ① + ②.
 - ⚠️ Mục "⭐ KHUNG DỮ LIỆU" bên dưới (viết lúc CHƯA code) chỉ để tham khảo lịch sử — trạng thái THẬT đã ở CHẶNG 17.
 
 **Chạy thử:** `python -m http.server 8123 --directory "D:\APP AND DATA\mySpeaking Web"` → http://localhost:8123 (hoặc preview tên `myspeaking`). KHÔNG cần node/build.
