@@ -594,12 +594,16 @@ cứu 38/39 dòng) nhưng đó là đoán theo khoảng giờ nói — vá tận
   `read_page` + `javascript_tool`, đừng phí thời gian chụp màn ở web này.
 
 ### Còn treo
-- **CHƯA PUSH ĐƯỢC** (xem chặng 21b): máy này gh đăng nhập `andrewclasses-code`, đo bằng
-  `gh api repos/andrewclasses-01/mySpeaking` → `{admin:false, push:false, pull:true}`. Lệnh
-  `git push` **treo vì bật hộp thoại đăng nhập Windows**, phải huỷ. Nay có **6 commit chờ**.
-  ➡️ Cách dứt điểm: thầy mời `andrewclasses-code` làm **Collaborator** của repo (Settings →
-  Collaborators) — 1 lần là máy lớp đẩy được mãi. Hoặc `gh auth login` bằng `andrewclasses-01`.
-  **Bản LIVE của học sinh vẫn là bản cũ cho tới khi push** — vá này chưa tới tay HS.
+- ~~CHƯA PUSH ĐƯỢC~~ → **SAI. ĐÃ ĐÍNH CHÍNH 20/07/2026 (thầy chỉ ra): MÁY PHÒNG HỌC ĐẨY ĐƯỢC.**
+  ⛔ **BẪY CHẨN ĐOÁN — nhớ đời:** máy này có **HAI đường xác thực GitHub khác nhau**:
+  · `gh` (CLI) đăng nhập **`andrewclasses-code`** → `gh api …/permissions` trả `push:false`
+  · **`git` dùng Windows Credential Manager**, ở đó lưu **`andrewclasses-01`** = CHỦ repo → **đẩy được**
+  Lấy kết quả của `gh` áp cho `git` là sai — suốt mấy chặng cứ ghi "chờ máy nhà push hộ".
+  ➡️ **Muốn biết git đẩy được không thì hỏi ĐÚNG git:**
+  `printf "protocol=https\nhost=github.com\n\n" | git credential fill` (xem username thật) rồi
+  `git push --dry-run origin master` → đo được *"Everything up-to-date"*, exit 0.
+  Lần `git push` treo trước đó là do chạy `GIT_TERMINAL_PROMPT=0` trong khi Credential Manager
+  đang bật hộp thoại xác thực — **không phải thiếu quyền**.
 
 ## CHẶNG 25 — 20/07/2026 (tối): BẮT BUỘC ĐỦ **6 MỤC** TRƯỚC KHI ADD
 
