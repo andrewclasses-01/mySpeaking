@@ -512,6 +512,35 @@ Pages không đổi). Commit `1aa9a8b` (+ commit ghi chú này) nằm trên D: s
 đặt khi thầy **ra bài đầu tiên** cho lớp đó từ app máy tính (màn ② → Đẩy bài, app gửi kèm mã). Lớp
 trống CODE + chưa có bài active thì **không hiện** trên web nên không ai đăng nhập được vào lớp rỗng.
 
+## CHẶNG 22 — 20/07/2026 (chiều): LỚP B2B RA BÀI GERMS — KIỂM TOÀN TUYẾN, ĐẠT
+
+**Đây là lớp THỨ HAI ra bài, và là lần đầu ra bài HOÀN TOÀN bằng app máy tính** (màn ② v0.3.2:
+tải video lên YouTube → đọc playlist → đẩy bài). Kiểm sau khi thầy đẩy xong:
+
+| Kiểm | Kết quả |
+|---|---|
+| `?config=1` | B2B · mã `GERMS` · bài GERMS · **4 đội**, cặp chấm chéo T1→T2→T3→T4→T1 |
+| 4 video (oEmbed) | **cả 4 xem được**, tiêu đề khớp đúng đội: `GERMS B2B TEAM 1 HA THAO D MINH` / `TEAM 2 MAI HAN DUNG` / `TEAM 3 B MINH PHUONG BENTLY` / `TEAM 4 PHONG LINH` |
+| Ghép video ↔ đội | **đúng 4/4** (đối chiếu tiêu đề video với MEMBERS trong cấu hình) |
+| Đăng nhập live | gõ **thường** `b2b`/`germs` vẫn vào (không phân biệt hoa thường) |
+| Tên học sinh trên web | **BẢN ĐẦY ĐỦ đúng**: `DUY MINH`, `BINH MINH` (không phải viết tắt) |
+| Màn xác nhận | *"You are in Team 1 · You will check Team 2"* — đúng cặp |
+| Màn bắt lỗi | video YouTube **chạy thật, thời lượng 6:23**, dòng dưới ghi `Lớp B2B \| TEAM 2 \| MAI · HAN · DUNG` — đúng đội bị chấm |
+| Console | **0 lỗi** |
+| B1AH | vẫn nguyên bài GERMS đang chạy — 2 lớp cùng mở bài không đụng nhau |
+
+**⚠️ VIỆC CẦN SỬA (không chặn học sinh, nhưng phải xử trước khi đẩy lại B2B):**
+File `D:\6. SPEAKING\SPEAKING TEST\B2B\2026.7.17 GERMS\DS HOC SINH B2B.txt` **hiện đang là bản VIẾT
+TẮT** ở đoạn tên đầy đủ (`HA; THAO; D.MINH` và `B.MINH; PHUONG; BENTLY`), trong khi bản `.bak.txt`
+lại là bản ĐẦY ĐỦ (`DUY MINH`, `BINH MINH`). Giờ sửa file: `.txt` = 3:16:40, `.bak.txt` = **3:18:20**
+— tức bản sao lưu MỚI HƠN chính file gốc, dấu hiệu điển hình của **Google Drive đồng bộ đè lại bản
+cũ** (ổ D: là mirror, 2 máy).
+- **Bản đã đẩy lên web là bản ĐÚNG (đầy đủ)** → học sinh không bị ảnh hưởng.
+- Nhưng nếu **đẩy lại bài B2B từ máy này**, app sẽ đọc file hiện tại và đẩy `D.MINH`/`B.MINH` lên cho
+  học sinh. Khắc phục: chạy lại **"Điền tên đầy đủ"** ở màn ①, hoặc chép nội dung `.bak.txt` đè lại.
+- Bài học chung: **ổ D: là Drive mirror → file app vừa ghi có thể bị bản từ máy kia đè lại.** Trước
+  khi đẩy bài nên liếc lại tên thành viên trong bảng xem trước của app.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking Web`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.
