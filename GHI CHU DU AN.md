@@ -601,6 +601,41 @@ cứu 38/39 dòng) nhưng đó là đoán theo khoảng giờ nói — vá tận
   Collaborators) — 1 lần là máy lớp đẩy được mãi. Hoặc `gh auth login` bằng `andrewclasses-01`.
   **Bản LIVE của học sinh vẫn là bản cũ cho tới khi push** — vá này chưa tới tay HS.
 
+## CHẶNG 25 — 20/07/2026 (tối): BẮT BUỘC ĐỦ **6 MỤC** TRƯỚC KHI ADD
+
+**Thầy chốt:** *"Cần bắt buộc các thông tin với toàn bộ các mục gồm: STUDENT, TIME, TYPE, SENTENCE,
+MISTAKE, EXPLANATION."* → chặng 24 mới bắt buộc STUDENT; TIME vẫn bỏ trống được (dòng lỗi không có
+mốc giờ thì app máy tính không nhảy tới được chỗ đó trong video ở màn ⑤ — hỏng đúng đích cuối).
+
+### Việc đã làm
+- `js/app.js` `addOrUpdateError()` — kiểm **theo đúng thứ tự trên form** để HS sửa từ trên xuống:
+  **STUDENT → TIME → TYPE → SENTENCE → MISTAKE → EXPLANATION**. TIME bắt buộc **cả MIN và SEC**
+  (đọc `.trim()` nên gõ dấu cách cũng không lọt).
+- Vì TIME nay chắc chắn có, nhánh lùi 3 giây bỏ được điều kiện `mn !== '' && sc !== ''` →
+  **mọi lỗi thêm mới đều được lùi 3s**, không còn ca lọt lưới.
+- Hàm `flashBox(el)` dùng chung (thay `flashStudentField` riêng lẻ): cuộn ô vào tầm nhìn + nháy viền
+  đỏ 1,6s. Áp cho **cả 6 mục** — TYPE nháy cả 3 nút, TIME nháy cả MIN lẫn SEC.
+- `index.html`: nhãn **TIME** và **TYPE** thêm dấu `*` đỏ (STUDENT đã có từ chặng 24) → nay cả 6
+  nhãn đều có dấu sao. Tăng **`?v=16 → 17`**.
+
+### Verify (server 8123, đăng nhập thật B1AH/germs → HOANG → Start, chạy tuần tự 7 bước)
+| Bấm Add khi | Kết quả |
+|---|---|
+| trống hoàn toàn | *"Please choose WHO made the mistake!"* — không thêm |
+| đã chọn tên, chưa có giờ | *"Please fill in the TIME (MIN and SEC) of the mistake!"* |
+| đủ giờ, chưa chọn loại | *"Please choose a TYPE!"* |
+| chưa có câu | *"Please write the SENTENCE that has the mistake!"* |
+| chưa tả lỗi | *"Please describe the MISTAKE!"* |
+| chưa giải thích | *"Please write the EXPLANATION!"* |
+| **đủ 6 mục** | **thêm được**, dòng lỗi hiện `01:17` (gõ 1:20, lùi đúng 3 giây) ✓ |
+
+Console **0 lỗi**. Đã dọn `localStorage` bài test sau khi đo.
+
+### Liên quan bên app máy tính
+Cùng buổi làm này, app máy tính lên **v0.4.3**: đếm người nộp theo **ba** trạng thái (chưa nộp /
+**nộp nhưng 0 lỗi** / đã nộp) — ca thật HOANG nộp 19/07 chỉ có bảng giờ, 0 lỗi. Xem
+`GHI CHU DU AN.md` bên `E:\LAP TRINH APP\mySpeaking`.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking Web`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.

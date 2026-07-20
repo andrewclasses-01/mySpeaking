@@ -360,14 +360,16 @@
         (on ? TYPE_ON : TYPE_OFF);   // chọn tên = KHUNG VÀNG y hệt phần TYPE
     });
   }
-  // Nháy viền đỏ khu vực chọn tên khi HS quên chọn (giống lối báo "thiếu ô giờ" lúc Submit)
-  function flashStudentField() {
-    const wrap = $('fStudentWrap');
-    if (!wrap) return;
-    wrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    wrap.classList.add('ring-2', 'ring-red-400', 'rounded-xl');
-    setTimeout(() => wrap.classList.remove('ring-2', 'ring-red-400', 'rounded-xl'), 1600);
+  // Nháy viền đỏ ô/khu vực còn thiếu (giống lối báo "thiếu ô giờ" lúc Submit).
+  // Chỉ báo bằng toast thì HS đang nhìn chỗ khác không biết thiếu mục nào.
+  function flashBox(el) {
+    if (!el) return;
+    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    el.classList.add('ring-2', 'ring-red-400', 'rounded-xl');
+    setTimeout(() => el.classList.remove('ring-2', 'ring-red-400', 'rounded-xl'), 1600);
   }
+  function flashStudentField() { flashBox($('fStudentWrap')); }
+  function flashTypeField() { document.querySelectorAll('.errType').forEach(flashBox); }
   function getWho() {
     if (!state.members.length) { const el = $('fWho'); return el ? el.value.trim() : ''; }
     return fWhoSel;
@@ -418,17 +420,27 @@
     const sentence = $('fSentence').value.trim();
     const detail = $('fDetail').value.trim();
     const explain = $('fExplain').value.trim();
-    // BẮT BUỘC chọn tên HS có lỗi (chặng 24). Trước đây bỏ trống được → 39/97 dòng thật bị rỗng,
-    // bảng "BỊ PHÁT HIỆN" của app máy tính rỗng theo ⇒ không chấm cá nhân được.
+    // BẮT BUỘC ĐỦ 6 MỤC (chặng 24-25) — kiểm theo ĐÚNG THỨ TỰ TRÊN FORM để HS sửa từ trên xuống:
+    // STUDENT → TIME → TYPE → SENTENCE → MISTAKE → EXPLANATION.
+    // Trước đây bỏ trống được → 39/97 dòng thật thiếu tên, có dòng thiếu giờ ⇒ app máy tính không
+    // ghép được lỗi với người/với mốc video.
+    const minRaw = $('fMin').value.trim();
+    const secRaw = $('fSec').value.trim();
     if (!getWho()) { toast('Please choose WHO made the mistake!', 'err'); flashStudentField(); return; }
-    if (!fType) { toast('Please choose a TYPE!', 'err'); return; }
-    if (!sentence) { toast('Please write the SENTENCE that has the mistake!', 'err'); $('fSentence').focus(); return; }
-    if (!detail) { toast('Please describe the MISTAKE!', 'err'); $('fDetail').focus(); return; }
-    if (!explain) { toast('Please write the EXPLANATION!', 'err'); $('fExplain').focus(); return; }
+    if (minRaw === '' || secRaw === '') {
+      toast('Please fill in the TIME (MIN and SEC) of the mistake!', 'err');
+      flashBox($('fMin')); flashBox($('fSec'));
+      (minRaw === '' ? $('fMin') : $('fSec')).focus();
+      return;
+    }
+    if (!fType) { toast('Please choose a TYPE!', 'err'); flashTypeField(); return; }
+    if (!sentence) { toast('Please write the SENTENCE that has the mistake!', 'err'); flashBox($('fSentence')); $('fSentence').focus(); return; }
+    if (!detail) { toast('Please describe the MISTAKE!', 'err'); flashBox($('fDetail')); $('fDetail').focus(); return; }
+    if (!explain) { toast('Please write the EXPLANATION!', 'err'); flashBox($('fExplain')); $('fExplain').focus(); return; }
 
-    let mn = $('fMin').value === '' ? '' : Math.max(0, parseInt($('fMin').value, 10) || 0);
-    let sc = $('fSec').value === '' ? '' : Math.max(0, parseInt($('fSec').value, 10) || 0);
-    if (editingIndex < 0 && mn !== '' && sc !== '') {
+    let mn = Math.max(0, parseInt(minRaw, 10) || 0);
+    let sc = Math.max(0, parseInt(secRaw, 10) || 0);
+    if (editingIndex < 0) {
       const tot = Math.max(0, mn * 60 + sc - REWIND_SEC);   // LUÔN lùi 3s khi thêm mới
       mn = Math.floor(tot / 60); sc = tot % 60;
     }
