@@ -191,11 +191,8 @@ tailwind.config = {
     </div>
   </header>
 
-  <!-- Mobile: block thường để video sticky được theo cuộn trang; Desktop: grid 2 cột chiếm hết chiều cao.
-       ⚠️ PHẢI là lg:items-stretch (KHÔNG items-start): items-start làm cột nhập liệu cao theo NỘI DUNG
-       thay vì bị khoá theo màn hình → danh sách lỗi dài bị overflow-hidden CẮT CỤT, không cuộn được
-       (bug chặng 15→26, HS không xem lại/sửa lỗi trước khi Submit được — sửa ở chặng 27). -->
-  <main class="max-w-7xl mx-auto w-full px-4 py-4 lg:py-5 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-5 lg:items-stretch lg:flex-1 lg:min-h-0 lg:overflow-hidden">
+  <!-- Mobile: block thường để video sticky được theo cuộn trang; Desktop: grid 2 cột chiếm hết chiều cao -->
+  <main class="max-w-7xl mx-auto w-full px-4 py-4 lg:py-5 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-5 lg:items-start lg:flex-1 lg:min-h-0 lg:overflow-hidden">
 
     <!-- ─── VIDEO COLUMN ─── (mobile: GHIM trên cùng khi cuộn; desktop: đứng yên trong bố cục khóa) -->
     <div class="sticky top-0 z-30 -mx-4 px-4 pt-1 pb-2 bg-slate-100 lg:static lg:z-auto lg:mx-0 lg:p-0 lg:bg-transparent lg:min-h-0 lg:overflow-y-auto">
@@ -224,9 +221,8 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- ─── INPUT COLUMN ─── (desktop: cột dọc khóa chiều cao — form đứng yên, chỉ list cuộn;
-         lg:overflow-y-auto = VAN AN TOÀN chặng 27: màn quá thấp thì cả cột cuộn được, không mất nút Add) -->
-    <div class="space-y-4 lg:min-h-0 lg:flex lg:flex-col lg:overflow-y-auto">
+    <!-- ─── INPUT COLUMN ─── (desktop: cột dọc khóa chiều cao — form đứng yên, chỉ list cuộn) -->
+    <div class="space-y-4 lg:min-h-0 lg:flex lg:flex-col">
 
       <!-- (tab bar đã bỏ chặng 12 — thời gian nói nhập ngay dưới nút tên HS trong form) -->
       <!-- MISTAKES TAB -->
@@ -290,9 +286,8 @@ tailwind.config = {
           </div>
         </div>
 
-        <!-- Mistakes list (desktop: phần DUY NHẤT được cuộn; min-h-[10rem] = SÀN chặng 27:
-             laptop màn thấp không được ép khung danh sách về 0px — thiếu chỗ thì cột cuộn bù) -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:flex-1 lg:min-h-[10rem] lg:flex lg:flex-col">
+        <!-- Mistakes list (desktop: phần DUY NHẤT được cuộn) -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
           <div class="flex items-center justify-between mb-3 lg:shrink-0">
             <h2 class="font-extrabold flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-indigo-600"></i> Mistakes found</h2>
             <div id="errStats" class="flex gap-1.5 text-xs font-bold"></div>
@@ -354,7 +349,7 @@ tailwind.config = {
 </div>
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
-<script src="config.js?v=18"></script>
-<script src="js/app.js?v=18"></script>
+<script src="config.js?v=17"></script>
+<script src="js/app.js?v=17"></script>
 </body>
 </html>

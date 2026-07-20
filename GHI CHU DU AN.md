@@ -675,8 +675,44 @@ từ chặng 21 (máy lớp không đẩy được vì lẫn tài khoản — xe
 `?v=17` chính là số hiệu chặng 25 → **bản HS đang dùng nay đã có đủ vá bắt buộc 6 mục**, không còn
 cảnh "bản live là bản cũ" như ghi chú cuối chặng 24.
 
+## CHẶNG 27 — 21/07/2026: FIX HS KHÔNG CUỘN ĐƯỢC DANH SÁCH "MISTAKES FOUND" (desktop)
+
+**HS báo cáo:** danh sách Mistakes found không cuộn được → không xem lại/sửa các lỗi trước khi Submit.
+
+### Điều tra (tái hiện thật: đăng nhập B1AH/germs, thêm 16 lỗi, đo bằng JS trong browser)
+- **Xác nhận đúng — CHỈ trên desktop ≥1024px** (máy phòng học). Điện thoại KHÔNG bị (trang cuộn thường).
+- Số đo tại 1280×800: cột nhập liệu cao **2679px** trong khi `main` chỉ 736px + `overflow-hidden`
+  → 16 lỗi chỉ **nhìn thấy 1**, lăn chuột 500px chỉ nhích 12px, lỗi cuối nằm sâu 2622px không với tới.
+- **Thủ phạm: chặng 15** đổi `lg:items-stretch` → `lg:items-start` trên `<main>` (lúc chỉnh "video cân
+  cao form"). `items-start` làm grid item KHÔNG bị khoá theo chiều cao container → cột cao theo nội dung
+  → chuỗi `min-h-0/flex-1/overflow-y-auto` bên trong mất tác dụng (không có chiều cao chặn) → main cắt cụt.
+  Test các chặng trước chỉ thêm 1-2 lỗi nên vừa màn hình, không ai phát hiện; HS thật bắt 10-20 lỗi là dính.
+- Phát hiện thêm: cả bản TRƯỚC chặng 15 cũng có điểm yếu — laptop màn thấp (~620px viewport) khung danh
+  sách bị ép còn **0px** (form 515px nuốt hết chỗ).
+
+### Sửa (chỉ index.html — 3 chỉnh class, không đụng logic; đã backup `Backup/pre-chang27/`)
+1. `<main>`: `lg:items-start` → **`lg:items-stretch`** (sửa gốc — kèm comment cảnh báo ngay trong file).
+2. Cột nhập liệu: thêm **`lg:overflow-y-auto`** (van an toàn: màn quá thấp thì cả cột cuộn, không mất nút Add).
+3. Khung Mistakes found: `lg:min-h-0` → **`lg:min-h-[10rem]`** (sàn 160px — danh sách không bao giờ về 0px;
+   dùng arbitrary value `[10rem]` cho chắc với Tailwind CDN, không dùng `min-h-40`).
+- Tăng **`?v=17 → 18`**.
+
+### Verify (server 8123, bản sửa THẬT — đăng nhập lại, autosave khôi phục đúng 16 lỗi test)
+| Màn | Kết quả |
+|---|---|
+| 1280×800 | cột khoá 696px, cuộn ăn thật, thấy 4-5 lỗi/khung, **với tới + Edit được lỗi cuối** ("Save changes" nạp đúng nội dung) |
+| 1280×620 (laptop thấp) | khung danh sách giữ sàn 158px, cột cuộn bù, lỗi cuối vẫn với tới |
+| 375×812 (điện thoại) | không đổi: trang cuộn thường, video vẫn sticky top-0 |
+
+Console **0 lỗi**. Đã dọn localStorage bài test (1 key) sau khi đo. Bẫy khi test: trình duyệt cache
+index.html cũ → phải nạp lại bằng `?cachebust=…` mới thấy bản sửa (screenshot pane vẫn timeout do iframe
+YouTube — bẫy cũ chặng 4, đo bằng JS thay thế).
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
+> **CẬP NHẬT 21/07/2026 (CHẶNG 27):** fix HS không cuộn được danh sách Mistakes found trên desktop
+> (bug ngủ từ chặng 15: `items-start` phá chuỗi khoá chiều cao). Nay **`?v=18`**. Xem CHẶNG 27.
+>
 > **CHỐT NGÀY 20/07/2026 (cuối ngày).** Web ĐANG LIVE và ĐÃ ĐỦ: `?v=17`, bắt buộc **6 mục**
 > (STUDENT · TIME · TYPE · SENTENCE · MISTAKE · EXPLANATION) khi học sinh thêm lỗi — chặng 24-25.
 > Local khớp GitHub (`ddbba6e`). Bộ não Apps Script **Phiên bản 6**.
