@@ -63,13 +63,7 @@ tailwind.config = {
   @media (min-width:1024px){
     #appScreen:not(.hidden){ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
     #tab-errors:not(.hidden){ display:flex; flex-direction:column; flex:1 1 0%; min-height:0; }
-    /* CHẶNG 29: 2 khối trắng LUÔN CAO BẰNG NHAU mọi cỡ/tỷ lệ cửa sổ — khối video bỏ tỷ lệ 16:9
-       cứng, giãn chiếm hết cột (video tự thêm viền đen trên-dưới/trái-phải như YouTube khi lệch tỷ lệ) */
-    .video-shell{ aspect-ratio:auto; flex:1 1 0%; min-height:0; }
   }
-  /* CHẶNG 29 — chế độ XEM LẠI bài đã nộp: khoá form + ẩn nút sửa/xoá từng lỗi (mở khoá qua nút Edit) */
-  #appScreen.review-locked #errFormCard{ opacity:.45; pointer-events:none; }
-  #appScreen.review-locked #errList [data-edit], #appScreen.review-locked #errList [data-del]{ display:none; }
 </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen">
@@ -99,14 +93,6 @@ tailwind.config = {
       <button id="btnLogin" class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[.98] transition text-white font-bold rounded-xl py-3 flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30">
         <i data-lucide="log-in" class="w-5 h-5"></i> Continue
       </button>
-    </div>
-
-    <!-- CHẶNG 29: bài ĐÃ NỘP trên chính thiết bị này — bấm xem lại KHÔNG cần đăng nhập -->
-    <div id="reviewSection" class="hidden mt-6 pt-5 border-t border-slate-200">
-      <div class="text-xs font-bold text-slate-500 mb-2 flex items-center gap-1.5">
-        <i data-lucide="history" class="w-4 h-4"></i> MY SUBMITTED CHECKS — TAP TO REVIEW
-      </div>
-      <div id="reviewList" class="space-y-2"></div>
     </div>
   </div>
 </div>
@@ -192,32 +178,19 @@ tailwind.config = {
     </div>
   </header>
 
-  <!-- CHẶNG 29: dải báo chế độ XEM LẠI bài đã nộp (chỉ hiện khi vào từ "My submitted checks") -->
-  <div id="reviewBanner" class="hidden bg-emerald-50 border-b border-emerald-200 lg:shrink-0">
-    <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center gap-2">
-      <span class="text-sm font-semibold text-emerald-800 flex items-center gap-1.5 mr-auto">
-        <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i> This check was submitted — you are viewing it.
-      </span>
-      <button id="btnEditAgain" class="bg-white border border-emerald-300 hover:bg-emerald-100 transition rounded-xl px-3.5 py-1.5 text-sm font-bold text-emerald-800 flex items-center gap-1.5">
-        <i data-lucide="pencil" class="w-4 h-4"></i> Edit &amp; submit again
-      </button>
-    </div>
-  </div>
-
   <!-- Mobile: block thường để video sticky được theo cuộn trang; Desktop: grid 2 cột chiếm hết chiều cao.
        ⚠️ PHẢI là lg:items-stretch (KHÔNG items-start): items-start làm cột nhập liệu cao theo NỘI DUNG
        thay vì bị khoá theo màn hình → danh sách lỗi dài bị overflow-hidden CẮT CỤT, không cuộn được
        (bug chặng 15→26, HS không xem lại/sửa lỗi trước khi Submit được — sửa ở chặng 27). -->
   <main class="max-w-7xl mx-auto w-full px-4 py-4 lg:py-5 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-5 lg:items-stretch lg:flex-1 lg:min-h-0 lg:overflow-hidden">
 
-    <!-- ─── VIDEO COLUMN ─── (mobile: GHIM trên cùng khi cuộn; desktop: đứng yên trong bố cục khóa.
-         CHẶNG 29: cột + thẻ video thành flex dọc giãn hết chiều cao → khối video CAO BẰNG khối check lỗi) -->
-    <div class="sticky top-0 z-30 -mx-4 px-4 pt-1 pb-2 bg-slate-100 lg:static lg:z-auto lg:mx-0 lg:p-0 lg:bg-transparent lg:min-h-0 lg:overflow-y-auto lg:flex lg:flex-col">
-      <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+    <!-- ─── VIDEO COLUMN ─── (mobile: GHIM trên cùng khi cuộn; desktop: đứng yên trong bố cục khóa) -->
+    <div class="sticky top-0 z-30 -mx-4 px-4 pt-1 pb-2 bg-slate-100 lg:static lg:z-auto lg:mx-0 lg:p-0 lg:bg-transparent lg:min-h-0 lg:overflow-y-auto">
+      <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5">
         <div class="video-shell rounded-2xl overflow-hidden" id="videoContainer"></div>
 
         <!-- Always-visible player bar (custom — NEVER auto-hides, unlike native video controls) -->
-        <div id="videoCtrl" class="hidden mt-6 items-center gap-3.5 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-4 lg:shrink-0">
+        <div id="videoCtrl" class="hidden mt-6 items-center gap-3.5 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-4">
           <button id="vcPlay" class="w-14 h-14 shrink-0 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white flex items-center justify-center shadow-lg shadow-indigo-600/30">
             <i data-lucide="play" class="w-6 h-6 pointer-events-none"></i>
           </button>
@@ -228,13 +201,13 @@ tailwind.config = {
 
         <!-- Backup slider (chỉ hiện khi Drive KHÔNG phát trực tiếp được): kéo cho khớp giờ trên video Drive rồi bấm SET TIME.
              Không play/pause, không chữ hướng dẫn — thanh XANH DƯƠNG, nút mốc TO gấp đôi. -->
-        <div id="stopwatchWrap" class="hidden mt-6 items-center gap-3.5 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-4 lg:shrink-0">
+        <div id="stopwatchWrap" class="hidden mt-6 items-center gap-3.5 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-4">
           <span id="swCur" class="font-mono text-lg font-bold text-slate-900 tabular-nums shrink-0 w-14 text-center">0:00</span>
           <input id="swSeek" type="range" min="0" max="900" value="0" class="flex-1 min-w-0 cursor-pointer">
           <button id="swSet" class="shrink-0 bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white rounded-xl px-4 py-2.5 font-bold text-sm shadow shadow-indigo-600/30">SET TIME</button>
         </div>
 
-        <div id="videoStatus" class="mt-6 text-sm text-slate-600 flex items-center gap-1.5 flex-wrap lg:shrink-0"></div>
+        <div id="videoStatus" class="mt-6 text-sm text-slate-600 flex items-center gap-1.5 flex-wrap"></div>
       </div>
     </div>
 
@@ -245,7 +218,7 @@ tailwind.config = {
       <!-- (tab bar đã bỏ chặng 12 — thời gian nói nhập ngay dưới nút tên HS trong form) -->
       <!-- MISTAKES TAB -->
       <div id="tab-errors" class="space-y-4">
-        <div id="errFormCard" class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:shrink-0">
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:shrink-0">
           <!-- STUDENT trên cùng (nút tên + thời gian nói dưới mỗi tên) -->
           <div class="mb-3">
             <label class="block text-xs font-bold text-slate-500 mb-1">STUDENT <span class="text-rose-500">*</span></label>
@@ -355,21 +328,6 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- CHẶNG 29: xác nhận MỞ KHOÁ sửa bài đã nộp -->
-<div id="editAgainModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop text-center">
-    <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
-      <i data-lucide="pencil" class="w-6 h-6 text-amber-500"></i>
-    </div>
-    <p class="text-slate-700 font-semibold mb-1 leading-relaxed">Are you sure you want to edit and submit this check again?</p>
-    <p class="text-xs text-slate-500 mb-4 leading-relaxed">Teacher Andrew already received your check. If you edit it, remember to press <b>Submit</b> again when you finish.</p>
-    <div class="flex gap-2">
-      <button id="btnEditAgainCancel" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">Keep viewing</button>
-      <button id="btnEditAgainOk" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl py-2.5 font-bold text-sm">Yes, edit</button>
-    </div>
-  </div>
-</div>
-
 <!-- Submit confirmation modal -->
 <div id="submitModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop">
@@ -383,7 +341,7 @@ tailwind.config = {
 </div>
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
-<script src="config.js?v=20"></script>
-<script src="js/app.js?v=20"></script>
+<script src="config.js?v=19"></script>
+<script src="js/app.js?v=19"></script>
 </body>
 </html>

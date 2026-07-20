@@ -732,11 +732,56 @@ Tab title đúng · favicon nhận · logo login + header load thật (naturalWi
 `text` hoạt động · đăng nhập B1AH/germs → app mở, header "Speaking in Andrew Classes" + topic GERMS ·
 console **0 lỗi**. (Screenshot pane vẫn timeout — đo bằng JS.)
 
+## CHẶNG 29 — 21/07/2026: 2 KHỐI CAO BẰNG NHAU + XEM LẠI BÀI ĐÃ NỘP KHÔNG CẦN ĐĂNG NHẬP
+
+**Thầy yêu cầu:** (1) khối video và khối check lỗi LUÔN cao bằng nhau mọi cỡ/tỷ lệ cửa sổ, màn hẹp
+thì check lỗi xuống dưới video; (2) HS sau khi Submit vẫn xem lại bài được, hoàn toàn không đăng nhập.
+**Thầy chốt (AskUserQuestion):** xem lại = CÙNG THIẾT BỊ (localStorage, không đụng máy chủ) · được
+SỬA + GỬI LẠI nhưng phải qua pop-up xác nhận khi bấm nút sửa.
+
+### 1. Hai khối cao bằng nhau (desktop ≥1024px; mobile giữ nguyên xếp chồng + video 16:9 sticky)
+- Cột video + thẻ trắng video thành flex dọc giãn hết chiều cao cột (`lg:flex lg:flex-col` +
+  `lg:flex-1 lg:min-h-0`); `.video-shell` ở ≥1024px **bỏ `aspect-ratio:16/9` cứng** → `flex:1` chiếm
+  chỗ còn lại, video tự thêm viền đen khi lệch tỷ lệ (như YouTube). `#videoCtrl`/`#stopwatchWrap`/
+  `#videoStatus` thêm `lg:shrink-0` ghim dưới đáy thẻ.
+- Đo thật: 1280×800 → **696=696** · 1280×620 → **516=516** · 1050×900 → **796=796** · 375×812 →
+  16:9 giữ nguyên, check lỗi nằm dưới video, sticky sống.
+
+### 2. Xem lại bài đã nộp (cùng thiết bị, không đăng nhập)
+- Nền sẵn có: sau Submit bài VẪN nằm trong localStorage kèm cờ `submitted` — chỉ cần cửa xem lại.
+- `js/app.js`: autosave thêm `savedAt`; submit thêm cờ `wasSubmitted` (giữ bài trong danh sách kể cả
+  khi mở khoá sửa mà chưa gửi lại); `submittedSaves()` quét key `myspeaking_*`; `renderReviewSection()`
+  vẽ mục **MY SUBMITTED CHECKS** dưới nút Continue (tối đa 6 bài, mới nhất trước: topic · ngày ·
+  tên · đội · số lỗi); `openReview(key)` dựng lại toàn bộ app từ state đã lưu (video YouTube phát
+  bình thường, KHÔNG cần server/config) rồi `setReviewLock(true)`.
+- **Chế độ khoá xem**: dải banner xanh "This check was submitted — you are viewing it" + nút
+  **Edit & submit again**; form mờ + không bấm được (CSS `.review-locked` → `#errFormCard`
+  pointer-events none), nút sửa/xoá từng lỗi ẨN, nút Submit ẨN; video + danh sách + Export vẫn dùng.
+- **Mở khoá** = modal `#editAgainModal` "Are you sure you want to edit and submit this check again?"
+  (thầy chốt phải hỏi) → Yes: mở khoá + `state.submitted=false` (để cảnh báo rời trang hoạt động;
+  `wasSubmitted` giữ bài trong danh sách) + toast nhắc Submit lại. Cancel = tiếp tục xem.
+- `start()` (đăng nhập thường): khôi phục thêm `wasSubmitted` (không thì autosave xoá cờ → bài biến
+  mất khỏi danh sách) + `setReviewLock(false)`.
+- Guard: `addOrUpdateError()` chặn khi `reviewLocked` (dù pointer-events đã chặn sẵn).
+
+### Verify (server 8123, đủ luồng; KHÔNG submit thật — giả lập cờ submitted qua localStorage)
+| Kiểm | Kết quả |
+|---|---|
+| Thêm 3 lỗi + đánh dấu submitted → reload | login hiện "GERMS · 21/07 · HOANG · TEAM 1 checked TEAM 2 · 3 mistakes" |
+| Bấm bài → chế độ xem | banner ✓ Submit ẩn ✓ form mờ-khoá ✓ sửa/xoá ẩn ✓ 3 lỗi + video hiện ✓ |
+| Edit & submit again | modal hiện đúng chữ; **Cancel giữ khoá**; Yes → mở khoá trọn (banner mất, Submit về, form sống) |
+| Mở khoá xong chưa gửi lại → reload | bài **VẪN trong danh sách** (wasSubmitted) ✓ |
+| Đăng nhập đường thường | vẫn chạy, không khoá, khôi phục 3 lỗi ✓ |
+
+Console **0 lỗi**. Đã dọn localStorage test. Tăng **`?v=19 → 20`**.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
-> **CẬP NHẬT 21/07/2026 (CHẶNG 27-28):** fix HS không cuộn được danh sách Mistakes found trên desktop
+> **CẬP NHẬT 21/07/2026 (CHẶNG 27-29):** fix HS không cuộn được danh sách Mistakes found trên desktop
 > (bug ngủ từ chặng 15: `items-start` phá chuỗi khoá chiều cao) + **đổi tên site "Speaking in Andrew
-> Classes" + logo chibi mới `img/logo-site.png` + favicon**. Nay **`?v=19`**. Xem CHẶNG 27-28.
+> Classes" + logo chibi mới `img/logo-site.png` + favicon** + **2 khối video/check lỗi LUÔN cao bằng
+> nhau** + **XEM LẠI BÀI ĐÃ NỘP không cần đăng nhập (cùng thiết bị, sửa/gửi lại phải xác nhận)**.
+> Nay **`?v=20`**. Xem CHẶNG 27-29.
 >
 > **CHỐT NGÀY 20/07/2026 (cuối ngày).** Web ĐANG LIVE và ĐÃ ĐỦ: `?v=17`, bắt buộc **6 mục**
 > (STUDENT · TIME · TYPE · SENTENCE · MISTAKE · EXPLANATION) khi học sinh thêm lỗi — chặng 24-25.

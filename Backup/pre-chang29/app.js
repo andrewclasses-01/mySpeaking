@@ -25,7 +25,6 @@
     errors: [],   // {min, sec, section, who, type, sentence, detail, explain}  (type = Grammar/Pronunciation/Information)
     timers: [],   // {name, sMin, sSec, eMin, eSec}
     submitted: false,
-    wasSubmitted: false,   // CHẶNG 29: đã từng nộp ít nhất 1 lần (giữ bài trong "My submitted checks" kể cả khi đang mở khoá sửa)
   };
   let editingIndex = -1;
   let fType = '';
@@ -38,7 +37,6 @@
   function autosave() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      state.savedAt = new Date().toISOString();   // CHẶNG 29: mốc lưu — xếp danh sách "bài đã nộp"
       try { localStorage.setItem(saveKey, JSON.stringify(state)); } catch (e) {}
     }, 300);
   }
@@ -419,7 +417,6 @@
   // KHÔNG lùi khi SỬA lỗi cũ (mốc đã được lùi từ lần thêm rồi).
   const REWIND_SEC = 3;
   function addOrUpdateError() {
-    if (reviewLocked) return;   // CHẶNG 29: đang XEM bài đã nộp — muốn sửa phải bấm "Edit & submit again"
     const sentence = $('fSentence').value.trim();
     const detail = $('fDetail').value.trim();
     const explain = $('fExplain').value.trim();
@@ -615,7 +612,6 @@
       const out = await res.json();
       if (!out.ok) throw new Error(out.error || 'unknown');
       state.submitted = true;
-      state.wasSubmitted = true;   // CHẶNG 29: cờ ĐÃ TỪNG NỘP — giữ bài trong "My submitted checks" kể cả khi mở khoá sửa
       autosave();
       toast('🎉 Submitted successfully! Thank you.');
     } catch (e) {
@@ -807,10 +803,8 @@
       state.errors = saved.errors || [];
       savedTimers = saved.timers;
       state.submitted = !!saved.submitted;
-      state.wasSubmitted = !!(saved.wasSubmitted || saved.submitted);   // CHẶNG 29: giữ bài trong "My submitted checks"
       if (state.errors.length) toast('Restored ' + state.errors.length + ' mistakes you logged earlier ✓', 'info');
     }
-    setReviewLock(false);   // vào theo đường đăng nhập = chế độ làm bài bình thường
 
     // dựng UI chính
     // Nút người chấm: "HOANG · T1" (tên · đội của người chấm) — bỏ icon, cỡ = nút Export
@@ -831,104 +825,11 @@
 
   // (switchTab đã bỏ chặng 12 — chỉ còn một khối Mistakes, thời gian nói nằm trong form)
 
-  // ═══════════════ CHẶNG 29 — XEM LẠI BÀI ĐÃ NỘP (không cần đăng nhập, cùng thiết bị) ═══════════════
-  // Bài đã Submit vẫn nằm nguyên trong localStorage (cờ submitted/wasSubmitted). Màn đăng nhập liệt kê
-  // các bài đó → bấm mở CHẾ ĐỘ XEM (khoá form, ẩn sửa/xoá, ẩn Submit). Muốn sửa phải bấm
-  // "Edit & submit again" và XÁC NHẬN qua modal (thầy chốt) — mở khoá xong nhớ Submit lại.
-  let reviewLocked = false;
-
-  function submittedSaves() {
-    const out = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k || k.indexOf('myspeaking_') !== 0) continue;
-      try {
-        const s = JSON.parse(localStorage.getItem(k));
-        if (s && (s.submitted || s.wasSubmitted) && s.student) out.push({ key: k, s: s });
-      } catch (e) {}
-    }
-    out.sort((a, b) => String(b.s.savedAt || '').localeCompare(String(a.s.savedAt || '')));
-    return out;
-  }
-
-  function renderReviewSection() {
-    const list = submittedSaves();
-    const sec = $('reviewSection');
-    if (!list.length) { sec.classList.add('hidden'); return; }
-    $('reviewList').innerHTML = list.slice(0, 6).map(({ key, s }) => {
-      const d = s.savedAt ? new Date(s.savedAt) : null;
-      const when = d ? String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') : '';
-      return '<button data-review="' + escapeHtml(key) + '" class="w-full text-left rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 transition px-3.5 py-2.5">' +
-        '<div class="flex items-center gap-2">' +
-        '<span class="font-bold text-sm text-slate-800 truncate">' + escapeHtml(s.topic || s.lesson || 'Speaking check') + '</span>' +
-        '<span class="ml-auto text-[11px] font-bold text-slate-400 shrink-0">' + when + '</span></div>' +
-        '<div class="text-xs text-slate-500 mt-0.5">' + escapeHtml(s.student) + ' · ' + escapeHtml(s.myTeam || '') +
-        ' checked ' + escapeHtml(s.checkedTeam || '') + ' · ' + (s.errors || []).length + ' mistakes</div>' +
-        '</button>';
-    }).join('');
-    sec.classList.remove('hidden');
-    refreshIcons();
-  }
-
-  function openReview(key) {
-    let saved = null;
-    try { saved = JSON.parse(localStorage.getItem(key)); } catch (e) {}
-    if (!saved || !saved.student) { toast('Cannot open this saved check.', 'err'); return; }
-    saveKey = key;
-    state.student = saved.student || ''; state.myTeam = saved.myTeam || '';
-    state.className = saved.className || ''; state.classCode = saved.classCode || '';
-    state.lesson = saved.lesson || ''; state.topic = saved.topic || '';
-    state.checkedTeam = saved.checkedTeam || '';
-    state.members = saved.members || [];
-    state.videoUrl = saved.videoUrl || ''; state.videoId = saved.videoId || '';
-    state.errors = saved.errors || [];
-    state.submitted = !!saved.submitted;
-    state.wasSubmitted = !!(saved.wasSubmitted || saved.submitted);
-
-    // dựng UI y hệt start() nhưng từ dữ liệu đã lưu — video YouTube phát bình thường, không cần server
-    const myTeamNo = String(state.myTeam || '').replace(/[^0-9]/g, '');
-    $('hdStudent').textContent = state.student + (myTeamNo ? ' · T' + myTeamNo : '');
-    $('hdTopic').textContent = state.topic || '';
-    initTimers(saved.timers);
-    buildStudentField();
-    renderErrors();
-    initVideo();
-    setReviewLock(true);
-
-    $('loginScreen').classList.add('hidden');
-    $('appScreen').classList.remove('hidden');
-    refreshIcons();
-  }
-
-  function setReviewLock(on) {
-    reviewLocked = on;
-    $('appScreen').classList.toggle('review-locked', on);
-    $('reviewBanner').classList.toggle('hidden', !on);
-    $('btnSubmit').classList.toggle('hidden', on);
-  }
-  function hideEditAgainModal() { $('editAgainModal').classList.add('hidden'); $('editAgainModal').classList.remove('flex'); }
-
   // ─── Gắn sự kiện ───
   document.addEventListener('DOMContentLoaded', async () => {
     refreshIcons();
     await loadClasses();
     initLoginScreen();
-
-    // CHẶNG 29: danh sách bài đã nộp trên thiết bị này (xem lại không cần đăng nhập)
-    renderReviewSection();
-    $('reviewList').addEventListener('click', (ev) => {
-      const b = ev.target.closest('[data-review]');
-      if (b) openReview(b.dataset.review);
-    });
-    $('btnEditAgain').addEventListener('click', () => { $('editAgainModal').classList.remove('hidden'); $('editAgainModal').classList.add('flex'); });
-    $('btnEditAgainCancel').addEventListener('click', hideEditAgainModal);
-    $('btnEditAgainOk').addEventListener('click', () => {
-      hideEditAgainModal();
-      setReviewLock(false);
-      state.submitted = false;   // để cảnh báo rời trang + tóm tắt Submit hoạt động đúng; wasSubmitted vẫn giữ bài trong danh sách
-      autosave();
-      toast('You can edit now — press Submit again when you finish!', 'info');
-    });
 
     // Màn đăng nhập lớp
     $('btnLogin').addEventListener('click', handleLogin);
