@@ -541,6 +541,35 @@ cũ** (ổ D: là mirror, 2 máy).
 - Bài học chung: **ổ D: là Drive mirror → file app vừa ghi có thể bị bản từ máy kia đè lại.** Trước
   khi đẩy bài nên liếc lại tên thành viên trong bảng xem trước của app.
 
+## CHẶNG 23 — 20/07/2026 (chiều): PHIÊN BẢN 6 — BẢO VỆ KHO DỮ LIỆU 3 LỚP
+
+**Thầy chốt:** kho `mySpeaking Data` chỉ được ghi thêm từ app + web, **không sửa tay**; cần dữ liệu
+cho việc khác thì **trích ra file khác trong thư mục lesson** rồi mới làm.
+
+⚠️ **Nói thẳng giới hạn:** thầy là **chủ sở hữu** file nên Google không cho khoá cứng chính chủ.
+Bảo vệ = 3 lớp thực tế, đã deploy **Phiên bản 6** (ID triển khai giữ nguyên):
+1. **Khoá cảnh báo** (`protect().setWarningOnly(true)`) mọi sheet → mở ra gõ là hiện cảnh báo đỏ.
+   **Cố ý không chặn cứng**: chặn cứng sẽ chặn luôn bài nộp học sinh (script ghi cũng dưới danh
+   nghĩa thầy).
+2. **Nhật ký sửa tay** — trigger `onEdit` ghi sheet `AUDIT (nhat ky sua tay)` của chính file đó.
+   Trigger cài đặt **không nổ khi script ghi** ⇒ **hễ có dòng AUDIT là chắc chắn người sửa tay**.
+3. **Mã kiểm tra** — `adminResults` trả kèm `luc`, `checksum`, `soDongLoi`, `soDongTime`,
+   `dsSubmission`, `suaTay`; app ghi vào sheet **NGUON** của file trích để về sau đối chiếu.
+
+**Lệnh quản trị mới:** `action:'baove'` (= `baoVeKho()`), idempotent.
+
+**⏳ CÒN CHỜ THẦY ỦY QUYỀN:** lớp 1+2 cần quyền tạo trigger → thầy mở project Apps Script, chọn hàm
+**`baoVeKho`**, bấm **Chạy**, *Xem lại quyền* → *Cho phép*. Claude không tự bấm màn hình ủy quyền
+Google. **Lớp 3 đã chạy** (đo thật: `checksum=20146b86caf49501`, `suaTay=0`).
+
+**Đã kiểm sau deploy:** `?config=1` vẫn đúng 2 lớp B1AH + B2B → học sinh không gián đoạn.
+
+### ⏳ VIỆC NÊN LÀM BÊN WEB (phát hiện khi làm màn ④)
+**Bắt buộc chọn "HS có lỗi" trước khi Add.** Hiện web KHÔNG bắt buộc → **39/97 dòng bỏ trống**
+(TIEN trống cả 24 dòng, DIEM MY trống 15). Bảng "BỊ PHÁT HIỆN" rỗng thì **chấm cá nhân vô nghĩa**.
+App đã có đường cứu (suy tên theo khoảng giờ nói, cứu 38/39 dòng) nhưng vá tận gốc vẫn hơn.
+Sửa xong nhớ **tăng `?v=` trong index.html**.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 **Đọc TRƯỚC:** file này + CLAUDE.md trong `D:\APP AND DATA\mySpeaking Web`. Bức tranh lớn = chặng 5; mô hình web = chặng 6-7; màn bắt lỗi = chặng 10→16; hạ tầng live = chặng 14; **KHUNG DỮ LIỆU MỚI + hạ tầng hiện tại = CHẶNG 17 (đọc kỹ, thay mọi mô tả cũ về "Drive API/1 Sheet phẳng")**.
