@@ -708,10 +708,35 @@ Console **0 lỗi**. Đã dọn localStorage bài test (1 key) sau khi đo. Bẫ
 index.html cũ → phải nạp lại bằng `?cachebust=…` mới thấy bản sửa (screenshot pane vẫn timeout do iframe
 YouTube — bẫy cũ chặng 4, đo bằng JS thay thế).
 
+## CHẶNG 28 — 21/07/2026: ĐỔI TÊN SITE "Speaking in Andrew Classes" + LOGO MỚI
+
+**Thầy yêu cầu:** đổi tên site thành "Speaking in Andrew Classes" + logo đẹp, hiện đại, đơn giản.
+Em đề xuất 3 mẫu logo SVG vẽ tay (bong bóng+sóng âm / micro / 2 đội trò chuyện) — **thầy chốt dùng
+ảnh chibi riêng** `D:\OTHERS\OTHERS\AVATAR\OK CHIBI - TRON.png` + kiểu chữ "Speaking" gradient.
+
+### Việc đã làm (chỉ index.html + 1 ảnh mới; backup `Backup/pre-chang28/`)
+- Ảnh gốc 1024px/1.9MB → thu **`img/logo-site.png` 256px/111KB** (PowerShell System.Drawing,
+  HighQualityBicubic, giữ nền trong suốt). File cũ `img/logo-chibi.png` không còn chỗ nào dùng
+  (đã grep) — giữ lại trong repo cho lành.
+- `<title>` → **Speaking in Andrew Classes** + thêm **favicon** (`link rel="icon"` = logo-site.png).
+- **Thẻ đăng nhập**: bỏ SVG bảng-biểu-đồ cũ → ảnh chibi tròn w-14 + chữ **"Speaking"** tô gradient
+  tím-hồng (`bg-clip-text text-transparent`, from-indigo-600 via-purple-600 to-fuchsia-600) +
+  dòng nhỏ "in Andrew Classes".
+- **Header app**: logo → logo-site.png, chữ "ANDREW CLASSES" → **"Speaking in Andrew Classes"**
+  (giữ ring trắng + hdTopic + hành vi bấm-logo-về-trang-chủ nguyên vẹn).
+- ⚠️ KHÔNG đụng: tên file Excel export `SPEAKING CHECK...` + mọi chuỗi dữ liệu (quy ước khung dữ liệu).
+- Tăng **`?v=18 → 19`**.
+
+### Verify (server 8123, cachebust)
+Tab title đúng · favicon nhận · logo login + header load thật (naturalWidth 256) · gradient clip
+`text` hoạt động · đăng nhập B1AH/germs → app mở, header "Speaking in Andrew Classes" + topic GERMS ·
+console **0 lỗi**. (Screenshot pane vẫn timeout — đo bằng JS.)
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
-> **CẬP NHẬT 21/07/2026 (CHẶNG 27):** fix HS không cuộn được danh sách Mistakes found trên desktop
-> (bug ngủ từ chặng 15: `items-start` phá chuỗi khoá chiều cao). Nay **`?v=18`**. Xem CHẶNG 27.
+> **CẬP NHẬT 21/07/2026 (CHẶNG 27-28):** fix HS không cuộn được danh sách Mistakes found trên desktop
+> (bug ngủ từ chặng 15: `items-start` phá chuỗi khoá chiều cao) + **đổi tên site "Speaking in Andrew
+> Classes" + logo chibi mới `img/logo-site.png` + favicon**. Nay **`?v=19`**. Xem CHẶNG 27-28.
 >
 > **CHỐT NGÀY 20/07/2026 (cuối ngày).** Web ĐANG LIVE và ĐÃ ĐỦ: `?v=17`, bắt buộc **6 mục**
 > (STUDENT · TIME · TYPE · SENTENCE · MISTAKE · EXPLANATION) khi học sinh thêm lỗi — chặng 24-25.

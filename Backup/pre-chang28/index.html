@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Speaking in Andrew Classes</title>
-<link rel="icon" type="image/png" href="img/logo-site.png">
+<title>SPEAKING TEAM CHECK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -71,13 +70,27 @@ tailwind.config = {
 <!-- ══════════ SCREEN 1 — CLASS LOGIN ══════════ -->
 <div id="loginScreen" class="fixed inset-0 z-50 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 flex items-center justify-center p-4 overflow-y-auto">
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 pop my-8">
-    <!-- Logo site = ảnh chibi thầy chọn (img/logo-site.png, 256px thu từ bản gốc AVATAR\OK CHIBI - TRON.png).
-         Tên site "Speaking in Andrew Classes": chữ Speaking tô gradient tím-hồng (thầy chốt chặng 28) -->
     <div class="flex items-center gap-3 mb-1">
-      <img src="img/logo-site.png" alt="Speaking in Andrew Classes" class="w-14 h-14 rounded-full shadow shrink-0">
+      <svg viewBox="0 0 512 512" class="w-14 h-14 shrink-0" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="256" cy="256" r="256" fill="#5b62e6"/>
+        <path d="M188 300 L120 430" stroke="#ffb92e" stroke-width="26" stroke-linecap="round"/>
+        <path d="M324 300 L392 430" stroke="#ffb92e" stroke-width="26" stroke-linecap="round"/>
+        <path d="M256 300 L256 448" stroke="#ffcf4d" stroke-width="26" stroke-linecap="round"/>
+        <rect x="250" y="78" width="12" height="52" rx="4" fill="#ffcf4d"/>
+        <path d="M262 84 L300 96 L262 112 Z" fill="#ffb92e"/>
+        <rect x="104" y="120" width="304" height="196" rx="10" fill="#ffffff"/>
+        <path d="M104 130 a10 10 0 0 1 10 -10 h142 v56 h-152 z" fill="#bfe0ff"/>
+        <path d="M256 120 h142 a10 10 0 0 1 10 10 v46 h-152 z" fill="#8fc7ff"/>
+        <rect x="256" y="176" width="152" height="140" fill="#eef1f6"/>
+        <rect x="140" y="252" width="30" height="52" rx="3" fill="#ffc93c"/>
+        <rect x="185" y="222" width="30" height="82" rx="3" fill="#ff9f2e"/>
+        <rect x="230" y="196" width="30" height="108" rx="3" fill="#ff5a3c"/>
+        <rect x="292" y="212" width="82" height="24" rx="6" fill="#c2c9d4"/>
+        <rect x="292" y="256" width="82" height="24" rx="6" fill="#c2c9d4"/>
+      </svg>
       <div>
-        <h1 class="text-2xl font-extrabold leading-tight bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 bg-clip-text text-transparent">Speaking</h1>
-        <p class="text-sm text-slate-500 font-medium">in Andrew Classes</p>
+        <h1 class="text-xl font-extrabold text-slate-900 leading-tight">ANDREW CLASSES</h1>
+        <p class="text-sm text-slate-500">Speaking Team Check</p>
       </div>
     </div>
 
@@ -158,9 +171,9 @@ tailwind.config = {
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
       <!-- Bấm logo = về trang chủ đăng nhập lại (có pop-up hỏi nếu còn dữ liệu chưa submit) -->
       <button id="btnHome" class="flex items-center gap-2.5 mr-auto text-left hover:opacity-90 active:scale-[.98] transition">
-        <img src="img/logo-site.png" alt="Speaking in Andrew Classes" class="w-10 h-10 rounded-full ring-2 ring-white/50 shadow shrink-0">
+        <img src="img/logo-chibi.png" alt="Andrew Classes" class="w-10 h-10 rounded-full ring-2 ring-white/50 shadow shrink-0">
         <div>
-          <div class="font-extrabold leading-tight">Speaking in Andrew Classes</div>
+          <div class="font-extrabold leading-tight">ANDREW CLASSES</div>
           <div id="hdTopic" class="text-xs text-indigo-100"></div>
         </div>
       </button>
@@ -341,7 +354,7 @@ tailwind.config = {
 </div>
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
-<script src="config.js?v=19"></script>
-<script src="js/app.js?v=19"></script>
+<script src="config.js?v=18"></script>
+<script src="js/app.js?v=18"></script>
 </body>
 </html>

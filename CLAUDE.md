@@ -10,6 +10,8 @@
 ## Mục đích
 App web tĩnh (GitHub Pages) cho học sinh xem video thuyết trình speaking của đội bạn và **bắt lỗi** (Grammar / Pronunciation / Information) + ghi **thời gian nói** của từng bạn. Dữ liệu nộp về Google Sheet của thầy, đồng thời có nút xuất file Excel đúng mẫu `SPEAKING TEAM CHECK FORM.xlsx` (2 sheet TIMER + FORM).
 
+**Tên site (chặng 28, 21/07/2026): "Speaking in Andrew Classes"** — title tab + thẻ đăng nhập ("Speaking" gradient tím-hồng + dòng nhỏ "in Andrew Classes") + header app. **Logo = `img/logo-site.png`** (ảnh chibi thầy chọn, 256px thu từ `D:\OTHERS\OTHERS\AVATAR\OK CHIBI - TRON.png`, kiêm favicon). Đổi tên/logo KHÔNG đụng chuỗi dữ liệu (tên file Excel export, sheet names — vẫn SPEAKING CHECK/TIMER/FORM).
+
 ## Ngôn ngữ giao diện (QUAN TRỌNG)
 - **Toàn bộ UI là TIẾNG ANH, mặc định chỉ tiếng Anh** (từ chặng 4, 18/07/2026). `<html lang="en">`, mọi nhãn/nút/placeholder/toast/prompt tiếng Anh.
 - **Tách biệt HIỂN THỊ vs DỮ LIỆU**: loại lỗi hiển thị tiếng Anh (Grammar / Pronunciation / Information) nhưng **giá trị lưu + xuất Excel giữ tiếng Việt** (`NGỮ PHÁP / PHÁT ÂM / THÔNG TIN`) để khớp 100% file mẫu và dropdown validation cột E. Bản đồ này ở `js/app.js`: `TYPE_LABEL` + hàm `typeLabel()` (button giữ `data-type` tiếng Việt, chỉ đổi text hiển thị).
