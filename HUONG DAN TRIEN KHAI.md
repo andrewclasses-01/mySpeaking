@@ -20,7 +20,8 @@
 > Đây là chỗ **rất dễ quên**: sửa file `apps-script/Code.gs` trong kho rồi push GitHub **KHÔNG làm
 > gì cả** — Google vẫn chạy bản cũ. Phải dán code lên script.google.com **và** bấm deploy phiên bản
 > mới thì học sinh mới được dùng bản mới.
-> (Ghi ngày 21/07/2026 — lúc này `Code.gs` đang có bản sửa của CHẶNG 31 **chưa deploy**.)
+> (Ghi ngày 21/07/2026. ✅ Đêm 21/07: bản chặng 31+32 **ĐÃ deploy — Phiên bản 7**, làm tự động
+> qua Chrome; hướng dẫn dưới đây giữ cho các lần sau.)
 
 **Chuẩn bị:** đăng nhập Google bằng tài khoản **namdaptrai01@gmail.com** (đúng tài khoản, không thì
 không thấy project).

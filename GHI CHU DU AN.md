@@ -1009,12 +1009,18 @@ sang trang tích cam kết · nút back icon thay chữ "That's not me — choos
 Bẫy gặp lại: `computer screenshot` treo trên trang này (đã ghi từ chặng 1) → verify bằng
 `read_page` + `javascript_tool`.
 
-### ⚠️ VIỆC CÒN CHỜ SAU CHẶNG NÀY
-- **DEPLOY `Code.gs` phiên bản mới** (gộp chung chặng 31 + 32 — MỘT lần deploy). Trước khi deploy:
-  (A) không kéo được bài (web tự bỏ qua, không hỏng gì), (B) không cảnh báo. Làm theo mục
-  "⭐ SỬA Code.gs XONG THÌ PHẢI DEPLOY" trong `HUONG DAN TRIEN KHAI.md`; xong chạy `?check=1` và
-  thử `?mine=1&classCode=B1AH&lesson=GERMS&student=HOANG` (phải thấy errors của HOANG).
-- Web đã push live `?v=22` — chạy được NGAY cả khi chưa deploy (tương thích ngược, đã test).
+### ✅ ĐÃ DEPLOY TRỌN — **Phiên bản 7** (13:55 21/07/2026, gộp chặng 31 + 32, ID triển khai GIỮ NGUYÊN)
+Em tự deploy qua Claude in Chrome (thầy cho phép trước khi ngủ): mở project mySpeaking trên
+script.google.com → **nạp code qua Monaco API** (`monaco.editor.getModels()[0].setValue(...)`,
+code fetch từ raw.githubusercontent của chính repo — KHỎI gõ tay 36KB) → Ctrl+S → Triển khai →
+Quản lý → **Edit bản đang chạy → Phiên bản mới** (KHÔNG New deployment) → Deploy.
+- Kiểm sau deploy (đều ĐẠT): `?check=1` thấy đủ 8 lớp/12 dòng LESSONS/8 file kết quả ·
+  `?mine=1&classCode=B1AH&lesson=GERMS&student=HOANG` trả đúng lỗi thật của HOANG ·
+  **LIVE end-to-end**: máy trắng vào site thật đăng nhập HOANG → **13 lỗi thật tự quay về form**,
+  khoá xem + banner, tiêu đề CLASS, back icon. Live đang phục vụ `?v=22`.
+- ⭐ Bài học deploy tự động: Monaco lộ global `monaco` trên editor Apps Script → setValue nạp cả
+  file trong 1 nhịp; fetch raw.githubusercontent từ trang đó KHÔNG bị CSP chặn. Nút "Triển khai"
+  góc phải trên → menu 3 mục, chọn mục GIỮA (Quản lý các tùy chọn triển khai).
 
 ## TIẾP TỤC CÔNG VIỆC Ở MÁY KHÁC / SESSION MỚI
 1. **Thư mục app tự chứa đủ mọi thứ** (D:\ đồng bộ Drive giữa 2 máy): code + hồ sơ + file mẫu (`mau/`) + Apps Script (`apps-script/Code.gs`) + hướng dẫn (`HUONG DAN TRIEN KHAI.md`). Đọc CLAUDE.md + file này trước khi sửa.
