@@ -775,13 +775,46 @@ SỬA + GỬI LẠI nhưng phải qua pop-up xác nhận khi bấm nút sửa.
 
 Console **0 lỗi**. Đã dọn localStorage test. Tăng **`?v=19 → 20`**.
 
+## CHẶNG 30 — 21/07/2026: VIDEO CAO BẰNG CHỈ KHUNG FORM + MOBILE BÓP ĐỆM VIDEO
+
+**Thầy yêu cầu:** video cao bằng CHỈ khung check lỗi (không tính Mistakes found); màn hẹp video lên
+đầu; khi xếp chồng thì bóp khoảng trống của khung video tiết kiệm chiều dọc. **Thầy chốt
+(AskUserQuestion, có mockup 2 phương án): Mistakes found GIỮ CỘT PHẢI như cũ, dưới video để trống.**
+
+### Cách làm (chỉ index.html; backup `Backup/pre-chang30/`; JS không đụng — đã grep `tab-errors` 0 chỗ)
+- **Desktop ≥1024px: `<main>` = grid 2 cột × 2 hàng** (`lg:grid-rows-[auto_minmax(0,1fr)]`):
+  hàng 1 = VIDEO | FORM (items-stretch → video cao ĐÚNG BẰNG form, kể cả form giãn vì textarea
+  autogrow); hàng 2 = Mistakes found `lg:col-start-2 lg:row-start-2` (ô trái để trống).
+- 2 wrapper cột nhập liệu cũ **"tan ra" bằng `lg:contents`** (inputCol class + `#tab-errors` trong
+  media query) → form + list thành ô grid trực tiếp; thêm `#tab-errors > *{margin-top:0}` gỡ
+  margin space-y của mobile lọt vào grid.
+- **Van an toàn màn thấp CHUYỂN LÊN `<main>`**: `lg:overflow-hidden` → **`lg:overflow-y-auto`**
+  (wrapper cột — chỗ đặt van chặng 27 — không còn box). Bình thường không có thanh cuộn; quá thấp
+  thì cả main cuộn, không mất nút Add/lỗi cuối.
+- **Mobile <1024px bóp đệm KHUNG VIDEO** (desktop giữ nguyên): thẻ `p-2.5` (trước p-5), videoCtrl/
+  stopwatchWrap `mt-2.5 px-3 py-2` (trước mt-6 px-4 py-4), videoStatus `mt-2`, main `py-2
+  space-y-2.5` — đo được card video 315px, tiết kiệm ~65px dọc.
+- Tăng **`?v=20 → 21`**.
+
+### Verify (server 8123, đo bằng JS)
+| Kiểm | Kết quả |
+|---|---|
+| 1280×800 | video **521 = 521** form (KHÔNG gồm list); list cột phải dưới form (160px); dưới video trống |
+| Form giãn (gõ SENTENCE dài) | video bám theo tức thì **567 = 567** |
+| 10 lỗi | danh sách cuộn bên trong ✓, main không cuộn khi đủ chỗ ✓ |
+| 1280×620 | main cuộn bù ✓, nút Add + lỗi cuối với tới ✓ |
+| 375×812 | video TRÊN form ✓, đệm 10px/10px/8px (trước 20/24/16) ✓, 16:9 giữ ✓, sticky sống ✓ |
+
+Console **0 lỗi**, đã dọn localStorage test. Bẫy ghi lại: server preview có thể bị tắt giữa chừng
+(pane nhảy sang file://) — chạy lại `preview_start myspeaking` rồi test tiếp bằng tabId mới.
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
-> **CẬP NHẬT 21/07/2026 (CHẶNG 27-29):** fix HS không cuộn được danh sách Mistakes found trên desktop
+> **CẬP NHẬT 21/07/2026 (CHẶNG 27-30):** fix HS không cuộn được danh sách Mistakes found trên desktop
 > (bug ngủ từ chặng 15: `items-start` phá chuỗi khoá chiều cao) + **đổi tên site "Speaking in Andrew
-> Classes" + logo chibi mới `img/logo-site.png` + favicon** + **2 khối video/check lỗi LUÔN cao bằng
-> nhau** + **XEM LẠI BÀI ĐÃ NỘP không cần đăng nhập (cùng thiết bị, sửa/gửi lại phải xác nhận)**.
-> Nay **`?v=20`**. Xem CHẶNG 27-29.
+> Classes" + logo chibi mới `img/logo-site.png` + favicon** + **XEM LẠI BÀI ĐÃ NỘP không cần đăng
+> nhập (cùng thiết bị, sửa/gửi lại phải xác nhận)** + **CHẶNG 30: video cao bằng CHỈ khung form**
+> (grid 2×2, list cột phải hàng 2, `lg:contents`; mobile bóp đệm video). Nay **`?v=21`**. Xem CHẶNG 27-30.
 >
 > **CHỐT NGÀY 20/07/2026 (cuối ngày).** Web ĐANG LIVE và ĐÃ ĐỦ: `?v=17`, bắt buộc **6 mục**
 > (STUDENT · TIME · TYPE · SENTENCE · MISTAKE · EXPLANATION) khi học sinh thêm lỗi — chặng 24-25.

@@ -62,12 +62,9 @@ tailwind.config = {
      (cùng độ ưu tiên, media query nằm sau) làm màn/tab đang ẩn hiện ngược ra — bẫy cascade. */
   @media (min-width:1024px){
     #appScreen:not(.hidden){ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
-    /* CHẶNG 30: main = grid 2 cột × 2 hàng — hàng 1: VIDEO | FORM (video cao ĐÚNG BẰNG form,
-       không tính danh sách lỗi), hàng 2: Mistakes found ở CỘT PHẢI (dưới video để trống).
-       2 wrapper cột cũ "tan ra" bằng display:contents để form + list thành ô grid trực tiếp. */
-    #tab-errors:not(.hidden){ display:contents; }
-    #tab-errors > *{ margin-top:0; }   /* bỏ margin space-y của mobile khi con đã thành ô grid */
-    /* CHẶNG 29→30: khối video bỏ tỷ lệ 16:9 cứng, giãn theo thẻ (video tự thêm viền đen như YouTube) */
+    #tab-errors:not(.hidden){ display:flex; flex-direction:column; flex:1 1 0%; min-height:0; }
+    /* CHẶNG 29: 2 khối trắng LUÔN CAO BẰNG NHAU mọi cỡ/tỷ lệ cửa sổ — khối video bỏ tỷ lệ 16:9
+       cứng, giãn chiếm hết cột (video tự thêm viền đen trên-dưới/trái-phải như YouTube khi lệch tỷ lệ) */
     .video-shell{ aspect-ratio:auto; flex:1 1 0%; min-height:0; }
   }
   /* CHẶNG 29 — chế độ XEM LẠI bài đã nộp: khoá form + ẩn nút sửa/xoá từng lỗi (mở khoá qua nút Edit) */
@@ -211,17 +208,16 @@ tailwind.config = {
        ⚠️ PHẢI là lg:items-stretch (KHÔNG items-start): items-start làm cột nhập liệu cao theo NỘI DUNG
        thay vì bị khoá theo màn hình → danh sách lỗi dài bị overflow-hidden CẮT CỤT, không cuộn được
        (bug chặng 15→26, HS không xem lại/sửa lỗi trước khi Submit được — sửa ở chặng 27). -->
-  <main class="max-w-7xl mx-auto w-full px-4 py-2 lg:py-5 space-y-2.5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:grid-rows-[auto_minmax(0,1fr)] lg:gap-5 lg:items-stretch lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
+  <main class="max-w-7xl mx-auto w-full px-4 py-4 lg:py-5 space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-5 lg:items-stretch lg:flex-1 lg:min-h-0 lg:overflow-hidden">
 
     <!-- ─── VIDEO COLUMN ─── (mobile: GHIM trên cùng khi cuộn; desktop: đứng yên trong bố cục khóa.
          CHẶNG 29: cột + thẻ video thành flex dọc giãn hết chiều cao → khối video CAO BẰNG khối check lỗi) -->
     <div class="sticky top-0 z-30 -mx-4 px-4 pt-1 pb-2 bg-slate-100 lg:static lg:z-auto lg:mx-0 lg:p-0 lg:bg-transparent lg:min-h-0 lg:overflow-y-auto lg:flex lg:flex-col">
-      <!-- CHẶNG 30: mobile bóp đệm (p-2.5, mt-2.5, py-2) tiết kiệm chiều dọc; desktop giữ thoáng như cũ -->
-      <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-2.5 lg:p-5 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+      <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
         <div class="video-shell rounded-2xl overflow-hidden" id="videoContainer"></div>
 
         <!-- Always-visible player bar (custom — NEVER auto-hides, unlike native video controls) -->
-        <div id="videoCtrl" class="hidden mt-2.5 lg:mt-6 items-center gap-3.5 rounded-2xl bg-slate-50 border border-slate-200 px-3 py-2 lg:px-4 lg:py-4 lg:shrink-0">
+        <div id="videoCtrl" class="hidden mt-6 items-center gap-3.5 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-4 lg:shrink-0">
           <button id="vcPlay" class="w-14 h-14 shrink-0 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white flex items-center justify-center shadow-lg shadow-indigo-600/30">
             <i data-lucide="play" class="w-6 h-6 pointer-events-none"></i>
           </button>
@@ -232,19 +228,19 @@ tailwind.config = {
 
         <!-- Backup slider (chỉ hiện khi Drive KHÔNG phát trực tiếp được): kéo cho khớp giờ trên video Drive rồi bấm SET TIME.
              Không play/pause, không chữ hướng dẫn — thanh XANH DƯƠNG, nút mốc TO gấp đôi. -->
-        <div id="stopwatchWrap" class="hidden mt-2.5 lg:mt-6 items-center gap-3.5 rounded-2xl bg-slate-50 border border-slate-200 px-3 py-2 lg:px-4 lg:py-4 lg:shrink-0">
+        <div id="stopwatchWrap" class="hidden mt-6 items-center gap-3.5 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-4 lg:shrink-0">
           <span id="swCur" class="font-mono text-lg font-bold text-slate-900 tabular-nums shrink-0 w-14 text-center">0:00</span>
           <input id="swSeek" type="range" min="0" max="900" value="0" class="flex-1 min-w-0 cursor-pointer">
           <button id="swSet" class="shrink-0 bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white rounded-xl px-4 py-2.5 font-bold text-sm shadow shadow-indigo-600/30">SET TIME</button>
         </div>
 
-        <div id="videoStatus" class="mt-2 lg:mt-6 text-sm text-slate-600 flex items-center gap-1.5 flex-wrap lg:shrink-0"></div>
+        <div id="videoStatus" class="mt-6 text-sm text-slate-600 flex items-center gap-1.5 flex-wrap lg:shrink-0"></div>
       </div>
     </div>
 
-    <!-- ─── INPUT COLUMN ─── (CHẶNG 30: desktop wrapper "tan ra" lg:contents → form + list thành
-         2 ô grid riêng; van an toàn màn thấp chuyển lên <main> lg:overflow-y-auto) -->
-    <div class="space-y-4 lg:contents">
+    <!-- ─── INPUT COLUMN ─── (desktop: cột dọc khóa chiều cao — form đứng yên, chỉ list cuộn;
+         lg:overflow-y-auto = VAN AN TOÀN chặng 27: màn quá thấp thì cả cột cuộn được, không mất nút Add) -->
+    <div class="space-y-4 lg:min-h-0 lg:flex lg:flex-col lg:overflow-y-auto">
 
       <!-- (tab bar đã bỏ chặng 12 — thời gian nói nhập ngay dưới nút tên HS trong form) -->
       <!-- MISTAKES TAB -->
@@ -308,9 +304,9 @@ tailwind.config = {
           </div>
         </div>
 
-        <!-- Mistakes list (desktop CHẶNG 30: ô grid CỘT PHẢI HÀNG 2 — dưới form, dưới video để trống;
-             vẫn là phần DUY NHẤT cuộn; min-h-[10rem] = SÀN chặng 27, thiếu chỗ thì <main> cuộn bù) -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:col-start-2 lg:row-start-2 lg:min-h-[10rem] lg:flex lg:flex-col">
+        <!-- Mistakes list (desktop: phần DUY NHẤT được cuộn; min-h-[10rem] = SÀN chặng 27:
+             laptop màn thấp không được ép khung danh sách về 0px — thiếu chỗ thì cột cuộn bù) -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:flex-1 lg:min-h-[10rem] lg:flex lg:flex-col">
           <div class="flex items-center justify-between mb-3 lg:shrink-0">
             <h2 class="font-extrabold flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-indigo-600"></i> Mistakes found</h2>
             <div id="errStats" class="flex gap-1.5 text-xs font-bold"></div>
@@ -387,7 +383,7 @@ tailwind.config = {
 </div>
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
-<script src="config.js?v=21"></script>
-<script src="js/app.js?v=21"></script>
+<script src="config.js?v=20"></script>
+<script src="js/app.js?v=20"></script>
 </body>
 </html>
