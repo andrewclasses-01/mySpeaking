@@ -58,64 +58,7 @@ var TIME_HEADERS = ['TIME', 'LESSON', 'TEAM', 'CHECKER', 'STUDENT',
 function doGet(e) {
   if (e && e.parameter && e.parameter.config) return json(buildConfig());
   if (e && e.parameter && e.parameter.check) return json(kiemTraKho());
-  if (e && e.parameter && e.parameter.mine) return json(baiDaNop(e.parameter));
   return json({ ok: true, app: 'mySpeaking' });
-}
-
-// ═══════════════ ?mine=1 — TRẢ LẠI BÀI EM ĐÃ NỘP (CHẶNG 32) ═══════════════
-// Vì sao có cửa này: bài đang làm chỉ nằm trong localStorage CỦA TỪNG MÁY. Em nộp ở máy A rồi
-// hôm sau mở máy B thì form TRỐNG TRƠN — em điền thêm vài lỗi rồi Submit là chỉ gửi PHẦN BỔ SUNG
-// (đúng ca PHONG mất 16 lỗi ở B2B GERMS). Cửa này cho web KÉO LẠI những gì em đã nộp để đổ về form.
-// CHỈ ĐỌC — không ghi gì. Mức bảo vệ = ngang cửa đăng nhập (cần đúng lớp; dữ liệu chỉ là bài chấm).
-function baiDaNop(p) {
-  var cls = String(p.classCode || '').trim();
-  var lesson = String(p.lesson || '').trim();
-  var student = String(p.student || '').trim();
-  if (!cls || !lesson || !student) return { ok: false, error: 'THIEU_THAM_SO' };
-  try {
-    var sheetsFolder = folderByPath(PATH_SHEETS, false);
-    if (!sheetsFolder) return { ok: false, error: 'CHUA_CO_FOLDER_SHEETS' };
-    var f = fileByName(sheetsFolder, resolveResultFileName(cls));
-    if (!f) return { ok: false, error: 'KHONG_THAY_FILE_KET_QUA' };
-    var ss = SpreadsheetApp.openById(f.getId());
-
-    var out = { ok: true, errors: [], timers: [], soLanNop: 0 };
-    var fsh = timSheetBai(ss, lesson);   // tra "hiền" — chịu được lệch tên (chặng 31)
-    if (fsh && fsh.getLastRow() > 1) {
-      var R = fsh.getDataRange().getValues();
-      // GỘP HỢP mọi lần nộp của em (giống luật app máy tính v0.7.1): dòng sau TRÙNG NỘI DUNG
-      // dòng trước thì lấy bản sau (em sửa EXPLANATION thì bản mới thắng).
-      var thay = {}, thuTu = [], sids = {};
-      for (var i = 1; i < R.length; i++) {
-        if (!khopTen(R[i][1], student)) continue;             // CHECKER
-        var er = { min: R[i][5], sec: R[i][6], who: String(R[i][7] || ''), type: String(R[i][8] || ''),
-          sentence: String(R[i][9] || ''), detail: String(R[i][10] || ''), explain: String(R[i][11] || '') };
-        var k = [er.min, er.sec, er.who, er.type, er.sentence, er.detail]
-          .map(function (x) { return String(x).replace(/\s+/g, ' ').trim().toUpperCase(); }).join('|');
-        if (!(k in thay)) thuTu.push(k);
-        thay[k] = er;                                          // bản mới nhất thắng
-        var s = String(R[i][12] || ''); if (s) sids[s] = 1;    // SUBMISSION ID
-      }
-      out.errors = thuTu.map(function (k) { return thay[k]; });
-      out.soLanNop = Object.keys(sids).length;
-    }
-    var tsh = ss.getSheetByName('TIME');
-    if (tsh && tsh.getLastRow() > 1) {
-      var T = tsh.getDataRange().getValues();
-      var tThay = {}, tTen = [];
-      for (var j = 1; j < T.length; j++) {
-        if (!khopTen(T[j][1], lesson)) continue;               // LESSON
-        if (!khopTen(T[j][3], student)) continue;              // CHECKER
-        var ten = String(T[j][4] || '');                       // STUDENT được bấm giờ
-        if (!(ten in tThay)) tTen.push(ten);
-        tThay[ten] = { name: ten, sMin: T[j][5], sSec: T[j][6], eMin: T[j][7], eSec: T[j][8] };
-      }
-      out.timers = tTen.map(function (n) { return tThay[n]; });
-    }
-    return out;
-  } catch (err) {
-    return { ok: false, error: String(err) };
-  }
 }
 
 // ?check=1 — KIỂM TRA KHO DỮ LIỆU mà KHÔNG ghi gì. Dùng sau khi đổi tên thư mục / đổi tài khoản
@@ -197,28 +140,6 @@ function doPost(e) {
       return [now, data.student, data.myTeam, data.checkedTeam, data.videoId || '',
         er.min, er.sec, er.who, er.type, er.sentence, er.detail, er.explain, sid];
     });
-
-    // (CHẶNG 32) LƯỚI AN TOÀN "NỘP THIẾU": đếm lượt nộp GẦN NHẤT trước đó của chính em này —
-    // lượt mới ÍT LỖI HƠN HẲN thì vẫn ghi bình thường (không bao giờ chặn bài) nhưng trả thêm
-    // cờ để web nhắc: "em có đang làm ở máy khác không?". Đo trước khi ghi dòng mới.
-    var canhBaoNopThieu = null;
-    try {
-      if (fsh.getLastRow() > 1) {
-        var cu = fsh.getDataRange().getValues();
-        var nhom = {};                                   // SUBMISSION ID -> số dòng của lượt đó
-        for (var ci = 1; ci < cu.length; ci++) {
-          if (!khopTen(cu[ci][1], data.student)) continue;
-          var cs = String(cu[ci][12] || '') || '(khong sid)';
-          nhom[cs] = (nhom[cs] || 0) + 1;
-        }
-        var dsSid = Object.keys(nhom).sort();            // sid = yyMMdd-HHmmss-… → sort chuỗi là theo thời gian
-        if (dsSid.length) {
-          var truoc = nhom[dsSid[dsSid.length - 1]];
-          if (frows.length < truoc) canhBaoNopThieu = { truoc: truoc, nay: frows.length };
-        }
-      }
-    } catch (_) { /* lưới phụ — hỏng thì thôi, không được làm hỏng bài nộp */ }
-
     if (frows.length) fsh.getRange(fsh.getLastRow() + 1, 1, frows.length, FORM_HEADERS.length).setValues(frows);
 
     // ── Sheet TIME chung cả lớp (mỗi bạn 1 dòng) ──
@@ -229,7 +150,7 @@ function doPost(e) {
     });
     if (trows.length) tsh.getRange(tsh.getLastRow() + 1, 1, trows.length, TIME_HEADERS.length).setValues(trows);
 
-    return json({ ok: true, saved: frows.length, submissionId: sid, canhBaoNopThieu: canhBaoNopThieu });
+    return json({ ok: true, saved: frows.length, submissionId: sid });
   } catch (err) {
     return json({ ok: false, error: String(err) });
   }
@@ -319,14 +240,14 @@ function setup() {
   var cls = getSheet(ss, 'CLASSES', CLASSES_HEADERS);
   if (cls.getLastRow() < 2) {
     cls.getRange(2, 1, 8, 5).setValues([
-      ['B1AH', 'germs', 'CLASS B1AH', 'B1AH', 'active'],
-      ['A1A', '', 'CLASS A1A', 'A1A', 'active'],
-      ['A1B', '', 'CLASS A1B', 'A1B', 'active'],
-      ['A1C', '', 'CLASS A1C', 'A1C', 'active'],
-      ['A2A', '', 'CLASS A2A', 'A2A', 'active'],
-      ['A2B', '', 'CLASS A2B', 'A2B', 'active'],
-      ['B2A', '', 'CLASS B2A', 'B2A', 'active'],
-      ['B2B', '', 'CLASS B2B', 'B2B', 'active'],
+      ['B1AH', 'germs', 'Lớp B1AH', 'B1AH', 'active'],
+      ['A1A', '', 'Lớp A1A', 'A1A', 'active'],
+      ['A1B', '', 'Lớp A1B', 'A1B', 'active'],
+      ['A1C', '', 'Lớp A1C', 'A1C', 'active'],
+      ['A2A', '', 'Lớp A2A', 'A2A', 'active'],
+      ['A2B', '', 'Lớp A2B', 'A2B', 'active'],
+      ['B2A', '', 'Lớp B2A', 'B2A', 'active'],
+      ['B2B', '', 'Lớp B2B', 'B2B', 'active'],
     ]);
   }
   removeDefaultSheet(ss);
@@ -360,7 +281,7 @@ function chiaLessonsTheoLop() {
     if (lopCu && !daCo[lopCu]) thieu[lopCu] = true;
   }
   Object.keys(thieu).forEach(function (lop) {
-    CS.appendRow([lop, '', 'CLASS ' + lop, lop, 'active']);
+    CS.appendRow([lop, '', 'Lớp ' + lop, lop, 'active']);
     bc.ghi_chu.push('CLASSES thêm lớp ' + lop + ' (có bài trong LESSONS cũ mà chưa khai)');
   });
   C = CS.getDataRange().getValues();   // đọc lại sau khi thêm
@@ -522,7 +443,7 @@ function adminPush(data) {
   }
   if (!dong) {
     dong = CS.getLastRow() + 1;
-    CS.getRange(dong, 1, 1, 5).setValues([[cls, String(data.code || '').trim(), 'CLASS ' + cls, cls, 'active']]);
+    CS.getRange(dong, 1, 1, 5).setValues([[cls, String(data.code || '').trim(), 'Lớp ' + cls, cls, 'active']]);
   } else if (String(data.code || '').trim()) {
     CS.getRange(dong, 2).setValue(String(data.code).trim());          // thầy đổi mã đăng nhập
   }

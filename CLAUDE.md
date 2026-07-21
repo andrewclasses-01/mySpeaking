@@ -55,6 +55,18 @@ teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo
 - Drive trả file gốc nguyên bitrate, không adaptive → cả lớp (~15 máy) cùng xem dễ nghẽn Wi-Fi; YouTube tự hạ chất lượng nên mượt hơn. Đã tư vấn thầy ưu tiên YouTube unlisted.
 - Dropdown LOẠI LỖI trong file mẫu: `NGỮ PHÁP, PHÁT ÂM, THÔNG TIN` (data validation cột E sheet FORM).
 
+## CHẶNG 32 (21/07/2026 đêm) — luồng vào app + kéo bài đã nộp (MỚI NHẤT, `?v=22`)
+- **Luồng vào**: đăng nhập (class + code) → chọn Team + Name → **trang tích cam kết** — trang này có:
+  tiêu đề "**CLASS** B1AH — GERMS" (chữ CLASS do `fixClassNames()` chuẩn hoá lúc nạp config, sheet
+  NAME vẫn ghi "Lớp ..."), nút Start, **nút back CHỈ ICON** (`#btnBackNames`), và **lịch sử MY
+  SUBMITTED CHECKS** (`#reviewSection` — đã CHUYỂN từ màn đăng nhập sang đây; `renderReviewSection()`
+  gọi trong `handleNamePick`; `openReview` ẩn cả `identifyScreen`).
+- **Kéo bài đã nộp về form (`maybeRestoreFromServer`)**: máy không có dấu vết bài → GET `?mine=1`
+  (cửa `baiDaNop` trong Code.gs, gộp hợp mọi lần nộp) → đổ lỗi + bảng giờ về form + khoá xem
+  chặng 29. Mạng hỏng/8s/bộ não cũ → vào bài bình thường. **Cần deploy Code.gs mới có tác dụng.**
+- **Cảnh báo nộp thiếu**: `doPost` so lượt mới với lượt nộp gần nhất (nhóm theo SUBMISSION ID) →
+  `canhBaoNopThieu:{truoc,nay}` → web hiện `#fewerModal`. Không bao giờ chặn bài.
+
 ## Màn bắt lỗi — trạng thái hiện tại (sau chặng 10-16b, thầy nói "ok rồi")
 - **Đăng nhập/chọn tên (chặng 16)**: MÀN 1 gõ classCode+code (sai→pop-up). MÀN 2 = **2 ô cạnh nhau Your Team + Your Name** (`#selTeam`/`#selName`; Name KHÓA đến khi chọn Team → `onTeamChange` mở khóa; chọn Name → xác nhận ngay). MÀN 3 xác nhận: ảnh HS (tạm chữ đầu) + tiêu đề động **"{Tên HS}, Andrew has something for you."** (`#identNoteTitle`) + ô tích BẮT BUỘC "I understand and respect our journey, teacher Andrew ❤️".
 - **Bố cục GHIM**: desktop ≥1024px khoá `100dvh` — video + form đứng yên, CHỈ "Mistakes found" cuộn (CSS riêng `#appScreen:not(.hidden)`; KHÔNG dùng `lg:flex` cho phần tử toggle `.hidden` — bẫy cascade). Mobile: header cuộn qua, CỤM VIDEO sticky top-0. 2 cột desktop BẰNG chiều ngang (`grid-cols-2`), video cân cao form (~522/521).

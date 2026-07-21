@@ -104,7 +104,13 @@ tailwind.config = {
       </button>
     </div>
 
-    <!-- (CHẶNG 32) Lịch sử "MY SUBMITTED CHECKS" đã CHUYỂN sang trang xác nhận (identConfirm) — thầy chốt -->
+    <!-- CHẶNG 29: bài ĐÃ NỘP trên chính thiết bị này — bấm xem lại KHÔNG cần đăng nhập -->
+    <div id="reviewSection" class="hidden mt-6 pt-5 border-t border-slate-200">
+      <div class="text-xs font-bold text-slate-500 mb-2 flex items-center gap-1.5">
+        <i data-lucide="history" class="w-4 h-4"></i> MY SUBMITTED CHECKS — TAP TO REVIEW
+      </div>
+      <div id="reviewList" class="space-y-2"></div>
+    </div>
   </div>
 </div>
 
@@ -156,18 +162,7 @@ tailwind.config = {
       <button id="btnStartCheck" disabled class="mt-5 w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[.98] transition text-white font-bold rounded-xl py-3 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 opacity-50 cursor-not-allowed">
         <i data-lucide="rocket" class="w-5 h-5"></i> Start checking
       </button>
-      <!-- (CHẶNG 32) nút quay lại = CHỈ ICON (thầy chốt bỏ chữ "That's not me — choose again") -->
-      <button id="btnBackNames" title="Choose again" class="mt-3 w-10 h-10 rounded-full border border-slate-200 hover:bg-slate-100 active:scale-95 transition flex items-center justify-center text-slate-500">
-        <i data-lucide="arrow-left" class="w-5 h-5 pointer-events-none"></i>
-      </button>
-
-      <!-- (CHẶNG 32) lịch sử bài ĐÃ NỘP trên chính thiết bị này — chuyển từ màn đăng nhập sang đây -->
-      <div id="reviewSection" class="hidden mt-4 pt-4 border-t border-slate-200">
-        <div class="text-xs font-bold text-slate-500 mb-2 flex items-center gap-1.5">
-          <i data-lucide="history" class="w-4 h-4"></i> MY SUBMITTED CHECKS — TAP TO REVIEW
-        </div>
-        <div id="reviewList" class="space-y-2"></div>
-      </div>
+      <button id="btnBackNames" class="mt-2 w-full text-sm text-slate-500 hover:text-slate-700 font-medium">That's not me — choose again</button>
     </div>
   </div>
 </div>
@@ -379,18 +374,6 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- (CHẶNG 32) cảnh báo NỘP ÍT HƠN lần trước (em có thể đang làm ở máy khác, form trống) -->
-<div id="fewerModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop text-center">
-    <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
-      <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-500"></i>
-    </div>
-    <p class="text-slate-700 font-semibold mb-1 leading-relaxed">Your check was submitted — but it has <b id="fewerNow">0</b> mistakes, while your earlier submission had <b id="fewerBefore">0</b>.</p>
-    <p class="text-xs text-slate-500 mb-4 leading-relaxed">Don't worry — Teacher Andrew keeps <b>every</b> submission. If you meant to continue your earlier check, just log in again on this page and it will load back into the form.</p>
-    <button id="btnFewerOk" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-2.5 font-bold text-sm">Got it</button>
-  </div>
-</div>
-
 <!-- Submit confirmation modal -->
 <div id="submitModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop">
@@ -404,7 +387,7 @@ tailwind.config = {
 </div>
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
-<script src="config.js?v=22"></script>
-<script src="js/app.js?v=22"></script>
+<script src="config.js?v=21"></script>
+<script src="js/app.js?v=21"></script>
 </body>
 </html>

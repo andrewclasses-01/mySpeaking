@@ -955,6 +955,67 @@ với "chưa có bài nộp" nữa — hai chuyện hoàn toàn khác nhau.
   đó chính là ca làm app máy tính mất 16 lỗi của PHONG (B2B GERMS). Cách chặn: kéo bài đã nộp về
   form khi HS đăng nhập lại, hoặc cảnh báo khi bài nộp mới **ít lỗi hơn** lần trước.
 
+## CHẶNG 32 — 21/07/2026 (đêm, thầy đi ngủ giao tự làm): KÉO BÀI ĐÃ NỘP VỀ FORM + CẢNH BÁO NỘP THIẾU + 3 CHỈNH TRANG XÁC NHẬN
+
+**Thầy chốt trước khi ngủ (build cùng một lượt):** (A) kéo bài đã nộp về form + (B) cảnh báo nộp
+ít hơn lần trước (thầy chọn "C. Làm cả A và B" qua AskUserQuestion) + 3 việc UI: lịch sử chuyển
+sang trang tích cam kết · nút back icon thay chữ "That's not me — choose again" · "Lớp" → "CLASS".
+
+### (A) KÉO BÀI ĐÃ NỘP VỀ FORM — chặn GỐC ca "HS nộp lần 2 thiếu bài" (ca PHONG mất 16 lỗi B2B)
+- `Code.gs`: cửa đọc mới **`?mine=1&classCode=..&lesson=..&student=..`** (`baiDaNop`) — CHỈ ĐỌC,
+  trả `errors[]` + `timers[]` đã map sẵn về đúng khuôn form. **GỘP HỢP mọi lần nộp** (giống luật
+  app máy tính v0.7.1): khoá nội dung = `min|sec|who|type|sentence|detail` (KHÔNG tính explain —
+  bản mới thắng); timer mỗi tên giữ bản mới nhất. Tra sheet bằng `timSheetBai` (chịu lệch tên, chặng 31).
+- `js/app.js`: `start()` gọi `maybeRestoreFromServer(saved)` — CHỈ hỏi mạng khi máy **không có dấu
+  vết bài** (không lỗi đã lưu, chưa từng nộp; ưu tiên bản máy vì nó mới nhất). Có bài cũ → đổ về
+  form + bảng giờ + **KHOÁ XEM** (dùng lại `.review-locked` chặng 29 — sửa tiếp phải bấm
+  "Edit & submit again" xác nhận) + toast "Welcome back!". **LUẬT AN TOÀN: mạng hỏng / quá 8 giây
+  (AbortController) / bộ não bản cũ chưa deploy → vào làm bài BÌNH THƯỜNG, không bao giờ chặn HS.**
+- Riêng tư: cửa `?mine` mức bảo vệ NGANG cửa đăng nhập (ai biết lớp + tên đều gọi được) — thầy đã
+  duyệt trong phần trình phương án (dữ liệu chỉ là bài chấm lỗi).
+
+### (B) LƯỚI AN TOÀN — cảnh báo khi nộp ÍT HƠN lần trước
+- `Code.gs` `doPost`: trước khi ghi, đếm số dòng của **lượt nộp GẦN NHẤT** trước đó của chính em
+  (nhóm theo SUBMISSION ID, sid dạng `yyMMdd-HHmmss-…` nên sort chuỗi = sort thời gian). Lượt mới
+  ít hơn → **vẫn ghi bình thường** (không bao giờ chặn bài) + trả `canhBaoNopThieu:{truoc,nay}`.
+  Cả khối bọc try/catch — lưới phụ hỏng cũng không được làm hỏng bài nộp.
+- `js/app.js` `submit()`: thấy cờ → pop-up `#fewerModal` "…has 3 mistakes, while your earlier
+  submission had 16. Don't worry — Teacher Andrew keeps every submission…" thay toast thường.
+
+### 3 việc UI trang XÁC NHẬN (identConfirm)
+1. **Lịch sử MY SUBMITTED CHECKS chuyển từ màn đăng nhập → trang tích cam kết**: khối
+   `#reviewSection` dời vào `#identConfirm` (dưới nút Start + nút back); `renderReviewSection()`
+   gọi trong `handleNamePick` (bỏ gọi lúc DOMContentLoaded); `openReview` phải ẩn thêm
+   `identifyScreen` (trước chỉ ẩn loginScreen — không ẩn là màn chọn tên đè lên app).
+2. **Nút back = CHỈ ICON** (`arrow-left`, tròn 40px, title="Choose again") thay chữ
+   "That's not me — choose again"; handler `renderIdentify` giữ nguyên.
+3. **"Lớp" → "CLASS"**: gốc chữ nằm ở cột NAME sheet CLASSES ("Lớp B1AH"…) → sửa Ở CẢ 2 ĐẦU:
+   (a) `fixClassNames()` trong `loadClasses` chuẩn hoá NGAY KHI NẠP (`/^L[ớơo]?p\s+/i` → `CLASS `,
+   sheet giữ nguyên, không cần sửa tay sheet); (b) seed trong `Code.gs` (setup /
+   chiaLessonsTheoLop / adminPush) đổi `'Lớp ' + cls` → `'CLASS ' + cls` cho lớp tạo mới về sau.
+
+### Verify (server 8123, fetch giả cho phần ghi — KHÔNG đụng Sheet thật; config đọc thật)
+| Kiểm | Kết quả |
+|---|---|
+| Màn đăng nhập | KHÔNG còn khối lịch sử ✓ |
+| Trang xác nhận | tiêu đề "CLASS B1AH — GERMS" ✓ · lịch sử hiện đúng chỗ (1 bài) ✓ · nút back chỉ icon không chữ ✓ |
+| Nút back | quay về màn chọn tên ✓; bấm bài lịch sử → mở khoá xem, identifyScreen ẩn ✓ |
+| (A) máy trống + server có bài | 3 lỗi + 8 ô giờ tự nạp, khoá xem + banner, toast "Welcome back! Loaded the 3 mistakes…" ✓ |
+| (A) bộ não CHƯA deploy (gọi THẬT bản cũ) | vào bài bình thường, 0 lỗi, không kẹt, video YouTube chạy ✓ |
+| (B) POST trả `canhBaoNopThieu:{16,3}` | pop-up hiện đúng "3 … 16", bấm Got it đóng ✓ |
+| Mobile 375px | không tràn ngang, thứ tự đúng: tiêu đề CLASS → cam kết → Start → back icon → lịch sử ✓ |
+| Console | 0 lỗi ✓ · localStorage test đã dọn ✓ |
+
+Bẫy gặp lại: `computer screenshot` treo trên trang này (đã ghi từ chặng 1) → verify bằng
+`read_page` + `javascript_tool`.
+
+### ⚠️ VIỆC CÒN CHỜ SAU CHẶNG NÀY
+- **DEPLOY `Code.gs` phiên bản mới** (gộp chung chặng 31 + 32 — MỘT lần deploy). Trước khi deploy:
+  (A) không kéo được bài (web tự bỏ qua, không hỏng gì), (B) không cảnh báo. Làm theo mục
+  "⭐ SỬA Code.gs XONG THÌ PHẢI DEPLOY" trong `HUONG DAN TRIEN KHAI.md`; xong chạy `?check=1` và
+  thử `?mine=1&classCode=B1AH&lesson=GERMS&student=HOANG` (phải thấy errors của HOANG).
+- Web đã push live `?v=22` — chạy được NGAY cả khi chưa deploy (tương thích ngược, đã test).
+
 ## TIẾP TỤC CÔNG VIỆC Ở MÁY KHÁC / SESSION MỚI
 1. **Thư mục app tự chứa đủ mọi thứ** (D:\ đồng bộ Drive giữa 2 máy): code + hồ sơ + file mẫu (`mau/`) + Apps Script (`apps-script/Code.gs`) + hướng dẫn (`HUONG DAN TRIEN KHAI.md`). Đọc CLAUDE.md + file này trước khi sửa.
 2. **Git**: repo thường (không bare) ngay trong thư mục app, nhánh `master`. Remote `origin` = `https://github.com/andrewclasses-01/mySpeaking.git` (Pages công khai). Đẩy bằng `git push origin master`; credential Windows đã lưu đúng `andrewclasses-01` nên không cần `gh auth login`. **Đừng dựa vào `gh` để đoán quyền đẩy** — `gh` đăng nhập tài khoản khác (`andrewclasses-code`), xem chặng 26.

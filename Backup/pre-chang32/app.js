@@ -617,16 +617,7 @@
       state.submitted = true;
       state.wasSubmitted = true;   // CHẶNG 29: cờ ĐÃ TỪNG NỘP — giữ bài trong "My submitted checks" kể cả khi mở khoá sửa
       autosave();
-      // (CHẶNG 32) bộ não báo lượt này ÍT LỖI HƠN lượt gần nhất → nhắc (bài VẪN đã ghi, không chặn)
-      if (out.canhBaoNopThieu && typeof out.canhBaoNopThieu.truoc === 'number') {
-        $('fewerNow').textContent = out.canhBaoNopThieu.nay;
-        $('fewerBefore').textContent = out.canhBaoNopThieu.truoc;
-        $('fewerModal').classList.remove('hidden');
-        $('fewerModal').classList.add('flex');
-        refreshIcons();
-      } else {
-        toast('🎉 Submitted successfully! Thank you.');
-      }
+      toast('🎉 Submitted successfully! Thank you.');
     } catch (e) {
       toast('Submission failed (' + e.message + '). Try again or tap Export Excel to send to your teacher.', 'err');
     } finally {
@@ -684,7 +675,7 @@
         const r = await fetch(SCRIPT_URL + '?config=1&_=' + Date.now(), { cache: 'no-store' });
         if (r.ok) {
           const j = await r.json();
-          if (j && Array.isArray(j.classes) && j.classes.length) { CLASSES = j; fixClassNames(); return; }
+          if (j && Array.isArray(j.classes) && j.classes.length) { CLASSES = j; return; }
         }
       } catch (e) { /* rơi xuống dự phòng */ }
     }
@@ -692,14 +683,6 @@
       const r = await fetch('data/classes.json?_=' + Date.now(), { cache: 'no-store' });
       if (r.ok) CLASSES = await r.json();
     } catch (e) { CLASSES = { classes: [] }; }
-    fixClassNames();
-  }
-  // (CHẶNG 32) UI là 100% tiếng Anh nhưng cột NAME trong sheet CẤU HÌNH đang là "Lớp B2B"…
-  // → chuẩn hoá NGAY KHI NẠP: "Lớp X" thành "CLASS X" (sheet giữ nguyên, chỉ đổi hiển thị).
-  function fixClassNames() {
-    (CLASSES.classes || []).forEach((c) => {
-      if (c && c.name) c.name = String(c.name).replace(/^L[ớơo]?p\s+/i, 'CLASS ');
-    });
   }
 
   // Màn 1 — đăng nhập lớp: HS TỰ GÕ mã lớp (classCode) + mã (code)
@@ -812,7 +795,6 @@
 
     $('identPick').classList.add('hidden');
     $('identConfirm').classList.remove('hidden');
-    renderReviewSection();   // (CHẶNG 32) lịch sử bài đã nộp hiện Ở TRANG NÀY (thầy chốt chuyển từ màn đăng nhập sang)
     refreshIcons();
   }
 
@@ -845,45 +827,6 @@
     $('appScreen').classList.remove('hidden');
     autosave();
     refreshIcons();
-    maybeRestoreFromServer(saved);   // (CHẶNG 32) máy này trống mà em ĐÃ nộp ở máy khác → kéo bài về
-  }
-
-  // ═══════════════ CHẶNG 32 — KÉO BÀI ĐÃ NỘP VỀ FORM (chặn gốc ca "nộp lần 2 thiếu bài") ═══════════════
-  // Vì sao: bài đang làm chỉ nằm trong localStorage TỪNG MÁY. Em nộp ở máy A, hôm sau mở máy B thì
-  // form TRỐNG — em thêm 2 lỗi rồi Submit là chỉ gửi PHẦN BỔ SUNG (ca PHONG mất 16 lỗi, B2B GERMS).
-  // Nay: máy KHÔNG có dấu vết bài (không lỗi đã lưu, chưa từng nộp) thì hỏi bộ não "?mine=1".
-  // Có bài cũ → đổ về form + KHOÁ XEM (dùng lại cơ chế chặng 29 — muốn sửa phải bấm Edit & submit again).
-  // LUẬT AN TOÀN: mạng hỏng / chờ quá 8 giây / bộ não chưa deploy → vào làm bài BÌNH THƯỜNG, không chặn.
-  async function maybeRestoreFromServer(saved) {
-    if (!SCRIPT_URL) return;
-    // Máy này đã có dấu vết bài của chính em (lỗi đã lưu hoặc từng nộp) → ưu tiên bản máy, không hỏi mạng
-    if (saved && saved.student === state.student && ((saved.errors || []).length || saved.wasSubmitted)) return;
-    try {
-      const ctl = new AbortController();
-      const tm = setTimeout(() => ctl.abort(), 8000);
-      const u = SCRIPT_URL + '?mine=1&classCode=' + encodeURIComponent(state.classCode) +
-        '&lesson=' + encodeURIComponent(state.lesson) + '&student=' + encodeURIComponent(state.student) +
-        '&_=' + Date.now();
-      const r = await fetch(u, { cache: 'no-store', signal: ctl.signal });
-      clearTimeout(tm);
-      if (!r.ok) return;
-      const j = await r.json();
-      if (!j || !j.ok || !(j.errors || []).length) return;   // chưa nộp gì / bộ não bản cũ → thôi
-      if (state.errors.length) return;                        // trong lúc chờ mạng em đã kịp thêm lỗi → đừng đè
-      state.errors = j.errors.map((er) => ({
-        min: +er.min || 0, sec: +er.sec || 0, section: '',
-        who: String(er.who || ''), type: String(er.type || ''),
-        sentence: String(er.sentence || ''), detail: String(er.detail || ''), explain: String(er.explain || ''),
-      }));
-      state.submitted = true;
-      state.wasSubmitted = true;
-      if ((j.timers || []).length) initTimers(j.timers);
-      buildStudentField();
-      renderErrors();
-      setReviewLock(true);   // khoá xem — sửa tiếp phải bấm "Edit & submit again" (xác nhận như chặng 29)
-      autosave();
-      toast('Welcome back! Loaded the ' + state.errors.length + ' mistakes you already submitted ✓', 'info');
-    } catch (e) { /* mạng hỏng → làm bài bình thường, không làm phiền */ }
   }
 
   // (switchTab đã bỏ chặng 12 — chỉ còn một khối Mistakes, thời gian nói nằm trong form)
@@ -953,7 +896,6 @@
     setReviewLock(true);
 
     $('loginScreen').classList.add('hidden');
-    $('identifyScreen').classList.add('hidden');   // (CHẶNG 32) lịch sử nay nằm ở trang xác nhận → phải ẩn cả màn này
     $('appScreen').classList.remove('hidden');
     refreshIcons();
   }
@@ -972,8 +914,8 @@
     await loadClasses();
     initLoginScreen();
 
-    // CHẶNG 29 (CHẶNG 32 chuyển chỗ): danh sách bài đã nộp — nay dựng lúc VÀO TRANG XÁC NHẬN
-    // (handleNamePick gọi renderReviewSection), không dựng ở màn đăng nhập nữa.
+    // CHẶNG 29: danh sách bài đã nộp trên thiết bị này (xem lại không cần đăng nhập)
+    renderReviewSection();
     $('reviewList').addEventListener('click', (ev) => {
       const b = ev.target.closest('[data-review]');
       if (b) openReview(b.dataset.review);
@@ -1097,9 +1039,6 @@
     // Thanh kéo DỰ PHÒNG: kéo → giờ hiển thị chạy theo; SET TIME → đưa vào MIN/SEC kèm ánh sáng bay
     $('swSeek').addEventListener('input', () => { $('swCur').textContent = fmtClock(parseInt($('swSeek').value, 10) || 0); swFill(); });
     $('swSet').addEventListener('click', swSetTime);
-
-    // (CHẶNG 32) đóng pop-up "nộp ít hơn lần trước"
-    $('btnFewerOk').addEventListener('click', () => { $('fewerModal').classList.add('hidden'); $('fewerModal').classList.remove('flex'); });
 
     $('btnExport').addEventListener('click', exportExcel);
     $('btnSubmit').addEventListener('click', openSubmitModal);
