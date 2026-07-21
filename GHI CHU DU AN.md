@@ -288,7 +288,7 @@ Thầy chưa làm app máy tính vội — muốn hoàn thiện thêm web HS + t
 10. **Chỉ Mistakes found cuộn**, phần còn lại ghim (giữ nguyên cơ chế pin desktop 100dvh + mobile video sticky — đã đúng từ chặng 10).
 
 ### ⚠️ CÒN TREO — "KHUNG DỮ LIỆU" (việc thầy nói làm TIẾP)
-- **Google Sheet CHƯA có cột SENTENCE**: bài nộp online hiện đã MANG `sentence` trong payload (qua `errors[]`) nhưng `apps-script/Code.gs` CHƯA map ra cột → Sheet chưa ghi câu chứa lỗi. Excel export + bài đang làm (autosave) thì ĐÃ có đủ. Khi thầy chốt khung dữ liệu: thêm 'CÂU CHỨA LỖI' vào header FORM trong Code.gs + `er.sentence` vào hàng, xoá sheet FORM cũ (để tạo lại header mới) hoặc sửa header tay, rồi **deploy version mới** của Web App. File mẫu gốc `SPEAKING TEAM CHECK FORM.xlsx` cũng cần thêm cột cho khớp.
+- **[✅ ĐÃ XONG Ở CHẶNG 17 — giữ lại làm lịch sử, đừng làm lại]** **Google Sheet CHƯA có cột SENTENCE**: bài nộp online hiện đã MANG `sentence` trong payload (qua `errors[]`) nhưng `apps-script/Code.gs` CHƯA map ra cột → Sheet chưa ghi câu chứa lỗi. Excel export + bài đang làm (autosave) thì ĐÃ có đủ. Khi thầy chốt khung dữ liệu: thêm 'CÂU CHỨA LỖI' vào header FORM trong Code.gs + `er.sentence` vào hàng, xoá sheet FORM cũ (để tạo lại header mới) hoặc sửa header tay, rồi **deploy version mới** của Web App. File mẫu gốc `SPEAKING TEAM CHECK FORM.xlsx` cũng cần thêm cột cho khớp.
 
 ### Verify (preview thật, chụp desktop + mobile 375)
 Video Drive trong preview browser rơi chế độ đồng hồ (API key giới hạn referrer, preview không khớp — trên github.io thật thì chạy html5); đã ép hiện player bar để đo chiều cao đúng chế độ thật. Không lỗi console. Không tràn ngang. Mobile: video sticky, form đủ ô, không tràn.
@@ -820,7 +820,8 @@ Console **0 lỗi**, đã dọn localStorage test. Bẫy ghi lại: server previ
 > (STUDENT · TIME · TYPE · SENTENCE · MISTAKE · EXPLANATION) khi học sinh thêm lỗi — chặng 24-25.
 > Local khớp GitHub (`ddbba6e`). Bộ não Apps Script **Phiên bản 6**.
 > **Máy phòng học ĐẨY ĐƯỢC** (git dùng Credential Manager `andrewclasses-01`; đừng suy từ `gh`).
-> Bên app máy tính: **v0.6.1**, xong 4/5 màn (① ② ④ ⑤), còn màn ③ SUB — đọc
+> Bên app máy tính: **v0.8.2 (21/07/2026 tối)** — v0.7.0 đã **BỎ HẲN màn ③ SUB**, đưa việc tạo sub
+> về màn ① ⇒ app **xong cả 5 màn**. (Câu cũ "v0.6.1, còn màn ③ SUB" đã lạc hậu.) Đọc
 > `GHI CHU DU AN.md` ở `E:\LAP TRINH APP\mySpeaking`, mục ⭐ BÀN GIAO.
 > ⚠️ Việc còn treo bên web: chưa có. Việc treo liên quan: file `B1AH GERMS - ALL.xlsx` bên thư mục
 > buổi đang mở trong Excel và có dòng lạc đội — xem BÀN GIAO bên app.
@@ -861,7 +862,7 @@ Console **0 lỗi**, đã dọn localStorage test. Bẫy ghi lại: server previ
 - ✅ XONG (hạ tầng, chặng 14): Apps Script deployed (SCRIPT_URL trong config.js, Sheet nhận bài đã test end-to-end), API key giới hạn website, **web LIVE https://andrewclasses-01.github.io/mySpeaking/** (GitHub `andrewclasses-01`, repo `mySpeaking`, Pages nhánh master). Từ giờ MỖI lần sửa web: commit + `git push` là Pages tự cập nhật (~1 phút).
 - ✅ XONG (tinh chỉnh đợt 5, chặng 15): 2 cột bằng chiều ngang + video cân cao với khung bắt lỗi; nút play TRÒN, nút tua TO, thanh đỏ fill %; **thêm ô SENTENCE bắt buộc** (form thứ tự giờ = STUDENT → TIME → TYPE → SENTENCE* → MISTAKE* → EXPLANATION*); MIN/SEC + TYPE nhỏ lại bằng ô tên, TYPE chữ bên phải icon; 3 ô SENTENCE/MISTAKE/EXPLANATION textarea tự giãn; nút Add thấp hơn; **LUÔN lùi 3 giây** khi thêm lỗi mới; **kéo tua lúc video DỪNG → MIN/SEC nhảy theo**.
 - ✅ XONG (tinh chỉnh đợt 6, chặng 16): **đăng nhập 2 ô Your Team + Your Name** (Name khóa đến khi chọn Team; chọn Name → xác nhận ngay); màn xác nhận tiêu đề "**{Tên HS}, Andrew has something for you.**" + ô tích "**I understand and respect our journey, teacher Andrew ❤️**"; **TIME/TYPE tiêu đề cùng hàng với ô** (desktop; mobile xếp tầng để không cắt chữ); chữ trong SENTENCE/MISTAKE/EXPLANATION nhỏ = placeholder; **XOÁ MIN/SEC sau khi Add**; **nâng cấp fallback**: thanh kéo xanh dương nút to gấp đôi (không play/pause) + nút **SET TIME** đưa giờ vào MIN/SEC kèm ánh sáng bay, bỏ hết chữ hướng dẫn; tăng thời gian chờ video Drive 15→25s. **Điều tra**: sự cố rơi dự phòng trước là TẠM THỜI (key vừa giới hạn, Google áp dụng chậm ~5 phút) — nay video Drive phát html5 bình thường.
-- ⚠️ **KHUNG DỮ LIỆU còn treo** (việc TIẾP): Google Sheet CHƯA có cột SENTENCE — Code.gs chưa map `er.sentence`, cần thêm cột + deploy version mới khi thầy chốt khung dữ liệu (Excel export + autosave đã có sentence). Xem chi tiết ở CHẶNG 15.
+- ✅ **KHUNG DỮ LIỆU HẾT TREO** (soát lại 21/07/2026 tối): cột **SENTENCE đã có trong Google Sheet từ CHẶNG 17** — `apps-script/Code.gs` dòng 53 (header) + dòng 141 (`er.sentence`). Dòng cảnh báo cũ ở đây và ở CHẶNG 15 / mục "⭐ KHUNG DỮ LIỆU" viết lúc chưa code khung mới, **đừng tin nữa**.
 - ⚠️ Ảnh HS = chữ cái đầu (chờ ảnh thật qua `photos` trong classes.json). Mapping video→đội GIẢ ĐỊNH theo thứ tự. `teacher.html` là file CŨ không dùng. Header: nút người chấm "HOANG · T1" (chặng 16b), đã bỏ badge TEAM X. Cache-busting: **hiện `?v=14`** — TĂNG mỗi lần sửa app.js/config.js. Thanh kéo dự phòng max mặc định 900s (15:00) — chỉnh sau nếu cần. Tài khoản Google Cloud thầy còn 1 project mySpeaking TRÙNG THỪA (vô hại, dọn khi tiện). Backup từng chặng ở `Backup/pre-chang10/12/13`.
 
 ## ⭐ KHUNG DỮ LIỆU — VIỆC NGAY Ở SESSION SAU (thầy sẽ cùng chốt)
@@ -877,7 +878,7 @@ Console **0 lỗi**, đã dọn localStorage test. Bẫy ghi lại: server previ
 - `type` lưu TIẾNG VIỆT: `NGỮ PHÁP` / `PHÁT ÂM` / `THÔNG TIN` (hiển thị Grammar/Pronunciation/Information). `section` luôn rỗng (đã bỏ ô ĐOẠN). `sentence` = câu chứa lỗi (MỚI, chặng 15). Mốc thời gian đã LÙI 3s khi thêm.
 
 ### B. Google Sheet "SPEAKING CHECK - BÀI NỘP" — `apps-script/Code.gs` (id `1XkrbGHkiMHHTVSWLP6OZ0O-CIEORDj4dqYrXHynuA5E`)
-- Sheet **FORM** (mỗi dòng 1 lỗi) — hiện **13 cột, CHƯA có SENTENCE**: `NGÀY GIỜ NỘP, LỚP, NGƯỜI CHECK, ĐỘI CỦA NGƯỜI CHECK, ĐỘI ĐƯỢC CHECK, CHỦ ĐỀ, PHÚT, GIÂY, ĐOẠN, HS CÓ LỖI, LOẠI LỖI, LỖI CỤ THỂ, GIẢI THÍCH LỖI`. Hàng map: `[now, className, student, myTeam, checkedTeam, topic, er.min, er.sec, er.section, er.who, er.type, er.detail, er.explain]` → **`er.sentence` bị rớt (chưa ghi)**.
+- **[✅ LỖI THỜI — khung này đã bị CHẶNG 17 thay hoàn toàn; Sheet thật nay có SENTENCE]** Sheet **FORM** (mỗi dòng 1 lỗi) — hiện **13 cột, CHƯA có SENTENCE**: `NGÀY GIỜ NỘP, LỚP, NGƯỜI CHECK, ĐỘI CỦA NGƯỜI CHECK, ĐỘI ĐƯỢC CHECK, CHỦ ĐỀ, PHÚT, GIÂY, ĐOẠN, HS CÓ LỖI, LOẠI LỖI, LỖI CỤ THỂ, GIẢI THÍCH LỖI`. Hàng map: `[now, className, student, myTeam, checkedTeam, topic, er.min, er.sec, er.section, er.who, er.type, er.detail, er.explain]` → **`er.sentence` bị rớt (chưa ghi)**.
 - Sheet **TIMER** (mỗi dòng 1 HS): `NGÀY GIỜ NỘP, LỚP, NGƯỜI CHECK, ĐỘI ĐƯỢC CHECK, STT, BẠN, BĐ PHÚT, BĐ GIÂY, KT PHÚT, KT GIÂY`.
 
 ### C. Excel HS xuất (nút Export) — `js/app.js` hàm `exportExcel()`

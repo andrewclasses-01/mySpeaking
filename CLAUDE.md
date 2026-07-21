@@ -67,7 +67,7 @@ teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo
 - **Video dự phòng (fallback)**: Drive phát html5 trực tiếp (Drive API key, chờ metadata 25s). Nếu hỏng → iframe Drive + **thanh kéo tay `#swSeek`** (XANH DƯƠNG, nút to gấp đôi, KHÔNG play/pause) + nút **SET TIME** (`swSetTime`) đưa giờ vào MIN/SEC kèm đốm sáng bay (`flyLight`), max 900s. Không còn đồng hồ chạy + không chữ hướng dẫn.
 - **Submit chặn 3 tầng**: (1) thiếu ô giờ → viền đỏ + toast; (2) giờ sai — end≤start hoặc 2 HS đan xen (`validateTimerRanges`); (3) modal xác nhận.
 - **Header**: logo chibi + ANDREW CLASSES (BẤM = về trang chủ, còn lỗi chưa submit → pop-up `#leaveModal`) + **nút người chấm "HOANG · T1"** (`#hdStudent`, tên·đội, cỡ = Export, không icon; đã BỎ badge TEAM X) + Export + Submit.
-- **CẤU TRÚC DỮ LIỆU (payload/Sheet/Excel) + việc THỐNG NHẤT sắp tới**: xem mục **⭐ KHUNG DỮ LIỆU** trong `GHI CHU DU AN.md`. Lưu ý ô SENTENCE hiện CHƯA ghi vào Google Sheet (Code.gs chưa map) — Excel + autosave đã có.
+- **CẤU TRÚC DỮ LIỆU (payload/Sheet/Excel) + việc THỐNG NHẤT sắp tới**: xem mục **⭐ KHUNG DỮ LIỆU** trong `GHI CHU DU AN.md`. ✅ **Ô SENTENCE ĐÃ ghi vào Google Sheet từ CHẶNG 17** (`Code.gs`: header dòng 53 có `SENTENCE`, hàng ghi dòng 141 có `er.sentence`) — ghi chú cũ nói "chưa map" là **đã lạc hậu**, đừng đi sửa lại.
 
 ## Triển khai — ĐÃ LIVE (chặng 14, 19/07/2026)
 - **Web HS**: https://andrewclasses-01.github.io/mySpeaking/ — GitHub tài khoản **`andrewclasses-01`** (KHÔNG phải andrewclasses-code như dự kiến cũ — thầy chốt lại chặng 14), repo public `mySpeaking`, Pages nhánh `master` path `/`. Push bằng git thường (`git push origin master`); `gh repo create` bị classifier chặn → tạo repo qua web, teacher bấm.
