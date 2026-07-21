@@ -53,11 +53,7 @@ tailwind.config = {
      ép MỌI ô nhập ≥ 16px trên màn nhỏ. Chỉ áp dụng < 1024px → desktop giữ nguyên chữ nhỏ như cũ. */
   @media (max-width:1023px){
     input, select, textarea { font-size:16px !important; }
-    /* CHẶNG 33: chữ hướng dẫn (placeholder) TRẢ VỀ 13px trên điện thoại. Chặng 18 ép 16px cho cả
-       placeholder là THỪA: iOS chỉ tự phóng to theo cỡ chữ của Ô NHẬP, không theo placeholder.
-       Ép 16px làm câu "The sentence that contains the mistake" tràn 2 dòng trong ô cao 1 dòng
-       (rows=1 + autogrow) ⇒ HS thấy chữ bị CẮT CỤT. 13px vẫn dễ đọc mà gọn 1 dòng. */
-    input::placeholder, textarea::placeholder { font-size:13px !important; }
+    input::placeholder, textarea::placeholder { font-size:16px !important; }
     /* 4 ô giờ nói tí hon dưới mỗi tên: chữ to lên thì bỏ đệm ngang + siết nét cho vừa khung */
     .tIn { padding-left:0; padding-right:0; letter-spacing:-.03em; }
   }
@@ -181,27 +177,26 @@ tailwind.config = {
   <!-- Header -->
   <!-- Header: không sticky nữa — mobile cuộn qua header để nhường chỗ, VIDEO mới là thứ ghim -->
   <header class="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-lg lg:shrink-0">
-    <!-- CHẶNG 33: LUÔN 1 HÀNG (bỏ flex-wrap). Hẹp <640px: tên site rút "SP in Andrew Classes",
-         Submit thành icon, Export ẨN. Rộng ≥640px: Submit đủ chữ + Export = ICON nằm BÊN PHẢI Submit. -->
-    <div class="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex flex-nowrap items-center gap-2 sm:gap-3">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
       <!-- Bấm logo = về trang chủ đăng nhập lại (có pop-up hỏi nếu còn dữ liệu chưa submit) -->
-      <button id="btnHome" class="flex items-center gap-2 sm:gap-2.5 mr-auto min-w-0 text-left hover:opacity-90 active:scale-[.98] transition">
-        <img src="img/logo-site.png" alt="Speaking in Andrew Classes" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full ring-2 ring-white/50 shadow shrink-0">
-        <div class="min-w-0">
-          <div class="font-extrabold leading-tight text-sm sm:text-base truncate">
-            <span class="sm:hidden">SP in Andrew Classes</span>
-            <span class="hidden sm:inline">Speaking in Andrew Classes</span>
-          </div>
-          <div id="hdTopic" class="text-[11px] sm:text-xs text-indigo-100 truncate"></div>
+      <button id="btnHome" class="flex items-center gap-2.5 mr-auto text-left hover:opacity-90 active:scale-[.98] transition">
+        <img src="img/logo-site.png" alt="Speaking in Andrew Classes" class="w-10 h-10 rounded-full ring-2 ring-white/50 shadow shrink-0">
+        <div>
+          <div class="font-extrabold leading-tight">Speaking in Andrew Classes</div>
+          <div id="hdTopic" class="text-xs text-indigo-100"></div>
         </div>
       </button>
-      <span id="hdStudent" class="shrink-0 bg-white/15 rounded-xl px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-bold tabular-nums whitespace-nowrap"></span>
-      <button id="btnSubmit" title="Submit" class="shrink-0 bg-emerald-500 hover:bg-emerald-400 transition rounded-xl px-2.5 sm:px-4 py-2 text-sm font-bold flex items-center gap-1.5 shadow">
-        <i data-lucide="send" class="w-4 h-4 shrink-0"></i><span class="hidden sm:inline">Submit</span>
-      </button>
-      <button id="btnExport" title="Export Excel" class="hidden sm:flex shrink-0 bg-white/15 hover:bg-white/25 transition rounded-xl px-2.5 py-2 text-sm font-bold items-center justify-center">
-        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-      </button>
+      <div class="flex items-center gap-2">
+        <span id="hdStudent" class="bg-white/15 rounded-xl px-3.5 py-2 text-sm font-bold tabular-nums"></span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnExport" class="bg-white/15 hover:bg-white/25 transition rounded-xl px-3.5 py-2 text-sm font-bold flex items-center gap-1.5">
+          <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export
+        </button>
+        <button id="btnSubmit" class="bg-emerald-500 hover:bg-emerald-400 transition rounded-xl px-4 py-2 text-sm font-bold flex items-center gap-1.5 shadow">
+          <i data-lucide="send" class="w-4 h-4"></i> Submit
+        </button>
+      </div>
     </div>
   </header>
 
@@ -260,18 +255,16 @@ tailwind.config = {
       <!-- MISTAKES TAB -->
       <div id="tab-errors" class="space-y-4">
         <div id="errFormCard" class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:shrink-0">
-          <!-- STUDENT trên cùng (nút tên + thời gian nói dưới mỗi tên)
-               CHẶNG 33: BỎ dấu sao đỏ ở cả 6 mục — mọi mục trong khung này đều bắt buộc rồi,
-               dấu sao chỉ làm rối. Luật chặn khi thiếu GIỮ NGUYÊN (xem addOrUpdateError). -->
+          <!-- STUDENT trên cùng (nút tên + thời gian nói dưới mỗi tên) -->
           <div class="mb-3">
-            <label class="block text-xs font-bold text-slate-500 mb-1">STUDENT</label>
+            <label class="block text-xs font-bold text-slate-500 mb-1">STUDENT <span class="text-rose-500">*</span></label>
             <div id="fStudentWrap"></div>
           </div>
 
           <!-- TIME: tiêu đề CÙNG HÀNG với ô MIN/SEC (chữ TIME giãn cho bằng TYPE). MIN/SEC tự chạy theo video khi phát -->
           <div class="mb-3">
             <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-              <label class="text-xs font-bold text-slate-500 shrink-0 sm:w-14">TIME</label>
+              <label class="text-xs font-bold text-slate-500 shrink-0 sm:w-14">TIME <span class="text-rose-500">*</span></label>
               <div class="grid grid-cols-2 gap-2 w-full sm:flex-1 min-w-0">
                 <div class="relative">
                   <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">MIN</span>
@@ -288,7 +281,7 @@ tailwind.config = {
           <!-- TYPE: tiêu đề CÙNG HÀNG với 3 nút. Mặc định nền TRẮNG; bấm = KHUNG VÀNG. Icon BÊN TRÁI chữ -->
           <div class="mb-3">
             <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-              <label class="text-xs font-bold text-slate-500 shrink-0 sm:w-14">TYPE</label>
+              <label class="text-xs font-bold text-slate-500 shrink-0 sm:w-14">TYPE <span class="text-rose-500">*</span></label>
               <div class="grid grid-cols-3 gap-2 w-full sm:flex-1 min-w-0" id="errTypeBtns">
                 <button data-type="Grammar" class="errType rounded-lg border-2 px-0.5 sm:px-1 py-2 text-[10px] sm:text-xs font-bold leading-tight transition flex flex-row items-center justify-center gap-1.5 border-slate-200 bg-white text-slate-700 hover:border-slate-300"><i data-lucide="pencil-line" class="w-4 h-4 text-blue-600 shrink-0 pointer-events-none"></i>Grammar</button>
                 <button data-type="Pronunciation" class="errType rounded-lg border-2 px-0.5 sm:px-1 py-2 text-[10px] sm:text-xs font-bold leading-tight transition flex flex-row items-center justify-center gap-1.5 border-slate-200 bg-white text-slate-700 hover:border-slate-300"><i data-lucide="audio-lines" class="w-4 h-4 text-emerald-600 shrink-0 pointer-events-none"></i>Pronunciation</button>
@@ -299,16 +292,16 @@ tailwind.config = {
 
           <!-- SENTENCE: câu chứa lỗi (BẮT BUỘC). Ô tự giãn cao khi gõ nhiều chữ; chữ cỡ nhỏ = cỡ chữ hướng dẫn -->
           <div class="mb-3">
-            <label class="block text-xs font-bold text-slate-500 mb-1">SENTENCE</label>
+            <label class="block text-xs font-bold text-slate-500 mb-1">SENTENCE <span class="text-rose-500">*</span></label>
             <textarea id="fSentence" rows="1" placeholder="The sentence that contains the mistake" class="autogrow w-full rounded-xl border border-slate-300 px-4 py-2.5 text-xs placeholder:italic placeholder:text-xs placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
           </div>
 
           <div class="mb-3">
-            <label class="block text-xs font-bold text-slate-500 mb-1">MISTAKE</label>
+            <label class="block text-xs font-bold text-slate-500 mb-1">MISTAKE <span class="text-rose-500">*</span></label>
             <textarea id="fDetail" rows="1" placeholder="e.g. said 'he go' instead of 'he goes'" class="autogrow w-full rounded-xl border border-slate-300 px-4 py-2.5 text-xs placeholder:italic placeholder:text-xs placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
           </div>
           <div class="mb-4">
-            <label class="block text-xs font-bold text-slate-500 mb-1">EXPLANATION</label>
+            <label class="block text-xs font-bold text-slate-500 mb-1">EXPLANATION <span class="text-rose-500">*</span></label>
             <textarea id="fExplain" rows="1" placeholder="Why is it wrong? How should it be fixed?" class="autogrow w-full rounded-xl border border-slate-300 px-4 py-2.5 text-xs placeholder:italic placeholder:text-xs placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
           </div>
 
@@ -322,11 +315,7 @@ tailwind.config = {
 
         <!-- Mistakes list (desktop CHẶNG 30: ô grid CỘT PHẢI HÀNG 2 — dưới form, dưới video để trống;
              vẫn là phần DUY NHẤT cuộn; min-h-[10rem] = SÀN chặng 27, thiếu chỗ thì <main> cuộn bù) -->
-        <!-- CHẶNG 33: SÀN cao 10rem→14rem. Lý do: nút "Delete all" ăn mất ~40px của khung, màn
-             1280×800 khung tụt về sàn thì phần cuộn chỉ còn 34px (chưa đủ 1 dòng lỗi). Chọn 12rem
-             (không phải 14) để màn 800px CHƯA phải bật van cuộn của <main> — bố cục vẫn ghim.
-             Màn thấp hơn nữa vẫn an toàn nhờ van <main lg:overflow-y-auto> của chặng 30. -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:col-start-2 lg:row-start-2 lg:min-h-[12rem] lg:flex lg:flex-col">
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:col-start-2 lg:row-start-2 lg:min-h-[10rem] lg:flex lg:flex-col">
           <div class="flex items-center justify-between mb-3 lg:shrink-0">
             <h2 class="font-extrabold flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-indigo-600"></i> Mistakes found</h2>
             <div id="errStats" class="flex gap-1.5 text-xs font-bold"></div>
@@ -338,11 +327,6 @@ tailwind.config = {
               No mistakes yet. Watch closely and get started! 🔍
             </div>
           </div>
-          <!-- CHẶNG 33: Delete all — ĐẶT NGOÀI vùng cuộn (lg:shrink-0) nên luôn thấy ở đáy khung.
-               Tự ẩn khi chưa có lỗi nào hoặc đang ở chế độ xem lại bài đã nộp. -->
-          <button id="btnDelAll" class="hidden mt-2.5 lg:shrink-0 w-full rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 active:scale-[.98] transition py-1.5 text-sm font-bold flex items-center justify-center gap-1.5">
-            <i data-lucide="trash-2" class="w-4 h-4"></i> Delete all
-          </button>
         </div>
       </div>
 
@@ -395,36 +379,6 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- (CHẶNG 33) xác nhận XOÁ MỘT lỗi -->
-<div id="delOneModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop text-center">
-    <div class="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-3">
-      <i data-lucide="trash-2" class="w-6 h-6 text-rose-500"></i>
-    </div>
-    <p class="text-slate-700 font-semibold mb-1 leading-relaxed">Delete mistake <b id="delOneNo">#1</b>?</p>
-    <p id="delOneWhat" class="text-xs text-slate-500 mb-4 leading-relaxed"></p>
-    <div class="flex gap-2">
-      <button id="btnDelOneCancel" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">Keep it</button>
-      <button id="btnDelOneOk" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-2.5 font-bold text-sm">Yes, delete</button>
-    </div>
-  </div>
-</div>
-
-<!-- (CHẶNG 33) xác nhận XOÁ HẾT -->
-<div id="delAllModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop text-center">
-    <div class="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-3">
-      <i data-lucide="alert-triangle" class="w-6 h-6 text-rose-500"></i>
-    </div>
-    <p class="text-slate-700 font-semibold mb-1 leading-relaxed">Delete <b id="delAllCount">0</b> mistakes — all of them?</p>
-    <p class="text-xs text-slate-500 mb-4 leading-relaxed">This clears your whole list on this device. You cannot undo it.</p>
-    <div class="flex gap-2">
-      <button id="btnDelAllCancel" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">Keep them</button>
-      <button id="btnDelAllOk" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-2.5 font-bold text-sm">Yes, delete all</button>
-    </div>
-  </div>
-</div>
-
 <!-- (CHẶNG 32) cảnh báo NỘP ÍT HƠN lần trước (em có thể đang làm ở máy khác, form trống) -->
 <div id="fewerModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop text-center">
@@ -450,7 +404,7 @@ tailwind.config = {
 </div>
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
-<script src="config.js?v=23"></script>
-<script src="js/app.js?v=23"></script>
+<script src="config.js?v=22"></script>
+<script src="js/app.js?v=22"></script>
 </body>
 </html>

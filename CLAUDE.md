@@ -55,7 +55,21 @@ teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo
 - Drive trả file gốc nguyên bitrate, không adaptive → cả lớp (~15 máy) cùng xem dễ nghẽn Wi-Fi; YouTube tự hạ chất lượng nên mượt hơn. Đã tư vấn thầy ưu tiên YouTube unlisted.
 - Dropdown LOẠI LỖI trong file mẫu: `NGỮ PHÁP, PHÁT ÂM, THÔNG TIN` (data validation cột E sheet FORM).
 
-## CHẶNG 32 (21/07/2026 đêm) — luồng vào app + kéo bài đã nộp (MỚI NHẤT, `?v=22`)
+## CHẶNG 33 (22/07/2026) — MỚI NHẤT, `?v=23`
+- ⛔ **MỖI HỌC SINH MỘT Ô NHỚ RIÊNG**: `makeSaveKey(student, videoUrl)` = `myspeaking_<TÊN>_<video>`.
+  Khoá cũ chỉ theo video ⇒ **2 em cùng đội dùng chung ô nhớ, em sau ĐÈ MẤT bài em trước**. Lịch sử
+  lọc bằng `submittedSaves(state.student)` (so trường `student` bên trong, nên bài khoá cũ vẫn nhận
+  đúng chủ). **Đừng bao giờ đặt khoá lưu chỉ theo video.**
+- Ô đếm dùng chữ cái `TYPE_STYLE[t].short` = G/P/I (tên đầy đủ làm lòi khung máy nhỏ) · mỗi lỗi có
+  **STT theo thứ tự thời gian** (`sortedPositionOf` quy đổi vì `state.errors` giữ thứ tự thêm vào).
+- **Xoá phải hỏi**: `#delOneModal` (1 lỗi) · `#delAllModal` (nút `#btnDelAll` đáy khung, ngoài vùng
+  cuộn, tự ẩn khi trống/đang xem lại). Xoá lỗi đứng trước lỗi đang sửa thì `editingIndex--`.
+- **Header luôn 1 hàng** (không `flex-wrap`): <640px = "SP in Andrew Classes" + Submit icon + ẩn
+  Export; ≥640px = đủ chữ + Export **icon bên phải Submit**.
+- Bỏ hết dấu sao đỏ trong khung check lỗi (luật bắt buộc giữ nguyên) · sàn khung lỗi 12rem ·
+  placeholder mobile 13px (16px chỉ cần cho Ô NHẬP để chặn iOS tự zoom).
+
+## CHẶNG 32 (21/07/2026 đêm) — luồng vào app + kéo bài đã nộp (`?v=22`)
 - **Luồng vào**: đăng nhập (class + code) → chọn Team + Name → **trang tích cam kết** — trang này có:
   tiêu đề "**CLASS** B1AH — GERMS" (chữ CLASS do `fixClassNames()` chuẩn hoá lúc nạp config, sheet
   NAME vẫn ghi "Lớp ..."), nút Start, **nút back CHỈ ICON** (`#btnBackNames`), và **lịch sử MY

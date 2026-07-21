@@ -29,7 +29,6 @@
   };
   let editingIndex = -1;
   let fType = '';
-  let pendingDelIndex = -1;   // CHẶNG 33: lỗi đang chờ xác nhận xoá (pop-up delOneModal)
 
   const SCRIPT_URL = CFG.SCRIPT_URL || '';
   let saveKey = 'myspeaking_manual';   // đặt lại khi biết videoUrl (sau bước chọn tên)
@@ -45,20 +44,6 @@
   }
   function loadSaved() {
     try { return JSON.parse(localStorage.getItem(saveKey)); } catch (e) { return null; }
-  }
-
-  // ═══════════════ CHẶNG 33 — MỖI HỌC SINH MỘT Ô NHỚ RIÊNG ═══════════════
-  // ⛔ LỖI CŨ ĐÃ TRẢ GIÁ: khoá lưu chỉ theo LINK VIDEO (`myspeaking_<video>`). Hai em CÙNG ĐỘI thì
-  // chấm CÙNG một video ⇒ dùng CHUNG một ô nhớ. Em B đăng nhập trên cùng máy: app không nạp bài của
-  // em A (có so tên) NHƯNG autosave của em B GHI ĐÈ lên ô đó ⇒ bài + lịch sử của em A MẤT SẠCH.
-  // Nay khoá = tên em + link video ⇒ ai lưu bài nấy, và lịch sử lọc theo tên (xem submittedSaves).
-  // Bài lưu bằng khoá CŨ vẫn đọc lại được: submittedSaves đọc mọi khoá `myspeaking_` rồi lọc theo
-  // trường `student` nằm TRONG dữ liệu, không dựa vào hình dạng khoá.
-  function slugKey(s) {
-    return String(s || '').trim().toUpperCase().replace(/\s+/g, '-').replace(/[^A-Z0-9\-]/g, '') || 'HS';
-  }
-  function makeSaveKey(student, videoUrl) {
-    return 'myspeaking_' + slugKey(student) + '_' + String(videoUrl || 'manual').slice(-60);
   }
 
   // ─── Toast ───
@@ -402,11 +387,9 @@
   const TYPE_OFF = 'border-slate-200 bg-white text-slate-700 hover:border-slate-300';
   // TYPE lưu bằng TIẾNG ANH (khớp mẫu mới của thầy: Grammar / Pronunciation / Information)
   const TYPE_STYLE = {
-    // CHẶNG 33: `short` = chữ cái dùng cho ô ĐẾM ở đầu khung Mistakes found (G/P/I).
-    // Lý do: trên điện thoại nhỏ, "Pronunciation: 5" + "Information: 2" đẩy ô cuối LÒI RA NGOÀI khung.
-    'Grammar': { badge: 'bg-blue-100 text-blue-700', short: 'G' },
-    'Pronunciation': { badge: 'bg-emerald-100 text-emerald-700', short: 'P' },
-    'Information': { badge: 'bg-amber-100 text-amber-700', short: 'I' },
+    'Grammar': { badge: 'bg-blue-100 text-blue-700' },
+    'Pronunciation': { badge: 'bg-emerald-100 text-emerald-700' },
+    'Information': { badge: 'bg-amber-100 text-amber-700' },
   };
   const typeLabel = (t) => t;   // giá trị lưu đã là tiếng Anh → hiển thị nguyên
   function renderTypeBtns() {
@@ -484,13 +467,10 @@
     const list = $('errList');
     const sorted = state.errors.map((e, i) => ({ e, i }))
       .sort((a, b) => (tSec(a.e) - tSec(b.e)));
-    list.innerHTML = sorted.map(({ e, i }, pos) => {
+    list.innerHTML = sorted.map(({ e, i }) => {
       const st = TYPE_STYLE[e.type] || { badge: 'bg-slate-100 text-slate-600' };
       return '<div class="slidein rounded-2xl border border-slate-200 p-3.5 hover:border-indigo-300 transition group">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
-        // CHẶNG 33: STT đứng TRƯỚC mốc giờ. Đánh theo THỨ TỰ THỜI GIAN (danh sách đã sort)
-        // → khớp cách đánh số của file Excel bên app máy tính.
-        '<span class="shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center">' + (pos + 1) + '</span>' +
         '<span class="font-mono font-bold text-sm bg-slate-900 text-white rounded-lg px-2 py-0.5">' + fmtTime(e) + '</span>' +
         (e.section ? '<span class="text-xs font-bold text-slate-500">Section ' + escapeHtml(e.section) + '</span>' : '') +
         '<span class="text-xs font-bold rounded-full px-2.5 py-1 ' + st.badge + '">' + typeLabel(e.type) + '</span>' +
@@ -507,27 +487,14 @@
     $('errEmpty').style.display = state.errors.length ? 'none' : '';
 
     // đếm theo loại (badge tab đã bỏ cùng tab bar ở chặng 12)
-    // CHẶNG 33: dùng CHỮ CÁI G/P/I (không phải tên đầy đủ) — tên đầy đủ làm ô cuối lòi ra ngoài
-    // khung trên điện thoại nhỏ. Chữ cái in đậm + `whitespace-nowrap` để không bao giờ vỡ dòng.
     const counts = {};
     state.errors.forEach((e) => { counts[e.type] = (counts[e.type] || 0) + 1; });
     $('errStats').innerHTML = Object.keys(TYPE_STYLE)
       .filter((t) => counts[t])
-      .map((t) => '<span title="' + typeLabel(t) + '" class="rounded-full px-2 py-1 font-extrabold whitespace-nowrap ' +
-        TYPE_STYLE[t].badge + '">' + TYPE_STYLE[t].short + ': ' + counts[t] + '</span>').join('');
-
-    // CHẶNG 33: nút Delete all — chỉ hiện khi có lỗi VÀ không ở chế độ xem lại bài đã nộp
-    const da = $('btnDelAll');
-    if (da) da.classList.toggle('hidden', !state.errors.length || reviewLocked);
+      .map((t) => '<span class="rounded-full px-2.5 py-1 ' + TYPE_STYLE[t].badge + '">' + typeLabel(t) + ': ' + counts[t] + '</span>').join('');
     refreshIcons();
   }
   function tSec(e) { return (parseInt(e.min, 10) || 0) * 60 + (parseInt(e.sec, 10) || 0); }
-  // CHẶNG 33: STT hiện trên màn = vị trí trong danh sách ĐÃ SẮP THEO GIỜ, còn state.errors giữ
-  // thứ tự thêm vào → phải quy đổi khi muốn nói "đang xoá lỗi số mấy".
-  function sortedPositionOf(idx) {
-    const order = state.errors.map((e, i) => ({ e, i })).sort((a, b) => tSec(a.e) - tSec(b.e));
-    return order.findIndex((x) => x.i === idx) + 1;
-  }
   function fmtTime(e) {
     if (e.min === '' && e.sec === '') return '--:--';
     return String(e.min || 0).padStart(2, '0') + ':' + String(e.sec || 0).padStart(2, '0');
@@ -828,7 +795,7 @@
     state.topic = cls.topic || cls.lesson || '';
     state.className = cls.name || cls.id;
     state.classCode = cls.classCode || cls.id;    // khóa route tới đúng file lớp
-    saveKey = makeSaveKey(state.student, state.videoUrl);
+    saveKey = 'myspeaking_' + (state.videoUrl || 'manual').slice(-60);
 
     // ảnh HS: dùng ảnh thật nếu có, tạm thời hiện chữ cái đầu
     const photo = photoFor(cls, name);
@@ -927,20 +894,14 @@
   // "Edit & submit again" và XÁC NHẬN qua modal (thầy chốt) — mở khoá xong nhớ Submit lại.
   let reviewLocked = false;
 
-  // CHẶNG 33: CHỈ trả bài CỦA CHÍNH EM ĐANG ĐĂNG NHẬP (thầy chốt: "lịch sử của ai làm thì đúng
-  // tên người đó mới xem được"). Lọc theo trường `student` bên TRONG dữ liệu → bài lưu bằng khoá
-  // cũ (chỉ có link video) vẫn nhận đúng chủ.
-  function submittedSaves(onlyStudent) {
-    const want = String(onlyStudent || '').trim().toUpperCase();
+  function submittedSaves() {
     const out = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       if (!k || k.indexOf('myspeaking_') !== 0) continue;
       try {
         const s = JSON.parse(localStorage.getItem(k));
-        if (!s || !(s.submitted || s.wasSubmitted) || !s.student) continue;
-        if (want && String(s.student).trim().toUpperCase() !== want) continue;
-        out.push({ key: k, s: s });
+        if (s && (s.submitted || s.wasSubmitted) && s.student) out.push({ key: k, s: s });
       } catch (e) {}
     }
     out.sort((a, b) => String(b.s.savedAt || '').localeCompare(String(a.s.savedAt || '')));
@@ -948,7 +909,7 @@
   }
 
   function renderReviewSection() {
-    const list = submittedSaves(state.student);   // CHẶNG 33: chỉ bài của chính em đang chọn tên
+    const list = submittedSaves();
     const sec = $('reviewSection');
     if (!list.length) { sec.classList.add('hidden'); return; }
     $('reviewList').innerHTML = list.slice(0, 6).map(({ key, s }) => {
@@ -1002,9 +963,6 @@
     $('appScreen').classList.toggle('review-locked', on);
     $('reviewBanner').classList.toggle('hidden', !on);
     $('btnSubmit').classList.toggle('hidden', on);
-    // CHẶNG 33: Delete all cũng phải theo khoá. ⚠️ setReviewLock hay được gọi SAU renderErrors
-    // (openReview, maybeRestoreFromServer) nên phải tự cập nhật ở đây, không ỷ vào renderErrors.
-    $('btnDelAll').classList.toggle('hidden', on || !state.errors.length);
   }
   function hideEditAgainModal() { $('editAgainModal').classList.add('hidden'); $('editAgainModal').classList.remove('flex'); }
 
@@ -1116,16 +1074,12 @@
         $('btnCancelEdit').classList.remove('hidden');
         $('fSentence').focus();
       }
-      // CHẶNG 33: XOÁ PHẢI HỎI TRƯỚC (thầy chốt) — nút xoá chỉ mở pop-up, xoá thật ở btnDelOneOk
       if (del) {
-        pendingDelIndex = +del.dataset.del;
-        const e = state.errors[pendingDelIndex];
-        const pos = sortedPositionOf(pendingDelIndex);
-        $('delOneNo').textContent = '#' + pos;
-        $('delOneWhat').textContent = e ? (fmtTime(e) + ' · ' + (e.type || '') + (e.detail ? ' — ' + e.detail : '')) : '';
-        $('delOneModal').classList.remove('hidden');
-        $('delOneModal').classList.add('flex');
-        refreshIcons();
+        const i = +del.dataset.del;
+        state.errors.splice(i, 1);
+        if (editingIndex === i) clearErrForm();
+        renderErrors(); autosave();
+        toast('Mistake deleted', 'info');
       }
     });
 
@@ -1146,41 +1100,6 @@
 
     // (CHẶNG 32) đóng pop-up "nộp ít hơn lần trước"
     $('btnFewerOk').addEventListener('click', () => { $('fewerModal').classList.add('hidden'); $('fewerModal').classList.remove('flex'); });
-
-    // (CHẶNG 33) XÁC NHẬN XOÁ — xoá 1 lỗi
-    const closeDelOne = () => {
-      $('delOneModal').classList.add('hidden'); $('delOneModal').classList.remove('flex');
-      pendingDelIndex = -1;
-    };
-    $('btnDelOneCancel').addEventListener('click', closeDelOne);
-    $('btnDelOneOk').addEventListener('click', () => {
-      const i = pendingDelIndex;
-      closeDelOne();
-      if (i < 0 || i >= state.errors.length) return;
-      state.errors.splice(i, 1);
-      if (editingIndex === i) clearErrForm();
-      else if (editingIndex > i) editingIndex--;   // các lỗi phía sau tụt 1 bậc
-      renderErrors(); autosave();
-      toast('Mistake deleted', 'info');
-    });
-
-    // (CHẶNG 33) XÁC NHẬN XOÁ — xoá HẾT
-    const closeDelAll = () => { $('delAllModal').classList.add('hidden'); $('delAllModal').classList.remove('flex'); };
-    $('btnDelAll').addEventListener('click', () => {
-      if (!state.errors.length || reviewLocked) return;
-      $('delAllCount').textContent = state.errors.length;
-      $('delAllModal').classList.remove('hidden'); $('delAllModal').classList.add('flex');
-      refreshIcons();
-    });
-    $('btnDelAllCancel').addEventListener('click', closeDelAll);
-    $('btnDelAllOk').addEventListener('click', () => {
-      closeDelAll();
-      const n = state.errors.length;
-      state.errors = [];
-      clearErrForm();
-      renderErrors(); autosave();
-      toast('Deleted all ' + n + ' mistakes', 'info');
-    });
 
     $('btnExport').addEventListener('click', exportExcel);
     $('btnSubmit').addEventListener('click', openSubmitModal);

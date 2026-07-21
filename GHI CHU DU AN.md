@@ -808,6 +808,63 @@ Console **0 lỗi**. Đã dọn localStorage test. Tăng **`?v=19 → 20`**.
 Console **0 lỗi**, đã dọn localStorage test. Bẫy ghi lại: server preview có thể bị tắt giữa chừng
 (pane nhảy sang file://) — chạy lại `preview_start myspeaking` rồi test tiếp bằng tabId mới.
 
+## CHẶNG 33 — 22/07/2026: 7 TINH CHỈNH THEO YÊU CẦU THẦY (+ vá 1 lỗi mất bài chưa ai biết)
+
+Thầy giao 7 việc sau khi dùng thật. Em chốt 2 điểm qua AskUserQuestion (ô nhớ: **tách theo tên
+từng em**; ngưỡng màn hẹp: **<640px**) rồi build một lượt. `?v=22 → 23`. Backup `Backup/pre-chang33/`.
+
+### ⛔ LỖI GỐC PHÁT HIỆN KHI LÀM VIỆC 4 — "hai em cùng đội ĐÈ MẤT BÀI CỦA NHAU"
+Khoá lưu cũ **chỉ theo LINK VIDEO** (`myspeaking_<video>`). Hai em **cùng đội** thì chấm **cùng một
+video** ⇒ **dùng CHUNG một ô nhớ**. Em B đăng nhập trên cùng máy: app không nạp bài em A (có so
+tên — nên trước giờ *nhìn* thì không thấy gì lạ) **NHƯNG autosave của em B GHI ĐÈ lên ô đó** ⇒ bài
++ lịch sử của em A **mất sạch**. Không chỉ là "hiện nhầm lịch sử" như tưởng ban đầu.
+- Nay: `makeSaveKey(student, videoUrl)` = `myspeaking_<TÊN>_<video>` (`slugKey` bỏ dấu cách/ký tự lạ).
+- `submittedSaves(onlyStudent)` lọc theo trường **`student` nằm TRONG dữ liệu**, KHÔNG dựa hình dạng
+  khoá ⇒ bài lưu bằng **khoá cũ vẫn nhận đúng chủ**, không mất lịch sử của ai.
+- `renderReviewSection()` truyền `state.student` ⇒ **ai làm người đó mới thấy** (yêu cầu 4).
+- Đo thật: HOANG nộp 2 lỗi → TIEN (cùng đội 1) đăng nhập, thêm lỗi, autosave → ô nhớ HOANG **còn
+  nguyên 2 lỗi + wasSubmitted**, TIEN **không thấy** lịch sử HOANG; HOANG vào lại thấy đúng bài mình.
+
+### 7 việc thầy giao
+1. **Ô đếm G/P/I** (`TYPE_STYLE[t].short`): "Pronunciation: 5" + "Information: 2" từng đẩy ô cuối
+   **lòi ra ngoài khung** trên máy nhỏ → nay `G: 2` `P: 1` `I: 1`, chữ `font-extrabold` +
+   `whitespace-nowrap`, `title=` giữ tên đầy đủ khi rê chuột. Đo 320px: nằm trọn trong khung.
+2. **STT mỗi lỗi**: vòng tròn chàm đứng **trước** mốc giờ, đánh **theo thứ tự thời gian** (khớp cách
+   đánh số file Excel bên app máy tính). ⚠️ `state.errors` giữ thứ tự THÊM VÀO còn danh sách hiển
+   thị đã sort ⇒ thêm `sortedPositionOf(idx)` để pop-up nói đúng "đang xoá lỗi số mấy".
+3. **Bỏ dấu sao đỏ** ở cả 6 mục trong khung check lỗi (mọi mục đều bắt buộc rồi). **Luật chặn khi
+   thiếu GIỮ NGUYÊN**. Hai ô màn đăng nhập vẫn giữ sao (ngoài phạm vi thầy nói).
+4. **Lịch sử theo từng em** — xem mục lỗi gốc ở trên.
+5. **Nút "Delete all"** đáy khung Mistakes found + pop-up `#delAllModal` (nói rõ số lỗi sắp xoá).
+   Đặt **NGOÀI vùng cuộn** (`lg:shrink-0`) nên luôn thấy; tự ẩn khi chưa có lỗi / đang xem lại bài.
+6. **Xoá 1 lỗi phải hỏi** — nút thùng rác nay chỉ mở `#delOneModal` ("Delete mistake #3?" + mốc giờ
+   + loại + nội dung), xoá thật ở nút Yes. Sửa luôn: `editingIndex--` khi xoá lỗi nằm TRƯỚC lỗi
+   đang sửa (không thì đang sửa lỗi này lại lưu đè sang lỗi khác).
+7. **Header luôn 1 hàng** (bỏ `flex-wrap`): ≥640px `[HOANG · T1] [Submit] [Export=ICON]` — Export
+   sang **phải** Submit, bỏ chữ; <640px tên site rút **"SP in Andrew Classes"**, **Submit thành
+   icon**, **Export ẩn**. Logo cụm trái `min-w-0` + `truncate` để không đẩy cụm phải xuống dòng.
+
+### 2 việc phát sinh trong lúc đo (không nằm trong 7 việc — đã báo thầy)
+- **Sàn khung Mistakes found 10rem → 12rem** + nút Delete all gọn lại (`py-1.5`): nút mới ăn ~40px,
+  màn 1280×800 khung tụt về sàn thì phần cuộn **chỉ còn 34px** (chưa đủ 1 dòng lỗi). Nay 70px.
+  1536×864: khung 220px, cuộn 98px, `<main>` KHÔNG cuộn. Màn thấp hơn có van `main overflow-y-auto`.
+- **Chữ hướng dẫn (placeholder) trên điện thoại 16px → 13px**: chặng 18 ép 16px cho **cả**
+  placeholder là thừa — iOS chỉ tự phóng to theo cỡ chữ của **ô nhập**, không theo placeholder. Ép
+  16px làm câu "The sentence that contains the mistake" tràn 2 dòng trong ô cao 1 dòng ⇒ **HS thấy
+  chữ bị cắt cụt**. Đã đo lại: hết cắt, mà cỡ chữ khi GÕ vẫn 16px (không tái phát iOS tự zoom).
+
+### Verify (server 8123, dữ liệu mạng đều giả — KHÔNG đụng Sheet thật)
+| Kiểm | Kết quả |
+|---|---|
+| Thêm 5 lỗi lệch thứ tự | STT 1→5 đúng **theo giờ** (00:42 · 01:27 · 02:07 · 03:02 · 04:17) ✓ |
+| Ô đếm | `G: 2 P: 2 I: 1`; ở 320px nằm trọn trong khung, không vỡ dòng ✓ |
+| Xoá 1 lỗi | Pop-up đúng "#3 · 02:07 · Information — germs are big"; **Keep it → vẫn 5 lỗi**; Yes → 4 lỗi, STT đánh lại 1-4, ô đếm còn `G: 2 P: 2` ✓ |
+| Delete all | Pop-up "4 mistakes"; **Keep them → vẫn 4**; Yes → 0 lỗi, hiện lại lời mời, nút tự ẩn ✓ |
+| Chế độ xem lại | Delete all **ẩn** (cùng nút sửa/xoá từng lỗi) ✓ |
+| Header 320 / 639 / 640 / 1536 | Luôn **1 hàng** (đo theo TÂM DỌC, không theo `top` — các nút cao khác nhau); <640: SP + Submit icon + ẩn Export; ≥640: đủ chữ + Export icon **bên phải** Submit ✓ |
+| 2 em cùng đội | Xem mục lỗi gốc — bài em A còn nguyên, lịch sử ai nấy xem ✓ |
+| Console | 0 lỗi ✓ · localStorage test đã dọn ✓ |
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 > **CẬP NHẬT 21/07/2026 (CHẶNG 27-30):** fix HS không cuộn được danh sách Mistakes found trên desktop
