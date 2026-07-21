@@ -55,7 +55,15 @@ teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo
 - Drive trả file gốc nguyên bitrate, không adaptive → cả lớp (~15 máy) cùng xem dễ nghẽn Wi-Fi; YouTube tự hạ chất lượng nên mượt hơn. Đã tư vấn thầy ưu tiên YouTube unlisted.
 - Dropdown LOẠI LỖI trong file mẫu: `NGỮ PHÁP, PHÁT ÂM, THÔNG TIN` (data validation cột E sheet FORM).
 
-## CHẶNG 33 (22/07/2026) — MỚI NHẤT, `?v=23`
+## CHẶNG 34 (22/07/2026) — MỚI NHẤT, `?v=24`
+- **Chữ "CLASS" CHỈ ở màn đăng nhập/xác nhận.** Dòng dưới video dùng `tenLopNgan()` bỏ tiền tố
+  `CLASS `/`Lớp ` — **chỉ đổi HIỂN THỊ**, `state.className` và dữ liệu nộp lên giữ nguyên.
+- **Dòng dưới video LUÔN 1 DÒNG**: `#videoStatus` = `flex-nowrap whitespace-nowrap min-w-0
+  overflow-hidden` (không còn class cỡ chữ) + **`fitVideoInfo()` tự hạ cỡ 14/13px → sàn 9px**.
+  Chạy ở `setVideoStatus`, lặp lại sau **350ms** (khung video desktop giãn xong mới đo đúng) và khi
+  `resize` (debounce 120ms). Đội 3 người ở màn 320px → tự về 10px, không tràn.
+
+## CHẶNG 33 (22/07/2026) — `?v=23`
 - ⛔ **MỖI HỌC SINH MỘT Ô NHỚ RIÊNG**: `makeSaveKey(student, videoUrl)` = `myspeaking_<TÊN>_<video>`.
   Khoá cũ chỉ theo video ⇒ **2 em cùng đội dùng chung ô nhớ, em sau ĐÈ MẤT bài em trước**. Lịch sử
   lọc bằng `submittedSaves(state.student)` (so trường `student` bên trong, nên bài khoá cũ vẫn nhận

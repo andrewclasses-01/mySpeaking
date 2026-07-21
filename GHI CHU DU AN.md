@@ -865,6 +865,33 @@ tên — nên trước giờ *nhìn* thì không thấy gì lạ) **NHƯNG autos
 | 2 em cùng đội | Xem mục lỗi gốc — bài em A còn nguyên, lịch sử ai nấy xem ✓ |
 | Console | 0 lỗi ✓ · localStorage test đã dọn ✓ |
 
+## CHẶNG 34 — 22/07/2026: DÒNG DƯỚI VIDEO — BỎ CHỮ "CLASS" + LUÔN GỌN 1 DÒNG
+
+**Thầy chốt:** chữ `CLASS` **chỉ dùng ở màn đăng nhập**; vào trang check lỗi rồi thì dòng dưới
+video chỉ cần **tên lớp**. Dòng đó cũng phải có cơ chế chỉnh cỡ chữ để **màn hẹp không tràn 2 dòng**.
+
+### Đã làm (`?v=23 → 24`, chỉ đụng `videoInfoHtml` + `#videoStatus`)
+- `tenLopNgan(s)` — bỏ tiền tố `CLASS ` / `Lớp ` (regex `^\s*(CLASS|L[ớơo]p)\s+/i`) **chỉ khi hiển
+  thị dòng dưới video**. `state.className` giữ nguyên "CLASS B1AH" ⇒ màn đăng nhập/xác nhận
+  (`identHeader`) và mọi dữ liệu nộp lên **KHÔNG đổi**.
+- `#videoStatus`: bỏ `flex-wrap` → **`flex-nowrap whitespace-nowrap min-w-0 overflow-hidden`**
+  (khoá cứng 1 dòng) và **bỏ class cỡ chữ `text-sm`** vì cỡ nay do JS đặt.
+- **`fitVideoInfo()` — tự hạ cỡ chữ cho vừa khung**: bắt đầu 14px (desktop) / 13px (mobile), hạ dần
+  0,5px tới khi hết tràn, **sàn 9px**. Gọi ở 3 chỗ: trong `setVideoStatus`, **lặp lại sau 350ms**
+  (lúc vừa gán chữ, khung video desktop chưa giãn xong theo lưới ⇒ đo sớm sẽ hạ cỡ chữ oan), và
+  khi **`resize`** (xoay ngang/dọc điện thoại, kéo cỡ cửa sổ) — debounce 120ms.
+
+### Verify (server 8123) — ca xấu nhất: đội 3 người `PHONG · HA AN · BAO CHAU`
+| Màn | Cỡ chữ tự chọn | 1 dòng | Tràn ngang |
+|---|---|---|---|
+| 320px | **10px** | ✓ | không |
+| 375px | 13px | ✓ | không |
+| 1280px | 14px | ✓ | không |
+
+- Dòng dưới video: `B1AH \| TEAM 4 \| PHONG · HA AN · BAO CHAU` — **không còn chữ CLASS** ✓
+- Màn xác nhận vẫn `CLASS B1AH — GERMS` ✓ · nút người chấm vẫn `DIEM MY · T3` ✓
+- Đổi cỡ cửa sổ 320 → 375 → 1280: cỡ chữ tự chỉnh lại đúng (10 → 13 → 14) ✓ · console 0 lỗi ✓
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 > **CẬP NHẬT 21/07/2026 (CHẶNG 27-30):** fix HS không cuộn được danh sách Mistakes found trên desktop

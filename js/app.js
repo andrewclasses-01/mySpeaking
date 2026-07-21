@@ -86,13 +86,42 @@
     return { type: 'unknown', url: url };
   }
 
-  function setVideoStatus(html) { $('videoStatus').innerHTML = html; }
+  function setVideoStatus(html) {
+    $('videoStatus').innerHTML = html;
+    fitVideoInfo();
+    // Đo LẦN NỮA sau khi bố cục ổn định: lúc vừa gán chữ, khung video (desktop giãn theo lưới,
+    // mobile chờ video vào) có thể chưa đúng bề ngang cuối cùng ⇒ đo sớm sẽ hạ cỡ chữ oan.
+    clearTimeout(setVideoStatus._t);
+    setVideoStatus._t = setTimeout(fitVideoInfo, 350);
+  }
+
+  // ═══════════════ CHẶNG 34 — DÒNG DƯỚI VIDEO LUÔN GỌN 1 DÒNG ═══════════════
+  // Thầy chốt: chữ "CLASS" chỉ dùng ở màn đăng nhập; vào bài rồi thì chỉ cần TÊN LỚP.
+  // Và dòng này KHÔNG BAO GIỜ được tràn xuống dòng 2 — đội 3 người (VD "DIEM MY · CUONG · KHOI")
+  // trên máy 320px là chắc chắn tràn nếu để cỡ chữ cố định. Cách làm: khoá 1 dòng bằng CSS
+  // (flex-nowrap + whitespace-nowrap) rồi TỰ HẠ CỠ CHỮ cho tới khi vừa khung (14px → 9px).
+  function tenLopNgan(s) {
+    return String(s || '').replace(/^\s*(CLASS|L[ớơo]p)\s+/i, '').trim();   // "CLASS B1AH" → "B1AH"
+  }
+  function fitVideoInfo() {
+    const el = $('videoStatus');
+    if (!el || !el.firstChild) return;
+    const MAX = window.innerWidth >= 1024 ? 14 : 13, MIN = 9;
+    let px = MAX;
+    el.style.fontSize = px + 'px';
+    // + 1px dung sai: scrollWidth/clientWidth hay lệch 1px do bo tròn phân số
+    while (px > MIN && el.scrollWidth > el.clientWidth + 1) {
+      px -= 0.5;
+      el.style.fontSize = px + 'px';
+    }
+  }
 
   // Dòng thông tin dưới video: LỚP · ĐỘI ĐƯỢC CHẤM · các thành viên (thay cho chữ trạng thái kỹ thuật)
+  // CHẶNG 34: chỉ TÊN LỚP (bỏ chữ "CLASS" — chữ đó chỉ dùng ở màn đăng nhập, thầy chốt).
   function videoInfoHtml() {
     const mem = (state.members || []).join(' · ');
     return '<i data-lucide="users" class="w-3.5 h-3.5 text-indigo-500 shrink-0"></i> ' +
-      '<b>' + escapeHtml(state.className) + '</b><span class="text-slate-300">|</span>' +
+      '<b>' + escapeHtml(tenLopNgan(state.className)) + '</b><span class="text-slate-300">|</span>' +
       '<b class="text-indigo-600">' + escapeHtml(state.checkedTeam) + '</b>' +
       (mem ? '<span class="text-slate-300">|</span><span class="font-semibold">' + escapeHtml(mem) + '</span>' : '');
   }
@@ -1181,6 +1210,10 @@
       renderErrors(); autosave();
       toast('Deleted all ' + n + ' mistakes', 'info');
     });
+
+    // (CHẶNG 34) xoay ngang/dọc điện thoại hay kéo cỡ cửa sổ → tính lại cỡ chữ dòng dưới video
+    let fitTimer = null;
+    window.addEventListener('resize', () => { clearTimeout(fitTimer); fitTimer = setTimeout(fitVideoInfo, 120); });
 
     $('btnExport').addEventListener('click', exportExcel);
     $('btnSubmit').addEventListener('click', openSubmitModal);
