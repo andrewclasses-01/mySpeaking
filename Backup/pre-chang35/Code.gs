@@ -79,14 +79,7 @@ function baiDaNop(p) {
     if (!f) return { ok: false, error: 'KHONG_THAY_FILE_KET_QUA' };
     var ss = SpreadsheetApp.openById(f.getId());
 
-    var out = { ok: true, errors: [], timers: [], soLanNop: 0, lansNop: [] };
-
-    // (CHẶNG 35) TÁCH RIÊNG TỪNG LƯỢT NỘP theo SUBMISSION ID — thầy chốt: web KHÔNG tự nạp bài cũ
-    // nữa mà hỏi "tìm thấy N bản, em muốn xem bản nào?". Muốn hỏi thì phải biết có mấy bản, nộp
-    // lúc nào, mỗi bản bao nhiêu lỗi ⇒ không gộp sẵn như trước.
-    // VẪN GIỮ `errors`/`timers` gộp: học sinh nào còn giữ bản web cũ trong bộ nhớ đệm thì luồng cũ
-    // của em ấy chạy y nguyên, không gãy.
-    var nhom = {}, thuTuSid = [];
+    var out = { ok: true, errors: [], timers: [], soLanNop: 0 };
     var fsh = timSheetBai(ss, lesson);   // tra "hiền" — chịu được lệch tên (chặng 31)
     if (fsh && fsh.getLastRow() > 1) {
       var R = fsh.getDataRange().getValues();
@@ -102,19 +95,6 @@ function baiDaNop(p) {
         if (!(k in thay)) thuTu.push(k);
         thay[k] = er;                                          // bản mới nhất thắng
         var s = String(R[i][12] || ''); if (s) sids[s] = 1;    // SUBMISSION ID
-
-        // ── gom theo TỪNG LƯỢT NỘP ──
-        var sid = s || '(khong sid)';
-        if (!nhom[sid]) {
-          nhom[sid] = { sid: sid, luc: '', lucISO: '', errors: [], timers: [] };
-          thuTuSid.push(sid);
-          var d = R[i][0];
-          if (d instanceof Date) {
-            nhom[sid].luc = Utilities.formatDate(d, 'GMT+7', 'dd/MM/yyyy HH:mm');
-            nhom[sid].lucISO = Utilities.formatDate(d, 'GMT+7', 'yyyy-MM-dd HH:mm:ss');
-          } else { nhom[sid].luc = String(d || ''); }
-        }
-        nhom[sid].errors.push(er);
       }
       out.errors = thuTu.map(function (k) { return thay[k]; });
       out.soLanNop = Object.keys(sids).length;
@@ -128,17 +108,10 @@ function baiDaNop(p) {
         if (!khopTen(T[j][3], student)) continue;              // CHECKER
         var ten = String(T[j][4] || '');                       // STUDENT được bấm giờ
         if (!(ten in tThay)) tTen.push(ten);
-        var tm = { name: ten, sMin: T[j][5], sSec: T[j][6], eMin: T[j][7], eSec: T[j][8] };
-        tThay[ten] = tm;
-        var tsid = String(T[j][9] || '');                      // bảng giờ đi theo ĐÚNG lượt nộp
-        if (tsid && nhom[tsid]) nhom[tsid].timers.push(tm);
+        tThay[ten] = { name: ten, sMin: T[j][5], sSec: T[j][6], eMin: T[j][7], eSec: T[j][8] };
       }
       out.timers = tTen.map(function (n) { return tThay[n]; });
     }
-
-    // Mới nhất lên đầu (sid = yyMMdd-HHmmss-… nên so chuỗi là so thời gian)
-    out.lansNop = thuTuSid.map(function (s) { return nhom[s]; })
-      .sort(function (a, b) { return a.sid < b.sid ? 1 : (a.sid > b.sid ? -1 : 0); });
     return out;
   } catch (err) {
     return { ok: false, error: String(err) };

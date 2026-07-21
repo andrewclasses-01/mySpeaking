@@ -397,19 +397,6 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- (CHẶNG 35) HỎI TRƯỚC khi mở bài đã nộp — app KHÔNG tự nhảy vào chế độ xem nữa -->
-<div id="historyModal" class="fixed inset-0 z-[56] bg-black/50 hidden items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop">
-    <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
-      <i data-lucide="history" class="w-6 h-6 text-slate-500"></i>
-    </div>
-    <p id="histTitle" class="text-slate-700 font-semibold mb-1 leading-relaxed text-center"></p>
-    <p class="text-xs text-slate-500 mb-4 leading-relaxed text-center">Tap one to view it, or start a brand-new check.</p>
-    <div id="histList" class="space-y-2 max-h-56 overflow-y-auto"></div>
-    <button id="btnHistNew" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-2.5 font-bold text-sm">No thanks — start a new check</button>
-  </div>
-</div>
-
 <!-- (CHẶNG 33) xác nhận XOÁ MỘT lỗi -->
 <div id="delOneModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop text-center">
@@ -452,25 +439,10 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- (CHẶNG 35) hỏi LẦN NỮA khi nộp mà quá ít lỗi (≤15) -->
-<div id="fewMistakesModal" class="fixed inset-0 z-[57] bg-black/50 hidden items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop text-center">
-    <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
-      <i data-lucide="help-circle" class="w-6 h-6 text-slate-500"></i>
-    </div>
-    <p class="text-slate-700 font-semibold mb-4 leading-relaxed">Do you really want to submit with only <b id="fewMistakesN">0</b> mistake<span id="fewMistakesS">s</span>?</p>
-    <div class="flex gap-2">
-      <button id="btnFewReturn" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">Return to check</button>
-      <button id="btnFewSubmit" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl py-2.5 font-bold text-sm">Submit</button>
-    </div>
-  </div>
-</div>
-
 <!-- Submit confirmation modal -->
 <div id="submitModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop">
-    <!-- CHẶNG 35: pop-up xác nhận nộp dùng ICON ĐƠN SẮC (thầy chốt: không màu mè) -->
-    <h3 class="font-extrabold text-lg mb-2 flex items-center gap-2"><i data-lucide="send" class="w-5 h-5 text-slate-400"></i> Submit your check?</h3>
+    <h3 class="font-extrabold text-lg mb-2 flex items-center gap-2"><i data-lucide="send" class="w-5 h-5 text-emerald-500"></i> Submit your check?</h3>
     <div id="submitSummary" class="text-sm text-slate-600 space-y-1 mb-4"></div>
     <div class="flex gap-2">
       <button id="btnSubmitCancel" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">Not yet, review</button>
@@ -480,7 +452,7 @@ tailwind.config = {
 </div>
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
-<script src="config.js?v=25"></script>
-<script src="js/app.js?v=25"></script>
+<script src="config.js?v=24"></script>
+<script src="js/app.js?v=24"></script>
 </body>
 </html>

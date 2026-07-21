@@ -30,7 +30,6 @@
   let editingIndex = -1;
   let fType = '';
   let pendingDelIndex = -1;   // CHẶNG 33: lỗi đang chờ xác nhận xoá (pop-up delOneModal)
-  const IT_LOI = 15;          // CHẶNG 35: từ NGƯỠNG này trở xuống = "ít lỗi" → tô đỏ + hỏi lại lần nữa
 
   const SCRIPT_URL = CFG.SCRIPT_URL || '';
   let saveKey = 'myspeaking_manual';   // đặt lại khi biết videoUrl (sau bước chọn tên)
@@ -529,11 +528,9 @@
         '<button data-edit="' + i + '" class="p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-600"><i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i></button>' +
         '<button data-del="' + i + '" class="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500"><i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i></button>' +
         '</span></div>' +
-        // CHẶNG 35 (thầy chốt): thứ tự SENTENCE → MISTAKE → EXPLANATION, mỗi dòng một kiểu chữ:
-        // câu chứa lỗi = ĐEN đậm NGHIÊNG · lỗi = ĐỎ đậm thường · giải thích = XANH LÁ đậm thường.
-        (e.sentence ? '<div class="mt-1.5 text-sm font-bold italic text-slate-900">“' + escapeHtml(e.sentence) + '”</div>' : '') +
-        '<div class="mt-0.5 text-sm font-bold text-rose-600">' + escapeHtml(e.detail) + '</div>' +
-        (e.explain ? '<div class="mt-0.5 text-sm font-bold text-emerald-600">' + escapeHtml(e.explain) + '</div>' : '') +
+        '<div class="mt-1.5 text-sm font-semibold text-slate-800">' + escapeHtml(e.detail) + '</div>' +
+        (e.sentence ? '<div class="mt-0.5 text-xs italic text-slate-500">“' + escapeHtml(e.sentence) + '”</div>' : '') +
+        (e.explain ? '<div class="mt-0.5 text-xs text-slate-500">💡 ' + escapeHtml(e.explain) + '</div>' : '') +
         '</div>';
     }).join('');
     $('errEmpty').style.display = state.errors.length ? 'none' : '';
@@ -637,19 +634,15 @@
       toast(bad.msg, 'err');
       return;
     }
-    // CHẶNG 35 (thầy chốt): icon ĐƠN SẮC (bỏ emoji nhiều màu) · BỎ dòng "Students timed" ·
-    // số lỗi ≤ ÍT_LỖI thì tô ĐỎ và khi bấm Submit sẽ hỏi thêm một lần nữa.
-    const it = (name) => '<i data-lucide="' + name + '" class="w-4 h-4 text-slate-400 shrink-0"></i>';
-    const few = state.errors.length <= IT_LOI;
     const s = $('submitSummary');
     s.innerHTML =
-      '<div class="flex items-center gap-2">' + it('user') + '<span>Checked by: <b>' + escapeHtml(state.student) + '</b>' + (state.myTeam ? ' (' + escapeHtml(state.myTeam) + ')' : '') + '</span></div>' +
-      (state.checkedTeam ? '<div class="flex items-center gap-2">' + it('users') + '<span>Team checked: <b>' + escapeHtml(state.checkedTeam) + '</b></span></div>' : '') +
-      '<div class="flex items-center gap-2">' + it('flag') + '<span>Mistakes found: <b class="' + (few ? 'text-rose-600' : '') + '">' + state.errors.length + '</b></span></div>' +
-      (state.submitted ? '<div class="flex items-center gap-2 text-slate-500">' + it('info') + '<span>You\'ve already submitted once — submitting again creates a new copy.</span></div>' : '');
+      '<div>👤 Checked by: <b>' + escapeHtml(state.student) + '</b>' + (state.myTeam ? ' (' + escapeHtml(state.myTeam) + ')' : '') + '</div>' +
+      (state.checkedTeam ? '<div>🎯 Team checked: <b>' + escapeHtml(state.checkedTeam) + '</b></div>' : '') +
+      '<div>🚩 Mistakes found: <b>' + state.errors.length + '</b></div>' +
+      '<div>⏱ Students timed: <b>' + cleanTimers().filter((t) => t.name.trim()).length + '</b></div>' +
+      (state.submitted ? '<div class="text-amber-600 font-semibold">⚠ You\'ve already submitted once — submitting again creates a new copy.</div>' : '');
     $('submitModal').classList.remove('hidden');
     $('submitModal').classList.add('flex');
-    refreshIcons();
   }
   function closeSubmitModal() {
     $('submitModal').classList.add('hidden');
@@ -917,14 +910,12 @@
     maybeRestoreFromServer(saved);   // (CHẶNG 32) máy này trống mà em ĐÃ nộp ở máy khác → kéo bài về
   }
 
-  // ═══════════════ CHẶNG 32→35 — BÀI ĐÃ NỘP: HỎI TRƯỚC, KHÔNG TỰ MỞ ═══════════════
-  // Vì sao có cửa này: bài đang làm chỉ nằm trong localStorage TỪNG MÁY. Em nộp ở máy A, hôm sau mở
-  // máy B thì form TRỐNG — em thêm 2 lỗi rồi Submit là chỉ gửi PHẦN BỔ SUNG (ca PHONG mất 16 lỗi).
-  // CHẶNG 35 (thầy chốt sau khi dùng thử): bản cũ TỰ NHẢY RA + tự khoá xem làm HS giật mình.
-  // Nay: hỏi bằng pop-up "tìm thấy N bản nộp lúc … — muốn xem bản nào?"; chọn bản → mở CHẾ ĐỘ XEM;
-  // bấm "start a new check" → làm bài MỚI TINH. Nộp thêm lần nữa thì lần sau danh sách có N+1 bản.
-  // LUẬT AN TOÀN: mạng hỏng / quá 8 giây / bộ não bản cũ → vào làm bài BÌNH THƯỜNG, không chặn HS.
-  let serverSubs = [];   // các lượt nộp lấy về từ bộ não (mới nhất trước)
+  // ═══════════════ CHẶNG 32 — KÉO BÀI ĐÃ NỘP VỀ FORM (chặn gốc ca "nộp lần 2 thiếu bài") ═══════════════
+  // Vì sao: bài đang làm chỉ nằm trong localStorage TỪNG MÁY. Em nộp ở máy A, hôm sau mở máy B thì
+  // form TRỐNG — em thêm 2 lỗi rồi Submit là chỉ gửi PHẦN BỔ SUNG (ca PHONG mất 16 lỗi, B2B GERMS).
+  // Nay: máy KHÔNG có dấu vết bài (không lỗi đã lưu, chưa từng nộp) thì hỏi bộ não "?mine=1".
+  // Có bài cũ → đổ về form + KHOÁ XEM (dùng lại cơ chế chặng 29 — muốn sửa phải bấm Edit & submit again).
+  // LUẬT AN TOÀN: mạng hỏng / chờ quá 8 giây / bộ não chưa deploy → vào làm bài BÌNH THƯỜNG, không chặn.
   async function maybeRestoreFromServer(saved) {
     if (!SCRIPT_URL) return;
     // Máy này đã có dấu vết bài của chính em (lỗi đã lưu hoặc từng nộp) → ưu tiên bản máy, không hỏi mạng
@@ -939,53 +930,22 @@
       clearTimeout(tm);
       if (!r.ok) return;
       const j = await r.json();
-      if (!j || !j.ok) return;
-      // Bộ não bản CŨ chỉ trả `errors` gộp → dựng thành 1 lượt để vẫn hỏi được (đường lùi)
-      let subs = Array.isArray(j.lansNop) ? j.lansNop : [];
-      if (!subs.length && (j.errors || []).length) subs = [{ luc: '', errors: j.errors, timers: j.timers || [] }];
-      subs = subs.filter((s) => s && (s.errors || []).length);
-      if (!subs.length) return;                 // em chưa nộp gì → làm bài mới, không làm phiền
-      if (state.errors.length) return;          // trong lúc chờ mạng em đã kịp thêm lỗi → đừng chen ngang
-      serverSubs = subs;
-      showHistoryModal();
+      if (!j || !j.ok || !(j.errors || []).length) return;   // chưa nộp gì / bộ não bản cũ → thôi
+      if (state.errors.length) return;                        // trong lúc chờ mạng em đã kịp thêm lỗi → đừng đè
+      state.errors = j.errors.map((er) => ({
+        min: +er.min || 0, sec: +er.sec || 0, section: '',
+        who: String(er.who || ''), type: String(er.type || ''),
+        sentence: String(er.sentence || ''), detail: String(er.detail || ''), explain: String(er.explain || ''),
+      }));
+      state.submitted = true;
+      state.wasSubmitted = true;
+      if ((j.timers || []).length) initTimers(j.timers);
+      buildStudentField();
+      renderErrors();
+      setReviewLock(true);   // khoá xem — sửa tiếp phải bấm "Edit & submit again" (xác nhận như chặng 29)
+      autosave();
+      toast('Welcome back! Loaded the ' + state.errors.length + ' mistakes you already submitted ✓', 'info');
     } catch (e) { /* mạng hỏng → làm bài bình thường, không làm phiền */ }
-  }
-
-  function showHistoryModal() {
-    const n = serverSubs.length;
-    $('histTitle').innerHTML = 'We found <b>' + n + '</b> submitted check' + (n > 1 ? 's' : '') +
-      ' from <b>' + escapeHtml(state.student) + '</b>.';
-    $('histList').innerHTML = serverSubs.map((s, i) => {
-      const cnt = (s.errors || []).length;
-      return '<button data-sub="' + i + '" class="w-full text-left rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 transition px-3.5 py-2.5">' +
-        '<div class="font-bold text-sm text-slate-800">' + (s.luc ? escapeHtml(s.luc) : 'Earlier submission') + '</div>' +
-        '<div class="text-xs text-slate-500 mt-0.5">' + cnt + ' mistake' + (cnt > 1 ? 's' : '') + '</div>' +
-        '</button>';
-    }).join('');
-    $('historyModal').classList.remove('hidden');
-    $('historyModal').classList.add('flex');
-    refreshIcons();
-  }
-  function hideHistoryModal() { $('historyModal').classList.add('hidden'); $('historyModal').classList.remove('flex'); }
-
-  // Mở MỘT lượt nộp đã chọn → chế độ XEM (muốn sửa thì bấm "Edit & submit again" như chặng 29)
-  function openServerSub(i) {
-    const s = serverSubs[i];
-    hideHistoryModal();
-    if (!s) return;
-    state.errors = (s.errors || []).map((er) => ({
-      min: +er.min || 0, sec: +er.sec || 0, section: '',
-      who: String(er.who || ''), type: String(er.type || ''),
-      sentence: String(er.sentence || ''), detail: String(er.detail || ''), explain: String(er.explain || ''),
-    }));
-    state.submitted = true;
-    state.wasSubmitted = true;
-    if ((s.timers || []).length) initTimers(s.timers);
-    buildStudentField();
-    renderErrors();
-    setReviewLock(true);
-    autosave();
-    toast('Opened your check with ' + state.errors.length + ' mistakes ✓', 'info');
   }
 
   // (switchTab đã bỏ chặng 12 — chỉ còn một khối Mistakes, thời gian nói nằm trong form)
@@ -1251,16 +1211,6 @@
       toast('Deleted all ' + n + ' mistakes', 'info');
     });
 
-    // (CHẶNG 35) pop-up hỏi bài đã nộp: chọn 1 bản để XEM, hoặc bỏ qua để làm bài mới tinh
-    $('histList').addEventListener('click', (ev) => {
-      const b = ev.target.closest('[data-sub]');
-      if (b) openServerSub(+b.dataset.sub);
-    });
-    $('btnHistNew').addEventListener('click', () => {
-      hideHistoryModal();
-      toast('Starting a brand-new check — good luck! 🔍', 'info');
-    });
-
     // (CHẶNG 34) xoay ngang/dọc điện thoại hay kéo cỡ cửa sổ → tính lại cỡ chữ dòng dưới video
     let fitTimer = null;
     window.addEventListener('resize', () => { clearTimeout(fitTimer); fitTimer = setTimeout(fitVideoInfo, 120); });
@@ -1268,21 +1218,6 @@
     $('btnExport').addEventListener('click', exportExcel);
     $('btnSubmit').addEventListener('click', openSubmitModal);
     $('btnSubmitCancel').addEventListener('click', closeSubmitModal);
-    // (CHẶNG 35) ít lỗi quá thì HỎI THÊM một lần nữa trước khi gửi thật
-    $('btnSubmitOk').addEventListener('click', () => {
-      if (state.errors.length <= IT_LOI) {
-        closeSubmitModal();
-        $('fewMistakesN').textContent = state.errors.length;
-        $('fewMistakesS').textContent = state.errors.length === 1 ? '' : 's';   // "1 mistake" chứ không "1 mistakes"
-        $('fewMistakesModal').classList.remove('hidden');
-        $('fewMistakesModal').classList.add('flex');
-        refreshIcons();
-        return;
-      }
-      submit();
-    });
-    const closeFew = () => { $('fewMistakesModal').classList.add('hidden'); $('fewMistakesModal').classList.remove('flex'); };
-    $('btnFewReturn').addEventListener('click', closeFew);   // quay lại soi tiếp, KHÔNG gửi
-    $('btnFewSubmit').addEventListener('click', () => { closeFew(); submit(); });
+    $('btnSubmitOk').addEventListener('click', submit);
   });
 })();
