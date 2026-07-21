@@ -55,7 +55,17 @@ teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo
 - Drive trả file gốc nguyên bitrate, không adaptive → cả lớp (~15 máy) cùng xem dễ nghẽn Wi-Fi; YouTube tự hạ chất lượng nên mượt hơn. Đã tư vấn thầy ưu tiên YouTube unlisted.
 - Dropdown LOẠI LỖI trong file mẫu: `NGỮ PHÁP, PHÁT ÂM, THÔNG TIN` (data validation cột E sheet FORM).
 
-## CHẶNG 34 (22/07/2026) — MỚI NHẤT, `?v=24`
+## CHẶNG 35 (22/07/2026) — MỚI NHẤT, `?v=25` · Apps Script **Phiên bản 8**
+- ⛔ **KHÔNG tự mở bài đã nộp.** `?mine=1` nay trả **`lansNop[]`** (gom theo SUBMISSION ID: `sid`,
+  `luc`, `errors[]`, `timers[]` — timers ghép theo đúng sid; mới nhất trước). Web mở
+  **`#historyModal`** hỏi "We found N submitted checks…" → chọn 1 bản mới nạp (`openServerSub`) +
+  khoá xem; "start a new check" = làm bài mới. `errors`/`timers` gộp vẫn trả để web bản cũ không gãy.
+- **3 dòng mỗi lỗi**: SENTENCE (đen/đậm/nghiêng) → MISTAKE (`text-rose-600` đậm) → EXPLANATION
+  (`text-emerald-600` đậm).
+- **Pop-up nộp**: icon đơn sắc `text-slate-400`, bỏ dòng "Students timed"; **≤ `IT_LOI` (15)** lỗi →
+  số tô đỏ + hiện **`#fewMistakesModal`** hỏi lại (Return to check / Submit).
+
+## CHẶNG 34 (22/07/2026) — `?v=24`
 - **Chữ "CLASS" CHỈ ở màn đăng nhập/xác nhận.** Dòng dưới video dùng `tenLopNgan()` bỏ tiền tố
   `CLASS `/`Lớp ` — **chỉ đổi HIỂN THỊ**, `state.className` và dữ liệu nộp lên giữ nguyên.
 - **Dòng dưới video LUÔN 1 DÒNG**: `#videoStatus` = `flex-nowrap whitespace-nowrap min-w-0

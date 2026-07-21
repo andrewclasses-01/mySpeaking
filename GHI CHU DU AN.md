@@ -892,6 +892,59 @@ video chỉ cần **tên lớp**. Dòng đó cũng phải có cơ chế chỉnh 
 - Màn xác nhận vẫn `CLASS B1AH — GERMS` ✓ · nút người chấm vẫn `DIEM MY · T3` ✓
 - Đổi cỡ cửa sổ 320 → 375 → 1280: cỡ chữ tự chỉnh lại đúng (10 → 13 → 14) ✓ · console 0 lỗi ✓
 
+## CHẶNG 35 — 22/07/2026: HỎI TRƯỚC KHI MỞ BÀI CŨ + KIỂU CHỮ 3 DÒNG LỖI + POP-UP NỘP GỌN
+
+Thầy test bản `?v=24` rồi giao 3 việc. `?v=24 → 25`, Apps Script **Phiên bản 8**.
+Backup `Backup/pre-chang35/`.
+
+### 1. KHÔNG TỰ MỞ BÀI CŨ NỮA — HỎI BẰNG POP-UP
+**Thầy gặp:** đăng nhập B1AH-T2-NGAN, vài giây sau **một bản lịch sử tự nhảy ra và khoá chế độ xem**
+(hành vi của chặng 32). Thầy muốn: hiện pop-up hỏi *"có bản chấm lúc yyy from NGAN, muốn xem không?"*
+— chọn thì mới xem, **bỏ qua thì làm bài mới tinh**; nộp thêm lần nữa thì lần sau hỏi **2 bản**.
+- **`Code.gs`** — `baiDaNop` nay trả thêm **`lansNop[]`**: gom dòng theo **SUBMISSION ID**, mỗi lượt
+  có `sid` · `luc` ("22/07/2026 14:05", GMT+7) · `errors[]` · `timers[]` (bảng giờ ghép theo **đúng
+  sid**, không lấy chung). Sắp **mới nhất trước** (sid = `yyMMdd-HHmmss-…` nên so chuỗi = so giờ).
+  ⭐ **VẪN GIỮ `errors`/`timers` gộp** — máy học sinh nào còn giữ bản web cũ trong bộ nhớ đệm thì
+  luồng cũ chạy y nguyên, không gãy giữa buổi.
+- **`app.js`** — `maybeRestoreFromServer` không tự nạp nữa mà mở **`#historyModal`**: tiêu đề
+  *"We found N submitted checks from NGAN"*, mỗi dòng = **giờ nộp + số lỗi**, kèm nút
+  **"No thanks — start a new check"**. Chọn dòng → `openServerSub(i)` nạp ĐÚNG lượt đó rồi khoá xem
+  (sửa tiếp vẫn phải qua "Edit & submit again"). Bộ não bản cũ chỉ trả `errors` → dựng thành 1 lượt
+  để vẫn hỏi được (đường lùi). Mạng hỏng/quá 8 giây → vào làm bài bình thường, **không chặn HS**.
+
+### 2. KIỂU CHỮ 3 DÒNG TRONG MỖI LỖI (thầy chốt)
+Thứ tự mới **SENTENCE → MISTAKE → EXPLANATION** (trước là mistake trước, câu sau):
+| Dòng | Kiểu |
+|---|---|
+| Câu chứa lỗi | **đen** (`text-slate-900`) · đậm · **nghiêng** · trong ngoặc kép |
+| Lỗi | **đỏ** (`text-rose-600`) · đậm · thường |
+| Giải thích | **xanh lá** (`text-emerald-600`) · đậm · thường |
+Bỏ luôn emoji 💡 ở dòng giải thích (đã có màu phân biệt).
+
+### 3. POP-UP XÁC NHẬN NỘP
+- **Icon đơn sắc** thay emoji nhiều màu: `user` / `users` / `flag` / `info`, tất cả `text-slate-400`;
+  icon tiêu đề `send` cũng đổi xanh lá → xám.
+- **BỎ dòng "Students timed"** (thầy thấy thừa).
+- **≤ 15 lỗi** (`IT_LOI = 15`): số lỗi **tô ĐỎ**, và bấm Submit thì hiện **pop-up thứ hai**
+  *"Do you really want to submit with only X mistakes?"* — 2 nút **Return to check** (không gửi) /
+  **Submit** (gửi thật). Trên 15 lỗi thì gửi thẳng như cũ.
+- Sửa tiếng Anh: "1 mistake" chứ không "1 mistakes" (`#fewMistakesS` bật/tắt chữ "s").
+
+### Verify (server 8123, mạng giả; sau đó thử THẬT trên bộ não đã deploy)
+| Kiểm | Kết quả |
+|---|---|
+| Bộ não trả 2 lượt nộp | Pop-up "We found **2** submitted checks from NGAN" + 2 dòng đúng giờ/số lỗi ✓ |
+| Chưa chọn gì | **KHÔNG** tự khoá xem, danh sách lỗi vẫn trống ✓ (đúng chỗ thầy phàn nàn) |
+| Bấm "start a new check" | Pop-up đóng, 0 lỗi, form gõ được ngay ✓ |
+| Chọn bản CŨ (21/07, 1 lỗi) | Nạp đúng 1 lỗi của bản đó, khoá xem + banner + nút Edit ✓ |
+| Không có bài cũ | Không hiện pop-up, vào bài luôn ✓ |
+| Kiểu chữ 3 dòng | đo `getComputedStyle`: `rgb(15,23,42)`+italic+700 · `rgb(225,29,72)`+700 · `rgb(5,150,105)`+700 ✓ |
+| Pop-up nộp | 3 dòng, **không** còn "Students timed", **0 emoji**, 3 icon đều `rgb(148,163,184)` ✓ |
+| 15 lỗi | số **đỏ** + hiện pop-up thứ hai; "Return to check" → **không gửi**; "Submit" → gửi ✓ |
+| 16 lỗi | số **không đỏ**, **không** hỏi lại, gửi thẳng 1 lần ✓ |
+| Điện thoại 375px | pop-up lịch sử vừa khung, không tràn ngang ✓ · console 0 lỗi ✓ |
+| **Bộ não thật sau deploy** | `?mine=1` HOANG → **1 lượt nộp** `20/07/2026 18:23 · 13 lỗi · 2 dòng giờ`, `errors` gộp vẫn 13 ✓ |
+
 ## ⭐ HANDOFF — TIẾP TỤC (session mới)
 
 > **CẬP NHẬT 21/07/2026 (CHẶNG 27-30):** fix HS không cuộn được danh sách Mistakes found trên desktop
