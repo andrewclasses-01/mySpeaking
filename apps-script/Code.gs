@@ -591,6 +591,29 @@ function maKiemTra(rows) {
   return h.slice(0, 16);
 }
 
+// So tên "hiền": bỏ dấu cách thừa + không phân biệt hoa thường. Dùng cho MỌI chỗ so tên bài,
+// vì tên bài đi từ hai nguồn khác nhau (tên thư mục buổi test ↔ cột LESSON) nên đừng tin nó
+// khớp từng ký tự.
+function khopTen(a, b) {
+  return String(a || '').replace(/\s+/g, ' ').trim().toUpperCase() ===
+         String(b || '').replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+// Tìm sheet chứa bài: khớp đúng trước, không có thì khớp "hiền" trên toàn bộ tab.
+// Trả null nếu thật sự không có — KHÔNG đoán bừa sang tab khác (đoán sai còn tệ hơn báo thiếu).
+function timSheetBai(ss, lesson) {
+  var ten = sanitizeName(lesson);
+  var sh = ss.getSheetByName(ten);
+  if (sh) return sh;
+  var all = ss.getSheets();
+  for (var i = 0; i < all.length; i++) {
+    var n = all[i].getName();
+    if (n === 'TIME' || n === AUDIT_NAME) continue;
+    if (khopTen(n, ten) || khopTen(n, lesson)) return all[i];
+  }
+  return null;
+}
+
 // ── KÉO BÀI HỌC SINH NỘP (để dành cho v0.5 ĐÁNH GIÁ) ────────────────────────
 function adminResults(data) {
   var cls = String(data.classCode || '').trim();
@@ -603,13 +626,22 @@ function adminResults(data) {
   var ss = SpreadsheetApp.openById(f.getId());
 
   var out = { ok: true, classCode: cls, lesson: lesson, errors: [], timers: [] };
-  var fsh = lesson ? ss.getSheetByName(sanitizeName(lesson)) : null;
+  // ⛔ TRA SHEET BÀI PHẢI CHỊU ĐƯỢC LỆCH TÊN. Trước đây chỉ `getSheetByName(sanitizeName(lesson))`
+  // — khớp tuyệt đối. App gửi tên bài lấy từ TÊN THƯ MỤC buổi test, còn sheet mang tên lấy từ
+  // cột LESSON; hai nguồn khác nhau nên chỉ cần thừa một dấu cách / khác hoa-thường là trả về
+  // **0 dòng lỗi** mà vẫn `ok:true` -> app báo "chưa có bài nộp" trong khi kho đầy bài.
+  var fsh = lesson ? timSheetBai(ss, lesson) : null;
   if (fsh && fsh.getLastRow() > 1) out.errors = fsh.getDataRange().getValues().slice(1);
+  out.sheetBai = fsh ? fsh.getName() : '';
+  if (lesson && !fsh) {
+    out.canhBao = 'KHONG_THAY_SHEET_BAI';
+    out.sheetCoTrongFile = ss.getSheets().map(function (s) { return s.getName(); });
+  }
   var tsh = ss.getSheetByName('TIME');
   if (tsh && tsh.getLastRow() > 1) {
     var T = tsh.getDataRange().getValues();
     for (var i = 1; i < T.length; i++) {
-      if (!lesson || String(T[i][1] || '').trim().toLowerCase() === lesson.toLowerCase()) out.timers.push(T[i]);
+      if (!lesson || khopTen(T[i][1], lesson)) out.timers.push(T[i]);
     }
   }
   out.headersErrors = FORM_HEADERS;

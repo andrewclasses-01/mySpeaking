@@ -917,6 +917,43 @@ Console **0 lỗi**, đã dọn localStorage test. Bẫy ghi lại: server previ
   - T4: PHONG; HA AN; BAO CHAU
 - Link video dán vào app/teacher.html dạng: `https://drive.google.com/file/d/<id>/view`
 
+## CHẶNG 31 — 21/07/2026: `adminResults` TRA SHEET BÀI CHỊU ĐƯỢC LỆCH TÊN (⚠️ CHƯA DEPLOY)
+
+### Bối cảnh
+Bên **app máy tính mySpeaking** (repo khác) phát hiện file kết quả bị **thiếu dòng**, truy ra hai
+lỗi bên app (đã vá ở v0.7.1 + v0.7.2 của app). Rà tiếp sang bộ não thì thấy **một lỗ tiềm tàng ở
+`Code.gs`** — chưa gây thiệt hại thật, nhưng bung ra lúc nào không biết.
+
+### ⛔ Lỗ: tra sheet bài bằng tên KHỚP TUYỆT ĐỐI
+```js
+var fsh = lesson ? ss.getSheetByName(sanitizeName(lesson)) : null;   // ← cũ
+```
+App gửi tên bài lấy từ **tên thư mục buổi test** (`2026.7.17 GERMS` → `GERMS`), còn tab trong file
+kết quả mang tên lấy từ **cột LESSON** của sheet cấu hình. **Hai nguồn khác nhau** — thừa một dấu
+cách hoặc khác hoa-thường là `getSheetByName` trả `null` → `out.errors = []` **nhưng vẫn
+`ok: true`**. App bên kia hiểu thành *"chưa có học sinh nào nộp"* trong khi kho đang đầy bài.
+Hỏng kiểu này **không có tiếng động nào cả**, chỉ khác nhau ở lời báo cuối cùng.
+
+### Đã sửa
+1. Thêm `khopTen(a, b)` — so tên bỏ dấu cách thừa + không phân biệt hoa thường.
+2. Thêm `timSheetBai(ss, lesson)` — khớp đúng trước, không có thì khớp "hiền" trên toàn bộ tab
+   (bỏ qua `TIME` và tab nhật ký). **Không thấy thì trả `null`, KHÔNG đoán bừa sang tab khác** —
+   đoán sai còn tệ hơn báo thiếu.
+3. `adminResults` trả thêm `sheetBai` (tên tab thật đã đọc) và khi không thấy thì trả
+   `canhBao: 'KHONG_THAY_SHEET_BAI'` + `sheetCoTrongFile` (danh sách tab đang có).
+4. Bảng **TIME** cũng lọc theo `khopTen` thay vì `toLowerCase()` trần.
+
+Bên app máy tính đã có lời báo riêng cho ca này (`dg.khong_thay_sheet_bai`), **không** gộp chung
+với "chưa có bài nộp" nữa — hai chuyện hoàn toàn khác nhau.
+
+### ⚠️ VIỆC ĐANG CHỜ — QUAN TRỌNG
+- **CHƯA DEPLOY.** Sửa trong `apps-script/Code.gs` chỉ có tác dụng sau khi **deploy phiên bản
+  mới**. Bản đang chạy vẫn hoạt động bình thường (thay đổi tương thích ngược), chỉ là chưa có lưới
+  an toàn. Deploy xong nên chạy `?check=1` một lần cho chắc.
+- **Nên chặn từ gốc ở web**: HS nộp lần 2 từ máy khác thì form trống nên chỉ gửi **phần bổ sung** —
+  đó chính là ca làm app máy tính mất 16 lỗi của PHONG (B2B GERMS). Cách chặn: kéo bài đã nộp về
+  form khi HS đăng nhập lại, hoặc cảnh báo khi bài nộp mới **ít lỗi hơn** lần trước.
+
 ## TIẾP TỤC CÔNG VIỆC Ở MÁY KHÁC / SESSION MỚI
 1. **Thư mục app tự chứa đủ mọi thứ** (D:\ đồng bộ Drive giữa 2 máy): code + hồ sơ + file mẫu (`mau/`) + Apps Script (`apps-script/Code.gs`) + hướng dẫn (`HUONG DAN TRIEN KHAI.md`). Đọc CLAUDE.md + file này trước khi sửa.
 2. **Git**: repo thường (không bare) ngay trong thư mục app, nhánh `master`. Remote `origin` = `https://github.com/andrewclasses-01/mySpeaking.git` (Pages công khai). Đẩy bằng `git push origin master`; credential Windows đã lưu đúng `andrewclasses-01` nên không cần `gh auth login`. **Đừng dựa vào `gh` để đoán quyền đẩy** — `gh` đăng nhập tài khoản khác (`andrewclasses-code`), xem chặng 26.
