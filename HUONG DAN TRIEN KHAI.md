@@ -13,6 +13,43 @@
 | Apps Script | project "mySpeaking", Web App v1, Execute as Me / Anyone — URL /exec đã điền vào `SCRIPT_URL` trong config.js |
 | Drive API key | project Cloud `myspeaking-502901`, giới hạn Websites: `https://andrewclasses-01.github.io/*` + `http://localhost:8123/*`, chỉ Drive API |
 
+---
+
+## ⭐ SỬA `Code.gs` XONG THÌ PHẢI **DEPLOY PHIÊN BẢN MỚI** (làm bằng tay, ~3 phút)
+
+> Đây là chỗ **rất dễ quên**: sửa file `apps-script/Code.gs` trong kho rồi push GitHub **KHÔNG làm
+> gì cả** — Google vẫn chạy bản cũ. Phải dán code lên script.google.com **và** bấm deploy phiên bản
+> mới thì học sinh mới được dùng bản mới.
+> (Ghi ngày 21/07/2026 — lúc này `Code.gs` đang có bản sửa của CHẶNG 31 **chưa deploy**.)
+
+**Chuẩn bị:** đăng nhập Google bằng tài khoản **namdaptrai01@gmail.com** (đúng tài khoản, không thì
+không thấy project).
+
+1. Mở https://script.google.com → mở project tên **mySpeaking**.
+2. Bên trái chọn file **Code.gs** → bấm vào vùng code → `Ctrl+A` (chọn hết) → `Delete`.
+3. Mở file `D:\APP AND DATA\mySpeaking Web\apps-script\Code.gs` bằng Notepad → `Ctrl+A` → `Ctrl+C` →
+   quay lại trang Google → `Ctrl+V` → **`Ctrl+S`** (lưu). *(Dán từ bản trong kho, đừng gõ tay sửa
+   trên web — trước đây làm vậy nên bản trên Google bị mất dấu tiếng Việt.)*
+4. Góc phải trên bấm **Deploy → Manage deployments**.
+5. Bản triển khai đang chạy (hình bút chì **Edit** ở góc phải) → mục **Version** đổi từ số cũ sang
+   **New version** → ô Description ghi ví dụ `Chang 31 - tra sheet bai chiu duoc lech ten` →
+   **Deploy**.
+   ⛔ **ĐỪNG bấm "New deployment"** — cái đó đẻ ra **URL mới**, mà link học sinh + app máy tính đang
+   trỏ vào URL cũ ⇒ cả lớp mất đường nộp bài. Luôn **Edit bản cũ + New version**.
+6. Có hộp xin quyền thì bấm cho phép (Advanced → Go to mySpeaking).
+7. **Kiểm lại ngay:** mở đường dẫn `SCRIPT_URL` (lấy trong `config.js`) rồi thêm `?check=1` vào cuối,
+   dán lên trình duyệt. Phải thấy JSON kể đúng: folder `… / mySpeaking Web / …`, **8 lớp**, các dòng
+   LESSONS, danh sách file kết quả. Thấy đủ = deploy đạt.
+8. Mở tiếp `SCRIPT_URL?config=1` — phải thấy bài đang mở (ACTIVE) kèm 4 đội + link video.
+
+**Nếu lỡ bấm nhầm "New deployment":** đừng hoảng, dữ liệu không mất gì. Chỉ cần vào Manage
+deployments xoá bản thừa, và **giữ nguyên** bản cũ đang được `config.js` trỏ tới.
+
+**Sau khi deploy xong nhớ báo lại** để cập nhật dòng "CHƯA DEPLOY" trong `GHI CHU DU AN.md`
+(CHẶNG 31) và mục BÀN GIAO bên app máy tính.
+
+---
+
 ## Bước 1 — Nối Google Sheets (ĐÃ XONG — cách làm)
 1. Tạo 1 Google Sheet mới (VD **SPEAKING CHECK - BÀI NỘP**), copy **ID** (đoạn giữa `/d/` và `/edit`).
 2. Vào https://script.google.com → **New project** → dán toàn bộ `apps-script/Code.gs`.
