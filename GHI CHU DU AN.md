@@ -1204,6 +1204,20 @@ chưa dọn — đợi Drive đồng bộ xong hẵng tính, xoá bây giờ kh�
 ⚠️ **Trigger `onEdit` ghi sheet AUDIT của lớp 3 lớp bảo vệ kho cũng mất theo dự án cũ** — muốn có
 lại thì gọi cửa quản trị `action:'baove'` (app: nút bảo vệ kho) một lần.
 
+**ĐÃ ĐÓNG NỐT trong cùng ngày 27/07:**
+- **Thầy tự nộp thử một bài trên web live → CHẠY** ⇒ tuyến `doPost` (khâu quan trọng nhất) đã thông.
+- **Dọn 2 file `.gscript` xác** (gốc `D:\` và `mySpeaking Settings`, cùng trỏ `doc_id` chết
+  `1b1LEfq5…`). ⛔⛔ **SUÝT TAI NẠN — BÀI HỌC ĐẮT:** quét lại sau khi xoá thì thấy mọc ra
+  `D:\mySpeaking (1).gscript`, **đọc nội dung mới biết nó trỏ `doc_id` của dự án MỚI**
+  (`1wqcJqu…`) — Drive tự sinh con trỏ vì dự án mới nằm ở gốc "Drive của tôi", đặt tên `(1)` do lúc
+  đó gốc D còn file cũ. **Nếu dọn kiểu "xoá sạch mọi file .gscript" thì đã xoá luôn bộ não vừa
+  dựng.** ⇒ **LUẬT: trước khi xoá bất kỳ `.gscript`/`.gsheet` nào, PHẢI mở ra đọc `doc_id` trước.**
+  Đã **CHUYỂN** (không xoá) file đó về `mySpeaking Settings\mySpeaking.gscript` cho đúng bố cục cũ;
+  kiểm lại `?check=1` sau khi chuyển vẫn ĐẠT. Nay ổ D chỉ còn **đúng 1 file `.gscript`**, đúng chỗ.
+- **Bật lại 3 lớp bảo vệ kho** (`action:'baove'`, chạy hết 40,6 giây): khoá cảnh báo + đặt lại
+  trigger nhật ký cho **9 file** (8 lớp + file CẤU HÌNH), `loi: []`. Verify độc lập ở trang
+  *Trình kích hoạt của tôi*: **9 trigger `ghiNhatKySua` "Từ bảng tính – Đang chỉnh sửa"** đang chạy.
+
 ## TIẾP TỤC CÔNG VIỆC Ở MÁY KHÁC / SESSION MỚI
 1. **Thư mục app tự chứa đủ mọi thứ** (D:\ đồng bộ Drive giữa 2 máy): code + hồ sơ + file mẫu (`mau/`) + Apps Script (`apps-script/Code.gs`) + hướng dẫn (`HUONG DAN TRIEN KHAI.md`). Đọc CLAUDE.md + file này trước khi sửa.
 2. **Git**: repo thường (không bare) ngay trong thư mục app, nhánh `master`. Remote `origin` = `https://github.com/andrewclasses-01/mySpeaking.git` (Pages công khai). Đẩy bằng `git push origin master`; credential Windows đã lưu đúng `andrewclasses-01` nên không cần `gh auth login`. **Đừng dựa vào `gh` để đoán quyền đẩy** — `gh` đăng nhập tài khoản khác (`andrewclasses-code`), xem chặng 26.
