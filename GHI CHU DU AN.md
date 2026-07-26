@@ -1159,6 +1159,51 @@ Quản lý → **Edit bản đang chạy → Phiên bản mới** (KHÔNG New de
   file trong 1 nhịp; fetch raw.githubusercontent từ trang đó KHÔNG bị CSP chặn. Nút "Triển khai"
   góc phải trên → menu 3 mục, chọn mục GIỮA (Quản lý các tùy chọn triển khai).
 
+## ⛔ CHẶNG 36 — 27/07/2026: BỘ NÃO APPS SCRIPT BỊ XOÁ MẤT TRONG SỰ CỐ GOOGLE DRIVE → DỰNG LẠI
+
+**Triệu chứng thầy KHÔNG nhìn thấy được (hỏng thầm lặng, loại tệ nhất):** web live vẫn mở ra
+bình thường, vẫn đăng nhập được lớp B1AH mã `germs` — nhưng đó là **file dự phòng tĩnh
+`data/classes.json`** (dữ liệu đông cứng từ 19/07), còn **học sinh nộp bài thì thất bại**.
+
+**Chẩn đoán (4 đường độc lập đều ra một kết quả):** gọi `SCRIPT_URL` cũ
+(`AKfycbwxN3Id...IFUzO9HBIg`) bằng PowerShell / curl / trình duyệt thật / `fetch` từ chính trang
+live → đều trả **"Rất tiếc, tệp mà bạn yêu cầu không tồn tại"** (404, `Failed to fetch` phía web).
+Đăng nhập thẳng `namdaptrai01` kiểm 3 chỗ: danh sách dự án Apps Script **không còn mySpeaking** ·
+**thùng rác Apps Script trống** · mở dự án bằng `doc_id` cũ
+(`1b1LEfq5lK7...jNXUQeTKy_l`) vẫn "tệp không tồn tại" ⇒ **dự án đã bị xoá VĨNH VIỄN**, không phải
+nằm trong thùng rác.
+
+**Dấu vết trên máy:** ổ D: mọc thêm `D:\mySpeaking.gscript` ở **gốc ổ đĩa** (26/07 lúc 8:41), cùng
+`doc_id` với bản ở `mySpeaking Settings` ⇒ hai lối vào của CÙNG một file, không phải bản sao.
+Gốc D: còn `.tmp.drivedownload`/`.tmp.driveupload` = Drive đang đồng bộ dở. Mirror vẫn giữ **xác**
+của file đã bị xoá trên Drive. ⛔ **BÀI HỌC: file `.gscript` chỉ là CON TRỎ 190 byte, không phải bộ
+não** — tạo lại file đó trên đĩa KHÔNG hồi sinh được gì, mà xoá nó (khi dự án còn sống) thì có thể
+xoá luôn dự án thật.
+
+**MẤT VỎ, KHÔNG MẤT RUỘT** — kiểm lại thấy còn nguyên: `MYSPEAKING - CẤU HÌNH` (8 lớp + 9 sheet
+LESSONS) · `mySpeaking Sheets` (bài nộp 8 lớp) · `mySpeaking Forms` · `Code.gs` 830 dòng trong repo.
+
+**Đã dựng lại (27/07/2026):**
+1. Dự án Apps Script MỚI tên `mySpeaking` (id `1wqcJquMzHgT4ZnGulTbPhLk8yK3QPWzeWi2zsXn90wf6I-nB6_Zg0xlw`),
+   dán nguyên `Code.gs` bằng Monaco (`monaco.editor.getModels()[0].setValue`, fetch từ raw.githubusercontent).
+2. Chạy `taoMatKhau()` — **Script Properties của dự án cũ mất theo dự án ⇒ mật khẩu quản trị PHẢI sinh
+   lại**; mật khẩu mới nằm ở sheet **ADMIN** của file CẤU HÌNH.
+3. Deploy **Ứng dụng web** (Thực thi: Tôi · Truy cập: **Bất kỳ ai**) → **ĐỊA CHỈ ĐỔI** (bản cũ mất hẳn
+   nên KHÔNG thể dùng lối "Edit bản đang chạy → Phiên bản mới" như mọi lần):
+   `.../macros/s/AKfycbw3etxthOSUHRPA0F4Wvnd2NAoaaISYdfcoY27DyWqlUNOULCHOPC07Nx6KdgEbKOuhRw/exec`
+4. Đấu dây lại: `config.js` (SCRIPT_URL mới) + `D:\APP AND DATA\mySpeaking App\data\push.json`
+   (địa chỉ + mật khẩu mới; bản cũ giữ lại ở `push.json.bak-2026-07-27`) + **bump `?v=25` → `?v=26`**
+   (⚠️ BẮT BUỘC: không bump thì máy học sinh vẫn xài `config.js?v=25` trong cache = vẫn gọi địa chỉ chết).
+5. **Kiểm thật, đều ĐẠT:** `?check=1` → đúng đường dẫn `mySpeaking Settings`, **8 lớp · 16 dòng LESSONS ·
+   9 sheet LESSONS · 8 file kết quả** · `?config=1` trả đúng bài GERMS (4 đội, link YouTube, cặp chấm
+   chéo) · app máy tính qua `push.js`: `trangThai('B1AH')` ok, `baiNop('B1AH','GERMS')` kéo về
+   **226 dòng lỗi + 36 dòng TIME**, checksum `46c25f895bc82ac5`.
+
+⚠️ **Việc còn lại của chặng này:** 2 file `.gscript` xác trên ổ D (gốc D: và `mySpeaking Settings`)
+chưa dọn — đợi Drive đồng bộ xong hẵng tính, xoá bây giờ không cần thiết và không giúp gì.
+⚠️ **Trigger `onEdit` ghi sheet AUDIT của lớp 3 lớp bảo vệ kho cũng mất theo dự án cũ** — muốn có
+lại thì gọi cửa quản trị `action:'baove'` (app: nút bảo vệ kho) một lần.
+
 ## TIẾP TỤC CÔNG VIỆC Ở MÁY KHÁC / SESSION MỚI
 1. **Thư mục app tự chứa đủ mọi thứ** (D:\ đồng bộ Drive giữa 2 máy): code + hồ sơ + file mẫu (`mau/`) + Apps Script (`apps-script/Code.gs`) + hướng dẫn (`HUONG DAN TRIEN KHAI.md`). Đọc CLAUDE.md + file này trước khi sửa.
 2. **Git**: repo thường (không bare) ngay trong thư mục app, nhánh `master`. Remote `origin` = `https://github.com/andrewclasses-01/mySpeaking.git` (Pages công khai). Đẩy bằng `git push origin master`; credential Windows đã lưu đúng `andrewclasses-01` nên không cần `gh auth login`. **Đừng dựa vào `gh` để đoán quyền đẩy** — `gh` đăng nhập tài khoản khác (`andrewclasses-code`), xem chặng 26.

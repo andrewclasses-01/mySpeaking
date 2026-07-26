@@ -4,7 +4,9 @@
 window.MYSPEAKING_CONFIG = {
   // URL Web App của Google Apps Script (xem apps-script/Code.gs và HUONG DAN TRIEN KHAI.md)
   // Dạng: https://script.google.com/macros/s/AKfycb.../exec
-  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwxN3IdwOFYDFXE9I2HHMvGty4Nb2zD1BRqHcauIKf_6vLltcSuDEIsJtyJIFUzO9HBIg/exec",
+  // 27/07/2026 — bộ não CŨ bị xoá mất trong sự cố Google Drive (dự án Apps Script biến mất
+  // khỏi Drive, /exec trả "tệp không tồn tại"). Đã dựng lại dự án mới + deploy lại => ĐỊA CHỈ ĐỔI.
+  SCRIPT_URL: "https://script.google.com/macros/s/AKfycbw3etxthOSUHRPA0F4Wvnd2NAoaaISYdfcoY27DyWqlUNOULCHOPC07Nx6KdgEbKOuhRw/exec",
 
   // (Tùy chọn) Google Drive API key — để phát TRỰC TIẾP video Drive >100MB
   // (lấy mốc thời gian chính xác thay vì dùng đồng hồ dự phòng).
