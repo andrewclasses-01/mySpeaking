@@ -1232,3 +1232,48 @@ lại thì gọi cửa quản trị `action:'baove'` (app: nút bảo vệ kho) 
    ⚠ **Đẩy tiếp về sau:** cứ `git push origin master` bình thường — credential Windows đã là `andrewclasses-01`. Nếu nghi ngờ quyền thì thử `git push --dry-run`, ĐỪNG tin `gh api ... .permissions` (token `gh` là tài khoản `andrewclasses-code`, luôn báo `push:false` — xem chặng 26).
 3. ~~Test thật với 1 video Drive lớn~~ → ĐÃ TEST chặng 2 (fallback OK). Đã có DRIVE_API_KEY; còn chờ test lại đường phát trực tiếp qua Drive API với video >100MB.
 4. Test trên điện thoại (layout đã responsive nhưng chưa soi kỹ màn nhỏ).
+
+---
+
+## CHẶNG — 29/07/2026: DỜI KHO SANG Ổ E + GỠ REF HỎNG DO GOOGLE DRIVE
+
+**Bối cảnh:** đợt "ổ E = code qua GitHub, ổ D = dữ liệu" (chi tiết ở `myLink/GHI CHU DU AN.md`
+chặng 29/07/2026). Kho này là git nằm trong vùng Google Drive đồng bộ.
+
+### ⛔ PHÁT HIỆN QUAN TRỌNG: kho NÀY đã bị Drive làm hỏng thật
+Chạy `git fsck` sau khi chép sang ổ E thì lộ ra:
+```
+error: refs/heads/master (1): badRefName: invalid refname format
+error: refs/remotes/origin/master (1): badRefName: invalid refname format
+```
+Đây **đúng kiểu hỏng đã xảy ra với kho myStudent hôm 27/07** — Google Drive nhân đôi file ref và đặt
+tên có `(1)`, mà git coi tên đó là **không hợp lệ** nên `git fetch` báo lỗi
+`did not send all necessary objects`. Không phải trùng hợp: đây là bằng chứng thứ hai cho thấy
+**đặt kho git trong vùng Drive đồng bộ là sai từ gốc** — chính là lý do của cả đợt chuyển này.
+
+**Đã kiểm trước khi động vào:** 2 ref rác đều trỏ vào commit `29eaaeb` (21/07 — *"Chang 35 notes +
+Apps Script deployed as Version 8"*), và commit đó **đã nằm trong lịch sử của `master` hiện tại**
+⇒ không mất việc gì. Đã CHUYỂN (không xoá) 2 file ref rác sang
+`E:\LAP TRINH APP\_BACKUP TRAM D\mySpeakingWeb-rac-Drive-29-07-2026\ref-hong\`.
+Sau đó `git fsck` **sạch hoàn toàn**, `fetch` chạy lại bình thường, khớp GitHub `eaf4546`.
+
+### Cũng dọn 3 file rác `(1)` khác của Drive
+`GHI CHU DU AN (1).md` · `config (1).js` · `index (1).html` — đều là **bản CŨ HƠN** (19-21/07) so
+với bản gốc (27/07); bản gốc mới là bản có `SCRIPT_URL` mới sau sự cố Apps Script. Đã chuyển sang
+thư mục backup nói trên, **không xoá**.
+> ⚠️ Lưu ý ngược với linh cảm thường gặp: bản `(1)` do Drive sinh **KHÔNG phải lúc nào cũng mới hơn**.
+> Ở đây (và ở myStudent 27/07) nó đều là bản CŨ. Luôn so ngày + nội dung trước khi quyết.
+
+### Đã dời
+`D:\APP AND DATA\mySpeaking Web\` → **`E:\LAP TRINH APP\mySpeaking Web\`** — 420 file / 4,14 MB,
+đối chiếu trước/sau khớp. Dùng `robocopy /E /XD "mySpeaking Data"`.
+
+**GIỮ NGUYÊN TRÊN Ổ D: `D:\APP AND DATA\mySpeaking Web\mySpeaking Data\`** (71 KB, 14 file) — đây là
+**dữ liệu lớp thật, `.gitignore` chặn không cho lên GitHub Pages công khai**. App mySpeaking trên ổ E
+đọc thẳng đường dẫn này ở 3 chỗ (`tools/chamdiem.py` `KHUON_DIR`, `tools/danhgia.py`
+`TEMPLATE_MISTAKES` + bảng đường dẫn). ⇒ **Giữ nguyên tên thư mục trên D nên KHÔNG phải sửa một dòng
+code nào của app mySpeaking.**
+
+**Thư mục `D:\APP AND DATA\mySpeaking Web` nay là thư mục đồng bộ**, gồm: `mySpeaking Data\` (dữ liệu
+thật) + `CAI DAT MAY MOI.bat` (clone từ GitHub về ổ E) + `GHI CHU (BAN CHUP - CHI DOC)\` (bản chụp
+tài liệu để đọc từ máy khác, sinh bằng `D:\APP AND DATA\_DONG BO\chep-ghi-chu.ps1`).
