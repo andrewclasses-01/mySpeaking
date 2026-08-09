@@ -1277,3 +1277,62 @@ code nào của app mySpeaking.**
 **Thư mục `D:\APP AND DATA\mySpeaking Web` nay là thư mục đồng bộ**, gồm: `mySpeaking Data\` (dữ liệu
 thật) + `CAI DAT MAY MOI.bat` (clone từ GitHub về ổ E) + `GHI CHU (BAN CHUP - CHI DOC)\` (bản chụp
 tài liệu để đọc từ máy khác, sinh bằng `D:\APP AND DATA\_DONG BO\chep-ghi-chu.ps1`).
+
+---
+
+## CHẶNG — 09/08/2026: GẮN DOMAIN RIÊNG `speaking.andrewclasses.com`
+
+**Bối cảnh:** thầy mới mua domain **`andrewclasses.com`** (quản lý tại **portal.inet.vn**, tài khoản
+PHẠM XUÂN NINH, hạn 09/08/2027), dùng làm domain gốc cho **MỌI app Andrew Classes từ nay về sau**, mỗi
+app một subdomain riêng. AWord đã gắn `aword.andrewclasses.com` trước (xem `AWord/web/GHI CHU DU
+AN.md` Đợt 93 để có mẫu đầy đủ). Lượt này gắn cho mySpeaking.
+
+### Web mới ⭐
+**`https://speaking.andrewclasses.com/`** — đã tự mở kiểm tra: trang vào (nhập lớp + mã lớp) hiện
+đúng, HTTPS khoá xanh. Web cũ **`https://andrewclasses-01.github.io/mySpeaking/`** vẫn chạy song
+song, KHÔNG xoá, KHÔNG đổi hướng — hai link cùng phục vụ một trang thật (cùng 1 GitHub Pages, chỉ thêm
+domain phụ).
+
+### Đã làm (3 bước — bước 3 KHÔNG áp dụng cho mySpeaking, xem cảnh báo bên dưới)
+1. **DNS trên portal.inet.vn** → OneShield → Bản ghi DNS → Thêm bản ghi: Loại `CNAME`, Tên `speaking`,
+   Đích `andrewclasses-01.github.io`, để mặc định KHÔNG bật "Trạng thái Bảo vệ" (proxy).
+2. **GitHub repo `andrewclasses-01/mySpeaking`** (nhánh `master`, KHÔNG phải `main`): tạo file `CNAME`
+   ở root chứa đúng 1 dòng `speaking.andrewclasses.com`, **commit RIÊNG chỉ file này** (lúc đó
+   `apps-script/Code.gs` đang có sửa dở chưa commit — đã `git add CNAME` tách riêng, không đụng
+   `Code.gs`), push. Gọi `gh api -X PUT repos/andrewclasses-01/mySpeaking/pages -f
+   cname='speaking.andrewclasses.com'` để GitHub nhận domain. Chứng chỉ SSL lần này mất khoảng
+   10-20 giây mới chuyển từ `authorization_pending` sang `approved` (khác AWord ra ngay lập tức) — bình
+   thường, chỉ cần đợi rồi gọi lại `gh api repos/andrewclasses-01/mySpeaking/pages` kiểm tra
+   `https_certificate.state`. Xong thì ép HTTPS: `gh api -X PUT
+   repos/andrewclasses-01/mySpeaking/pages -F https_enforced=true` (chú ý `-F` viết hoa = boolean thật,
+   `-f` thường sẽ gửi chuỗi `"true"` và bị GitHub từ chối 422).
+3. **Firebase Authorized domains**: mySpeaking **KHÔNG dùng Firebase** (đã `grep -ri firebase` toàn kho,
+   không thấy) → bỏ qua bước này, khác AWord.
+
+### ⛔⛔ VIỆC CÒN NỢ — CHƯA LÀM, CẦN LÀM TRƯỚC KHI GỬI LINK MỚI CHO LỚP THẬT
+**Drive API key đang giới hạn Website theo domain cũ, CHƯA thêm domain mới!** Key này
+(`myspeaking-502901`, xem `HUONG DAN TRIEN KHAI.md` dòng 14 + `GHI CHU DU AN.md` dòng 258) đang giới
+hạn **Application restrictions → Websites** chỉ gồm `https://andrewclasses-01.github.io/*` +
+`http://localhost:8123/*`. Cơ chế phát video qua Drive API (`googleapis.com/drive/v3/files/...`, xem
+CHẶNG 2 ở trên) gửi kèm HTTP Referrer của trang đang gọi — nếu HS mở bài từ
+`https://speaking.andrewclasses.com/` thì referrer KHÔNG khớp danh sách trắng, Google sẽ **từ chối
+request** (lỗi kiểu 403 "API_KEY_HTTP_REFERRER_BLOCKED"), video Drive sẽ **rơi về đồng hồ dự phòng**
+(app vẫn chạy được, nhưng học sinh không xem được video trực tiếp qua Drive nữa — coi như hỏng nửa
+tính năng chính).
+
+**Cách sửa (chưa làm, để dành session sau hoặc lúc thầy xác nhận):** Google Cloud Console → project
+`myspeaking-502901` → APIs & Services → Credentials → sửa key → Application restrictions → Websites →
+**thêm dòng `https://speaking.andrewclasses.com/*`** (giữ nguyên 2 dòng cũ, không xoá — để domain cũ
+vẫn chạy song song). KHÔNG cần đụng gì ở API restrictions (vẫn chỉ Drive API).
+
+⚠️ **Trước khi gửi link `speaking.andrewclasses.com` chính thức cho một lớp thật, PHẢI làm xong việc
+này và tự test lại 1 video Drive thật trên domain mới** — nếu chưa sửa, cứ tạm gửi link cũ
+`andrewclasses-01.github.io/mySpeaking/` cho lớp, domain mới chỉ dùng để thầy xem trước.
+
+### Mẫu chung để gắn domain cho app tiếp theo (myLesson, myBoard... nếu thầy muốn)
+DNS CNAME `<sub> → andrewclasses-01.github.io` (tắt Bảo vệ) trên portal.inet.vn → file `CNAME` trong
+repo + `gh api ... -f cname=` → đợi `https_certificate.state` = `approved` → `-F
+https_enforced=true`. Nếu app có Firebase Auth thì thêm domain vào Firebase Authorized domains; nếu
+app gọi API bên ngoài bị giới hạn theo Website referrer (Google Cloud API key, v.v.) thì nhớ thêm
+domain mới vào whitelist bên đó — **đây chính là lỗi suýt bỏ sót ở mySpeaking**, luôn rà lại mọi API
+key/OAuth config của app trước khi coi một domain mới là "xong".
