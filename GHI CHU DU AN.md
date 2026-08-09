@@ -1309,25 +1309,24 @@ domain phụ).
 3. **Firebase Authorized domains**: mySpeaking **KHÔNG dùng Firebase** (đã `grep -ri firebase` toàn kho,
    không thấy) → bỏ qua bước này, khác AWord.
 
-### ⛔⛔ VIỆC CÒN NỢ — CHƯA LÀM, CẦN LÀM TRƯỚC KHI GỬI LINK MỚI CHO LỚP THẬT
-**Drive API key đang giới hạn Website theo domain cũ, CHƯA thêm domain mới!** Key này
+### ⚠️ VIỆC CHỈ CẦN LÀM NẾU DÙNG LẠI LINK GOOGLE DRIVE CHO VIDEO (hiện KHÔNG khẩn cấp)
+**Drive API key đang giới hạn Website theo domain cũ, CHƯA thêm domain mới.** Key này
 (`myspeaking-502901`, xem `HUONG DAN TRIEN KHAI.md` dòng 14 + `GHI CHU DU AN.md` dòng 258) đang giới
 hạn **Application restrictions → Websites** chỉ gồm `https://andrewclasses-01.github.io/*` +
-`http://localhost:8123/*`. Cơ chế phát video qua Drive API (`googleapis.com/drive/v3/files/...`, xem
-CHẶNG 2 ở trên) gửi kèm HTTP Referrer của trang đang gọi — nếu HS mở bài từ
-`https://speaking.andrewclasses.com/` thì referrer KHÔNG khớp danh sách trắng, Google sẽ **từ chối
-request** (lỗi kiểu 403 "API_KEY_HTTP_REFERRER_BLOCKED"), video Drive sẽ **rơi về đồng hồ dự phòng**
-(app vẫn chạy được, nhưng học sinh không xem được video trực tiếp qua Drive nữa — coi như hỏng nửa
-tính năng chính).
+`http://localhost:8123/*`.
 
-**Cách sửa (chưa làm, để dành session sau hoặc lúc thầy xác nhận):** Google Cloud Console → project
-`myspeaking-502901` → APIs & Services → Credentials → sửa key → Application restrictions → Websites →
-**thêm dòng `https://speaking.andrewclasses.com/*`** (giữ nguyên 2 dòng cũ, không xoá — để domain cũ
-vẫn chạy song song). KHÔNG cần đụng gì ở API restrictions (vẫn chỉ Drive API).
+**Đã kiểm tra code (`js/app.js` hàm `parseVideoLink`/`initDriveDirect`, dòng ~82-280) xác nhận: key
+này CHỈ được gọi khi link video dán vào là link `drive.google.com`** — nếu là link YouTube thì app đi
+thẳng đường YouTube (`initYouTube`), không đụng gì tới Drive API key. **Thầy xác nhận (9/8/2026) hiện
+tại toàn bộ video đang dùng link YouTube** (đúng hướng đã chốt ở CHẶNG 17 vì Drive giới hạn file lớn)
+→ đường Drive coi như đang ngủ yên, **domain mới `speaking.andrewclasses.com` KHÔNG bị ảnh hưởng gì,
+không cần sửa gì ngay**.
 
-⚠️ **Trước khi gửi link `speaking.andrewclasses.com` chính thức cho một lớp thật, PHẢI làm xong việc
-này và tự test lại 1 video Drive thật trên domain mới** — nếu chưa sửa, cứ tạm gửi link cũ
-`andrewclasses-01.github.io/mySpeaking/` cho lớp, domain mới chỉ dùng để thầy xem trước.
+**Chỉ cần quay lại sửa nếu sau này thầy dùng lại link Google Drive cho một video nào đó** — lúc đó
+trước khi gửi link `speaking.andrewclasses.com` có video Drive cho lớp thật: Google Cloud Console →
+project `myspeaking-502901` → APIs & Services → Credentials → sửa key → Application restrictions →
+Websites → thêm dòng `https://speaking.andrewclasses.com/*` (giữ nguyên 2 dòng cũ, không xoá). KHÔNG
+cần đụng API restrictions (vẫn chỉ Drive API).
 
 ### Mẫu chung để gắn domain cho app tiếp theo (myLesson, myBoard... nếu thầy muốn)
 DNS CNAME `<sub> → andrewclasses-01.github.io` (tắt Bảo vệ) trên portal.inet.vn → file `CNAME` trong
