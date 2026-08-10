@@ -36,8 +36,10 @@
 // thư mục app máy tính. Ổ D: là bản mirror của Drive nên đổi tên ở máy sẽ đổi luôn trên Drive,
 // mà Drive đồng bộ có ĐỘ TRỄ -> trong lúc đó bộ não phải chấp nhận CẢ HAI tên, không thì học sinh
 // không đăng nhập và không nộp bài được. Giữ luôn về sau: đổi tên lần nữa cũng không hỏng.
+// 30/07/2026: thầy gộp "mySpeaking App" + "mySpeaking Web" -> MỘT thư mục "mySpeaking-data" (quy
+// ước ổ D chỉ chứa dữ liệu, hậu tố -data) -> tên mới nhất đứng TRƯỚC, giữ tên cũ làm đường lùi.
 var ROOT_NAMES  = ['APP AND DATA'];
-var WEB_NAMES   = ['mySpeaking Web', 'mySpeaking'];   // ← tên mới đứng TRƯỚC
+var WEB_NAMES   = ['mySpeaking-data', 'mySpeaking Web', 'mySpeaking'];   // ← tên mới đứng TRƯỚC
 var DATA_NAMES  = ['mySpeaking Data'];
 var PATH_SETTINGS = [ROOT_NAMES, WEB_NAMES, DATA_NAMES, ['mySpeaking Settings']];
 var PATH_SHEETS   = [ROOT_NAMES, WEB_NAMES, DATA_NAMES, ['mySpeaking Sheets']];
