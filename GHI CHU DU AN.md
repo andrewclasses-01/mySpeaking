@@ -1335,3 +1335,37 @@ https_enforced=true`. Nếu app có Firebase Auth thì thêm domain vào Firebas
 app gọi API bên ngoài bị giới hạn theo Website referrer (Google Cloud API key, v.v.) thì nhớ thêm
 domain mới vào whitelist bên đó — **đây chính là lỗi suýt bỏ sót ở mySpeaking**, luôn rà lại mọi API
 key/OAuth config của app trước khi coi một domain mới là "xong".
+
+## CHẶNG — 10/08/2026: PHÁT HIỆN `Code.gs` TRÊN GITHUB BỊ LỆCH VỚI BẢN "BỘ NÃO" ĐANG CHẠY THẬT
+
+### Bối cảnh
+Đang git pull hàng loạt repo trên ổ E thì thấy `apps-script/Code.gs` có sửa dở chưa commit (working
+copy) — thêm tên thư mục mới `mySpeaking-data` vào `WEB_NAMES` (ăn theo việc 30/07/2026 gộp 2 thư
+mục cũ thành `mySpeaking-data`, xem `rename-o-d-data` trong memory). Trước khi commit đã hỏi thầy có
+cần deploy sau khi push không.
+
+### Kiểm tra thật — không đoán
+Gọi thẳng địa chỉ "bộ não" ĐANG CHẠY (không phải code trên máy):
+`https://script.google.com/macros/s/AKfycbw.../exec?check=1`
+→ trả về `"duong_dan": "Drive của tôi / APP AND DATA / mySpeaking-data / mySpeaking Data /
+mySpeaking Settings"`, `co_file_cau_hinh: true`, `so_lop: 8`, `so_dong_lessons: 21` — **bản đang
+chạy thật đã tự tìm ra đúng thư mục `mySpeaking-data` từ trước, hoàn toàn không hỏng.**
+
+### Kết luận: GitHub bị LỆCH so với bản chạy thật (deploy ngược, không đồng bộ)
+Ai đó (thầy hoặc Claude phiên trước) đã **sửa trực tiếp trên script.google.com rồi bấm "Phiên bản
+mới"** để vá gấp, nhưng **chưa bao giờ chép nội dung đó xuống file cục bộ + commit lên GitHub**. Vì
+vậy repo GitHub vẫn còn bản CŨ (thiếu `mySpeaking-data`) trong khi bản CHẠY THẬT đã đúng — chiều lệch
+NGƯỢC với ca thường gặp ở [[deploy-apps-script]] (thường là sửa code trên máy quên deploy; lần này là
+sửa trên script.google.com quên chép lại xuống máy).
+
+### Đã làm
+- Commit `3fb72bb` (đồng bộ GitHub khớp lại với bản đang chạy thật) — **KHÔNG cần deploy gì thêm**,
+  vì deploy y hệt nội dung vừa push sẽ cho kết quả giống hệt bản đang chạy hiện tại, không đổi gì cho
+  học sinh.
+
+### Bài học — tránh lặp lại
+- Khi sửa gấp trực tiếp trên script.google.com (không qua máy/git), **PHẢI** dán code đó xuống lại
+  file `Code.gs` cục bộ + commit ngay sau đó, kẻo GitHub "nói dối" về code đang thực sự chạy.
+- Trước khi kết luận "cần deploy" hay "code trên máy đã cũ", **luôn gọi thử `?check=1` (hoặc
+  `?config=1`) vào `scriptUrl` thật** (đọc từ `push.json`) để biết bản đang chạy — đừng suy luận chỉ
+  từ diff trên máy.
