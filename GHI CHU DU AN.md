@@ -1435,7 +1435,32 @@ tập khác. Hai cửa cũ đều không dùng được:
 - Lấy lượt nộp mới nhất bằng cách **so chuỗi SUBMISSION ID** (dạng `yyMMdd-HHmmss-…` nên so chuỗi
   chính là so thời gian) — khỏi parse ngày.
 
-### ⚠️ CHƯA DEPLOY — việc còn phải làm bằng tay
+### ✅ ĐÃ DEPLOY 20/08/2026 — **Phiên bản 3 lúc 12:17**
+
+Thầy chốt *"tự deploy qua trình duyệt đi"* ⇒ đã làm ngay trên `script.google.com`:
+
+1. Mở dự án **mySpeaking** → editor `Mã.gs` — **đối chiếu trước khi đụng**: model có đúng **832
+   dòng**, chưa có `daNopTrongBuoi`, có nguyên dòng neo ⇒ **bản đang chạy khớp bản git**, không dính
+   lại vụ lệch hồi 10/08.
+2. Chèn code bằng `monaco.editor.getModels()[0].setValue()` (chỉ chèn thêm, không dán đè cả file):
+   **832 → 887 dòng**, đúng bằng bản trên máy. Kiểm luôn regex `\s+` không bị nhân đôi backslash.
+3. Ctrl+S → **"Đã lưu vào Drive"**.
+4. **Triển khai → Quản lý các tùy chọn triển khai → sửa bản ĐANG HOẠT ĐỘNG (bút chì) → Phiên bản →
+   "Phiên bản mới"** → mô tả → **Triển khai**.
+   ⛔ KHÔNG bấm "Tùy chọn triển khai mới".
+5. Kết quả: *"Đã cập nhật thành công hoạt động triển khai"* — **Phiên bản 3 lúc 12:17, 20 thg 8,
+   2026**, ID triển khai vẫn là `AKfycbw3etxthOSUHRPA0F4Wvnd2NAoaaISYdfcoY27DyWqlUNOULCHOPC07Nx6KdgEbKOuhRw`
+   ⇒ **địa chỉ `/exec` KHÔNG đổi**, web và app không phải sửa gì.
+
+### Kiểm sau khi deploy (curl, dữ liệu thật)
+- `?danop=1&classCode=B2B&lesson=GERMS` → `ok:true, tong:11` kèm danh sách:
+  `PHUONG (T3, 9 lỗi) · MAI (T2, 64) · DUY MINH (T1, 70) · THAO (T1, 26) · DUNG (T2, 22) ·
+  BENTLY (T3, 8) · PHONG (T4, 18) · HAN (T2, 24) · LINH (T4, 12) · BINH MINH (T3, 25) · HA (T1, 20)`
+- `?config=1` và `?check=1` **vẫn chạy nguyên** — không hỏng cửa nào.
+- Bản mẫu myLesson gọi thật: thẻ SPEAKING CHECK **tự đổ trạng thái**, hiện `6/15` (danh sách lớp
+  trong bản mẫu là tên giả nên chỉ ghép được 6 em — bản thật sẽ khớp đủ).
+
+### (đã xong — giữ lại để tra) việc phải làm bằng tay
 Đã gọi `?check=1` đối chiếu trước khi sửa: **bản đang chạy khớp với bản trên máy** (8 lớp, 21 dòng
 lessons, thư mục `mySpeaking-data`) ⇒ không dính lại vụ lệch hồi 10/08.
 Muốn cửa mới sống thì phải mở `script.google.com`, **dán lại `Code.gs`** rồi **Triển khai → Quản lý
