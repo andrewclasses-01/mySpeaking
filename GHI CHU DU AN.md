@@ -1369,3 +1369,49 @@ sửa trên script.google.com quên chép lại xuống máy).
 - Trước khi kết luận "cần deploy" hay "code trên máy đã cũ", **luôn gọi thử `?check=1` (hoặc
   `?config=1`) vào `scriptUrl` thật** (đọc từ `push.json`) để biết bản đang chạy — đừng suy luận chỉ
   từ diff trên máy.
+
+## CHẶNG — 20/08/2026: VÀO THẲNG BÀI TỪ myLesson (bỏ cả ba màn) — ⚠️ CHƯA PUSH, CHƯA LÊN MẠNG
+
+### Bối cảnh
+Bên **myLesson** (trang lớp của học sinh) nay có **thẻ SPEAKING CHECK**. Thầy chốt: *"khi có thẻ
+bài tập ở trang chính là bấm vào luôn, bỏ qua màn nhập tên, lớp, team"*. Team **không** lấy từ
+myLesson mà **để mySpeaking lo** — bên này mới giữ `teams[]` + `pairs[]` của từng buổi.
+
+### Cách nối (myLesson làm phần khó, mySpeaking chỉ nhận)
+1. Học sinh bấm thẻ ở myLesson → bên đó hiện pop-up rồi **tự gọi `?config=1`**, tra xem em thuộc
+   đội nào, phải chấm đội nào, video + thành viên đội đó.
+2. Xong, em bấm nút **"Mở phòng chấm"** → mở tab mới sang đây kèm **gói dữ liệu trên link**:
+   `index.html?goi=<base64url của JSON>` (đo thật: link dài **322 ký tự**).
+3. Trang này thấy có `goi` thì **vào thẳng màn làm bài**.
+
+### Đã sửa gì trong `js/app.js` (chỉ 58 dòng thêm, 1 dòng đổi)
+- `docGoi()` — đọc + kiểm gói (`v===1`, đủ `ten/team/cham/video`).
+- `vaoThangTuGoi()` — đổ vào `state` rồi gọi thẳng `start()`.
+- `DOMContentLoaded`: **có gói thì `noiSuKien()` + vào bài rồi `return` NGAY**, ⛔ **không gọi
+  `loadClasses()`** (bộ não đo được 8-40 giây — gọi lại là mất trắng cái nhanh vừa đổi được).
+- Tách toàn bộ phần nối sự kiện ra hàm **`noiSuKien()`** vì nay có HAI đường vào.
+
+### ⛔ Ba điều phải giữ
+1. **`goi.ten` là TÊN TRONG BUỔI** (`teams[].members`, vd `PHONG`), KHÔNG phải tên đầy đủ bên
+   myStudent (`CHẤN PHONG`). Bài nộp + ô nhớ localStorage phải dùng tên này — đúng như khi em tự
+   chọn tên ở màn 2. Đổi sang tên đầy đủ là lệch hết với sheet cũ.
+   (Việc ghép `CHẤN PHONG` ↔ `PHONG` do **bên myLesson** lo trước khi dựng gói.)
+2. **Đường vào cũ giữ nguyên 100%** — lớp nào chưa nối vẫn gõ mã lớp như thường.
+3. **Gói hỏng thì im lặng rơi về màn đăng nhập**, không chặn học sinh.
+
+### Đã tự kiểm (20/08, chạy local cổng 8126 — `myspeaking-web` trong launch.json)
+| Việc | Kết quả |
+|---|---|
+| Mở kèm gói thật của lớp B2B | hai màn đầu **ẩn**, vào thẳng màn làm bài; header **`PHONG · T4`**, chủ đề `GERMS` |
+| Video | nạp đúng YouTube của **TEAM 1** (`g87P0m-Ptm0`); dòng dưới video: `B2B \| TEAM 1 \| HA · THAO · DUY MINH` |
+| Nút "ai mắc lỗi" | đúng 3 thành viên đội bị chấm |
+| Ô nhớ localStorage | `myspeaking_PHONG_https://youtu.be/g87P0m-Ptm0` — đúng tên trong buổi |
+| Thêm thử một lỗi | lưu đủ: `student PHONG · myTeam TEAM 4 · checkedTeam TEAM 1 · classCode B2B · lesson GERMS` |
+| **Đường vào CŨ** | vẫn chạy: gõ `B2B/germs` vào được, 4 đội, chọn TEAM 4 ra `PHONG · LINH` |
+| Gói hỏng (`?goi=day-la-goi-hong-123`) | rơi về màn đăng nhập, nút Login vẫn chạy |
+| Console | 0 lỗi |
+
+### ⚠️ Trạng thái: CHỈ COMMIT, CHƯA PUSH
+Đây là web **học sinh đang dùng thật** (4 lớp đang mở buổi). Thầy chưa duyệt đưa lên mạng.
+Phần còn lại của việc nối: **bộ não `Code.gs`** cần thêm một cửa công khai *"buổi này ai đã nộp"*
+để thẻ bên myLesson hiện được danh sách nộp bài cả lớp (`adminResults` hiện cần mật khẩu).

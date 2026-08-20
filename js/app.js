@@ -885,6 +885,50 @@
     refreshIcons();
   }
 
+  // ═══════════════ VÀO THẲNG TỪ myLesson (20/08/2026) ═══════════════
+  // Trang lớp bên myLesson (lesson.andrewclasses.com) có thẻ SPEAKING CHECK. Bấm thẻ, bên đó hỏi
+  // bộ não xem em thuộc đội nào / chấm đội nào, rồi mở tab sang đây kèm GÓI dữ liệu trên link:
+  //     index.html?goi=<base64url của JSON>
+  // Có gói thì BỎ CẢ BA MÀN (mã lớp · chọn team+tên · xác nhận) và vào thẳng bài — thầy chốt.
+  //
+  // ⛔ VÀO BẰNG GÓI THÌ KHÔNG GỌI loadClasses(): bộ não đo được 8-40 giây, mà mọi thứ cần biết đã
+  //    nằm trong gói rồi. Gọi lại là mất trắng cái nhanh vừa đổi được.
+  // ⛔ `goi.ten` là TÊN TRONG BUỔI (lấy từ `teams[].members`, vd "PHONG"), KHÔNG phải tên đầy đủ
+  //    bên myStudent ("CHẤN PHONG"). Bài nộp + ô nhớ localStorage PHẢI dùng tên này, đúng như khi
+  //    em tự chọn tên ở màn 2 — đổi sang tên đầy đủ là lệch hết với sheet cũ.
+  // ⛔ Đường vào cũ (gõ mã lớp) GIỮ NGUYÊN 100%: lớp nào chưa nối vẫn dùng bình thường.
+  // ⛔ Gói hỏng / thiếu trường thì im lặng rơi về màn đăng nhập, đừng chặn học sinh.
+  function docGoi() {
+    try {
+      const raw = new URLSearchParams(location.search).get('goi');
+      if (!raw) return null;
+      const b64 = raw.replace(/-/g, '+').replace(/_/g, '/');
+      const g = JSON.parse(decodeURIComponent(escape(atob(b64))));
+      if (!g || g.v !== 1) return null;
+      if (!g.ten || !g.team || !g.cham || !g.video) return null;
+      return g;
+    } catch (e) {
+      if (window.console) console.warn('goi hong:', e);
+      return null;
+    }
+  }
+
+  function vaoThangTuGoi(g) {
+    state.student = g.ten;                       // tên TRONG BUỔI — xem cảnh báo ở trên
+    state.myTeam = 'TEAM ' + g.team;
+    state.checkedTeam = 'TEAM ' + g.cham;
+    state.members = Array.isArray(g.members) ? g.members : [];
+    state.videoUrl = g.video || '';
+    const vp = parseVideoUrl(state.videoUrl);
+    state.videoId = (vp && vp.id) ? vp.id : '';
+    state.lesson = g.lesson || '';
+    state.topic = g.topic || g.lesson || '';
+    state.className = g.tenLop || g.classCode || '';
+    state.classCode = g.classCode || '';
+    saveKey = makeSaveKey(state.student, state.videoUrl);
+    start();
+  }
+
   function start() {
     // state.student / myTeam / checkedTeam / members / videoUrl / topic đã set ở handleNamePick
     // khôi phục bài dở nếu cùng người
@@ -1080,9 +1124,22 @@
   // ─── Gắn sự kiện ───
   document.addEventListener('DOMContentLoaded', async () => {
     refreshIcons();
+    // Vào bằng gói từ myLesson: dựng bài ngay, khỏi hỏi bộ não (xem khối "VÀO THẲNG TỪ myLesson").
+    const goi = docGoi();
+    if (goi) {
+      noiSuKien();
+      vaoThangTuGoi(goi);
+      return;
+    }
     await loadClasses();
     initLoginScreen();
 
+    noiSuKien();
+  });
+
+  // Mọi tay nghe sự kiện của trang. Tách ra thành hàm vì nay có HAI đường vào:
+  // đường cũ (đăng nhập lớp) và đường mới (gói từ myLesson) — cả hai đều phải nối.
+  function noiSuKien() {
     // CHẶNG 29 (CHẶNG 32 chuyển chỗ): danh sách bài đã nộp — nay dựng lúc VÀO TRANG XÁC NHẬN
     // (handleNamePick gọi renderReviewSection), không dựng ở màn đăng nhập nữa.
     $('reviewList').addEventListener('click', (ev) => {
@@ -1284,5 +1341,5 @@
     const closeFew = () => { $('fewMistakesModal').classList.add('hidden'); $('fewMistakesModal').classList.remove('flex'); };
     $('btnFewReturn').addEventListener('click', closeFew);   // quay lại soi tiếp, KHÔNG gửi
     $('btnFewSubmit').addEventListener('click', () => { closeFew(); submit(); });
-  });
+  }
 })();
