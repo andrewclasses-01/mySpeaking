@@ -61,7 +61,62 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.config) return json(buildConfig());
   if (e && e.parameter && e.parameter.check) return json(kiemTraKho());
   if (e && e.parameter && e.parameter.mine) return json(baiDaNop(e.parameter));
+  if (e && e.parameter && e.parameter.danop) return json(daNopTrongBuoi(e.parameter));
   return json({ ok: true, app: 'mySpeaking' });
+}
+
+// ═══════════════ ?danop=1 — BUỔI NÀY NHỮNG AI ĐÃ NỘP (20/08/2026) ═══════════════
+// Vì sao có cửa này: trang lớp bên **myLesson** có thẻ SPEAKING CHECK, và thẻ đó phải hiện được
+// "bao nhiêu em đã nộp / ai chưa" y như mọi thẻ bài tập khác. Hai cửa cũ đều không dùng được:
+//   · `?mine=1` chỉ trả bài của MỘT em (phải biết trước tên) — hỏi vòng cả lớp thì quá chậm;
+//   · `action:'results'` trả đủ nhưng **cần mật khẩu của thầy**, không thể nhét vào trang học sinh.
+// Cửa này CHỈ ĐỌC và chỉ trả **tên người chấm + số lỗi + mốc nộp gần nhất** — KHÔNG trả nội dung
+// lỗi, nên không lộ bài của em nào cho em nào. Mức bảo vệ ngang `?config=1` (cũng công khai).
+//
+// ⛔ Tên trả về là TÊN TRONG BUỔI (cột CHECKER, vd "PHONG") — myLesson phải tự ghép với tên đầy đủ
+//    bên myStudent ("CHẤN PHONG"). Bên đó đã có hàm ghép chịu lệch dấu/tên ngắn.
+// ⛔ SUBMISSION ID có dạng yyMMdd-HHmmss-… nên SO CHUỖI chính là so thời gian — dùng để lấy lượt
+//    nộp mới nhất mà không phải parse ngày.
+function daNopTrongBuoi(p) {
+  var cls = String(p.classCode || '').trim();
+  var lesson = String(p.lesson || '').trim();
+  if (!cls || !lesson) return { ok: false, error: 'THIEU_THAM_SO' };
+  try {
+    var sheetsFolder = folderByPath(PATH_SHEETS, false);
+    if (!sheetsFolder) return { ok: false, error: 'CHUA_CO_FOLDER_SHEETS' };
+    var f = fileByName(sheetsFolder, resolveResultFileName(cls));
+    if (!f) return { ok: false, error: 'KHONG_THAY_FILE_KET_QUA' };
+    var ss = SpreadsheetApp.openById(f.getId());
+
+    var fsh = timSheetBai(ss, lesson);   // tra "hiền" — chịu được lệch tên sheet (chặng 31)
+    var nhom = {}, thuTu = [];
+    if (fsh && fsh.getLastRow() > 1) {
+      var R = fsh.getDataRange().getValues();
+      for (var i = 1; i < R.length; i++) {
+        var ten = String(R[i][1] || '').trim();                  // CHECKER
+        if (!ten) continue;
+        var k = ten.replace(/\s+/g, ' ').toUpperCase();
+        if (!nhom[k]) {
+          nhom[k] = { ten: ten, doi: String(R[i][2] || ''), soLoi: 0, luc: '', sid: '' };
+          thuTu.push(k);
+        }
+        nhom[k].soLoi++;
+        var sid = String(R[i][12] || '');                        // SUBMISSION ID
+        if (sid > nhom[k].sid) {
+          nhom[k].sid = sid;
+          var d = R[i][0];
+          nhom[k].luc = (d instanceof Date)
+            ? Utilities.formatDate(d, 'GMT+7', 'dd/MM/yyyy HH:mm')
+            : String(d || '');
+        }
+      }
+    }
+    var ds = thuTu.map(function (k) { return nhom[k]; })
+      .sort(function (a, b) { return a.sid < b.sid ? 1 : (a.sid > b.sid ? -1 : 0); });
+    return { ok: true, classCode: cls, lesson: lesson, tong: ds.length, daNop: ds };
+  } catch (err) {
+    return { ok: false, error: String(err) };
+  }
 }
 
 // ═══════════════ ?mine=1 — TRẢ LẠI BÀI EM ĐÃ NỘP (CHẶNG 32) ═══════════════

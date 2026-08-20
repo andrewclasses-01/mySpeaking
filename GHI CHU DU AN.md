@@ -1415,3 +1415,31 @@ myLesson mà **để mySpeaking lo** — bên này mới giữ `teams[]` + `pair
 Đây là web **học sinh đang dùng thật** (4 lớp đang mở buổi). Thầy chưa duyệt đưa lên mạng.
 Phần còn lại của việc nối: **bộ não `Code.gs`** cần thêm một cửa công khai *"buổi này ai đã nộp"*
 để thẻ bên myLesson hiện được danh sách nộp bài cả lớp (`adminResults` hiện cần mật khẩu).
+
+## CHẶNG — 20/08/2026 (tiếp): CỬA CÔNG KHAI `?danop=1` — BUỔI NÀY AI ĐÃ NỘP ⚠️ CHƯA DEPLOY
+
+### Vì sao cần
+Thẻ SPEAKING CHECK bên myLesson phải hiện được *"bao nhiêu em đã nộp / ai chưa"* y như mọi thẻ bài
+tập khác. Hai cửa cũ đều không dùng được:
+- `?mine=1` chỉ trả bài **một em** (phải biết trước tên) — hỏi vòng cả lớp thì quá chậm (mỗi lượt
+  gọi đã 7-8 giây).
+- `action:'results'` trả đủ nhưng **cần mật khẩu của thầy** — không thể nhét vào trang học sinh.
+
+### Đã thêm gì vào `apps-script/Code.gs` (55 dòng, KHÔNG đụng gì cũ)
+- `doGet`: thêm một dòng `if (… e.parameter.danop) return json(daNopTrongBuoi(e.parameter));`
+- `daNopTrongBuoi(p)` — nhận `classCode` + `lesson`, mở đúng file kết quả của lớp, gom theo cột
+  **CHECKER**, trả:
+  `{ ok, classCode, lesson, tong, daNop:[{ ten, doi, soLoi, luc, sid }] }`
+- **CHỈ ĐỌC**, và **chỉ trả tên người chấm + số lỗi + mốc nộp** — KHÔNG trả nội dung lỗi, nên không
+  em nào xem được bài của em nào. Mức bảo vệ ngang `?config=1` (cũng công khai).
+- Lấy lượt nộp mới nhất bằng cách **so chuỗi SUBMISSION ID** (dạng `yyMMdd-HHmmss-…` nên so chuỗi
+  chính là so thời gian) — khỏi parse ngày.
+
+### ⚠️ CHƯA DEPLOY — việc còn phải làm bằng tay
+Đã gọi `?check=1` đối chiếu trước khi sửa: **bản đang chạy khớp với bản trên máy** (8 lớp, 21 dòng
+lessons, thư mục `mySpeaking-data`) ⇒ không dính lại vụ lệch hồi 10/08.
+Muốn cửa mới sống thì phải mở `script.google.com`, **dán lại `Code.gs`** rồi **Triển khai → Quản lý
+bản triển khai → sửa bản ĐANG CHẠY → "Phiên bản mới"**.
+⛔ **ĐỪNG "New deployment"** — đẻ ra địa chỉ `/exec` khác, web và app đều trỏ địa chỉ cũ.
+Kiểm sau khi deploy: `…/exec?danop=1&classCode=B2B&lesson=GERMS` phải trả mảng `daNop`
+(hiện đang trả `{"ok":true,"app":"mySpeaking"}` vì cửa chưa có).
