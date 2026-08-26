@@ -29,9 +29,6 @@
     khoFs: false,          // (Đợt Firebase) buổi này nằm ở KHO NÀO: true = Firestore, false = bộ não cũ
     buoiId: '',            // mã buổi LOP_BAI trong Firestore (chỉ có nghĩa khi khoFs)
     clips: [],             // (Đợt 3) video MỌI đội [{t: số đội, v: link}] — pop-up "All team videos"
-    // (Đợt B 27/08/2026) MÔ HÌNH 2 — bản tổng lỗi thống nhất + màn phản biện:
-    moHinh: 1,             // 1 = nhiều-lần-nộp (baiNop, buổi cũ) · 2 = bản tổng sống (tongLoi)
-    cheDo: 'cham',         // 'cham' = chấm đội được phân công · 'phanbien' = xem lỗi đội mình + tích
   };
   let editingIndex = -1;
   let fType = '';
@@ -127,7 +124,6 @@
         teams: (b.teams || []).map((t) => ({ team: t.team, video: t.video || '', members: t.members || [] })),
         pairs: b.pairs || [],
         _kho: 'fs',
-        _moHinh: b.moHinh === 2 ? 2 : 1,   // (Đợt B) buổi bản-tổng-lỗi hay buổi nhiều-lần-nộp
       };
     });
   }
@@ -166,146 +162,6 @@
     return true;
   }
 
-  // ═══════════════ (Đợt B 27/08/2026) MÔ HÌNH 2 — BẢN TỔNG LỖI + PHẢN BIỆN ═══════════════
-  // Thầy chốt 26/08 khuya: từ buổi mô hình 2 (spBuoi có `moHinh: 2`, app đẩy từ v1.7.0):
-  //   spBuoi/{id}/tongLoi/{slug-em-chấm}  — MỖI EM CHẤM = MỘT bản tổng SỐNG (create+update),
-  //     errors[] mang {id, trangThai: 'song'|'an'|'go', ketLuan: ''|'keep'|'agree', ...6 mục cũ}
-  //     'an' = em tự xoá (ẨN nhưng GIỮ VẾT) · 'go' = được Agree (gỡ bắt lỗi, giữ vết, mờ+gạch)
-  //   spBuoi/{id}/phanHoi/{errId__slug-em-tích} — MỖI PHIẾU = 1 tài liệu {y:'dongY'|'phanDoi',
-  //     lyDo (bắt buộc khi phản đối — LUẬT kho chặn, không chỉ giao diện), voter, chuLoi, ...}
-  // Buổi CŨ (mô hình 1 / Sheets) giữ NGUYÊN đường baiNop nhiều-lần-nộp phía trên — đừng gỡ.
-  // ⛔ Luật khối 4 (tongLoi + phanHoi) phải dán TRƯỚC khi buổi mô hình 2 chạy thật:
-  //    myLesson-data\tai-lieu\LUAT FIRESTORE CAN DAN (27-08 THEM PHAN BIEN).md
-
-  // Trạng thái riêng của mô hình 2 (không nằm trong `state` để autosave localStorage nhẹ)
-  const m2 = {
-    serverBan: '',   // JSON {errors,timers} ĐÃ đồng bộ lần cuối — so để biết "có sửa chưa gửi"
-    serverIds: {},   // map id lỗi -> JSON lỗi đã đồng bộ (vẽ icon uploaded từng ô)
-    phanHoi: [],     // mọi phiếu phản hồi của buổi liên quan tới màn đang mở
-    disOn: false,    // nút DISAGREEMENT đang bật (dồn câu tranh chấp lên đầu)
-    dsCham: [],      // (phản biện) [{chuLoi, err}] — lỗi đội mình bị chấm, gom từ mọi em bên đội chấm
-    votes: {},       // (phản biện) phiếu CỦA CHÍNH EM đang sửa: {errId: {y, lyDo}}
-    votesServer: '', // JSON votes đã đồng bộ lần cuối
-    daNopLanNao: false,
-  };
-
-  // Bỏ dấu tiếng Việt + về chữ-số-thường — dùng cho tên file avatar + khớp tên
-  function khongDauTen(s) {
-    return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
-      .replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
-  }
-  // Mã tài liệu tongLoi/phanHoi trên kho — PHẢI bỏ dấu kiểu slugAvatar, ⛔ đừng dùng slugKey
-  // (slugKey chỉ gọt [^A-Z0-9] nên CẮT MẤT chữ có dấu: 'HÀ'->'H', 'THẢO'->'THO' — đã cắn khi test).
-  const slugHs = (s) => slugAvatar(s);
-  function slugAvatar(s) {
-    return khongDauTen(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'hs';
-  }
-  // Ảnh avatar dùng CHUNG kho web andrewclasses.com (xuất từ myStudent — Đợt B).
-  // Hỏng/thiếu ảnh -> onerror tự thay bằng vòng tròn chữ tắt (initialsOf có sẵn).
-  // ⛔ Thư mục LỚP: bỏ HẾT ký tự không phải chữ-số — "B2B" (speaking) và "B2-B" (myStudent)
-  //    phải ra CÙNG một thư mục `b2b`. Script xuất ảnh (myLesson app tools/xuat-avatar.py)
-  //    dùng Y HỆT luật này — đổi một bên là đổi CẢ HAI.
-  const AVATAR_GOC = 'https://andrewclasses.com/assets/avatar/';
-  function avatarUrl(ten) {
-    const lop = khongDauTen(tenLopNgan(state.className) || state.classCode).replace(/[^a-z0-9]/g, '');
-    return AVATAR_GOC + lop + '/' + slugAvatar(ten) + '.jpg';
-  }
-
-  // Mã lỗi ổn định — phiếu phản biện bám theo mã này kể cả khi em chấm sửa chữ trong câu
-  function taoErrId() {
-    return Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36).padStart(2, '0');
-  }
-
-  async function fsGet(duong) {
-    const r = await fetch(FS_GOC + duong + fsKey(), { cache: 'no-store' });
-    if (r.status === 404) return null;
-    if (!r.ok) throw new Error('FS_' + r.status);
-    return fsGiaiDoc(await r.json());
-  }
-  async function fsPatch(duong, duLieu) {
-    const fields = {};
-    Object.keys(duLieu).forEach((k) => { fields[k] = fsMa(duLieu[k]); });
-    const r = await fetch(FS_GOC + duong + fsKey(), {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }),
-    });
-    if (!r.ok) {
-      let msg = 'FS_' + r.status;
-      try { const j = await r.json(); msg = (j.error && j.error.message) || msg; } catch (e) {}
-      throw new Error(msg);
-    }
-    return true;
-  }
-  async function fsQuery(buoiId, collectionId, filterField, filterVal, limit) {
-    const q = { from: [{ collectionId }], limit: limit || 1000 };
-    if (filterField) {
-      q.where = { fieldFilter: { field: { fieldPath: filterField }, op: 'EQUAL', value: { stringValue: String(filterVal) } } };
-    }
-    const r = await fetch(FS_GOC + '/spBuoi/' + encodeURIComponent(buoiId) + ':runQuery' + fsKey(), {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ structuredQuery: q }),
-    });
-    if (!r.ok) throw new Error('FS_' + r.status);
-    const ds = await r.json();
-    return (Array.isArray(ds) ? ds : []).filter((x) => x.document).map((x) => fsGiaiDoc(x.document));
-  }
-
-  const tongLoiLay = (buoiId, slug) => fsGet('/spBuoi/' + encodeURIComponent(buoiId) + '/tongLoi/' + encodeURIComponent(slug));
-  const tongLoiGhi = (buoiId, slug, d) => fsPatch('/spBuoi/' + encodeURIComponent(buoiId) + '/tongLoi/' + encodeURIComponent(slug), d);
-  const phanHoiGhi = (buoiId, phId, d) => fsPatch('/spBuoi/' + encodeURIComponent(buoiId) + '/phanHoi/' + encodeURIComponent(phId), d);
-
-  // Chuẩn hoá một lỗi mô hình 2 (bản cũ trong kho có thể thiếu trường mới)
-  function chuanLoi(er) {
-    return {
-      id: String(er.id || taoErrId()),
-      trangThai: er.trangThai === 'an' || er.trangThai === 'go' ? er.trangThai : 'song',
-      ketLuan: er.ketLuan === 'keep' || er.ketLuan === 'agree' ? er.ketLuan : '',
-      min: +er.min || 0, sec: +er.sec || 0, section: '',
-      who: String(er.who || ''), type: String(er.type || ''),
-      sentence: String(er.sentence || ''), detail: String(er.detail || ''), explain: String(er.explain || ''),
-    };
-  }
-  // Ảnh chụp phần SẼ GHI LÊN KHO — so sánh chuỗi = biết có gì chưa gửi
-  function m2ChupCham() {
-    return JSON.stringify({ e: state.errors, t: cleanTimers() });
-  }
-  function m2GhiNhanDongBo() {
-    m2.serverBan = m2ChupCham();
-    m2.serverIds = {};
-    state.errors.forEach((e) => { if (e.id) m2.serverIds[e.id] = JSON.stringify(e); });
-  }
-  function m2LoiDaDongBo(e) {
-    return !!(e.id && m2.serverIds[e.id] === JSON.stringify(e));
-  }
-  function m2CoSuaChuaGui() {
-    if (state.moHinh !== 2) return false;
-    if (state.cheDo === 'phanbien') return JSON.stringify(m2.votes) !== m2.votesServer;
-    return m2ChupCham() !== m2.serverBan;
-  }
-
-  // Nút SUBMIT 3 màu (thầy chốt): TRẮNG chưa gửi lần nào · XANH LÁ đã gửi ·
-  // VÀNG nhấp nháy to-nhỏ khi có sửa chưa gửi. Chỉ áp cho mô hình 2.
-  function capNhatNutSubmit() {
-    if (state.moHinh !== 2) return;
-    const b = $('btnSubmit');
-    b.classList.remove('bg-emerald-500', 'hover:bg-emerald-400', 'bg-white', 'text-emerald-700',
-      'hover:bg-emerald-50', 'nut-vang-nhay', 'bg-amber-400', 'hover:bg-amber-300', 'text-slate-900');
-    const daCo = state.cheDo === 'phanbien' ? (m2.votesServer !== '' && m2.votesServer !== '{}') : m2.daNopLanNao;
-    if (m2CoSuaChuaGui()) b.classList.add('bg-amber-400', 'hover:bg-amber-300', 'text-slate-900', 'nut-vang-nhay');
-    else if (daCo) b.classList.add('bg-emerald-500', 'hover:bg-emerald-400');
-    else b.classList.add('bg-white', 'text-emerald-700', 'hover:bg-emerald-50');
-  }
-
-  // Pop-up loading chặn thao tác (vào bài + SUBMIT — thầy chốt phải có)
-  function loadingHien(chu) {
-    $('m2LoadText').textContent = chu || 'Loading…';
-    $('m2LoadModal').classList.remove('hidden');
-    $('m2LoadModal').classList.add('flex');
-    refreshIcons();
-  }
-  function loadingAn() {
-    $('m2LoadModal').classList.add('hidden');
-    $('m2LoadModal').classList.remove('flex');
-  }
-
   // Mã lượt nộp yyMMdd-HHmmss-<3 số>, giờ VN — ⛔ CÙNG ĐỊNH DẠNG makeSid trong Code.gs
   // (sid là "khoá thời gian" của cả hệ: so chuỗi = so thời gian, python khử trùng theo nó).
   function taoSid() {
@@ -330,8 +186,6 @@
     saveTimer = setTimeout(() => {
       state.savedAt = new Date().toISOString();   // CHẶNG 29: mốc lưu — xếp danh sách "bài đã nộp"
       try { localStorage.setItem(saveKey, JSON.stringify(state)); } catch (e) {}
-      // (Đợt B) mọi thay đổi đều đi qua autosave → cập nhật màu nút SUBMIT tại đây một thể
-      if (state.moHinh === 2) capNhatNutSubmit();
     }, 300);
   }
   function loadSaved() {
@@ -793,18 +647,6 @@
       detail: detail,
       explain: explain,
     };
-    // (Đợt B) mã lỗi ỔN ĐỊNH + trạng thái: SỬA giữ nguyên mã cũ (phiếu phản biện bám theo mã),
-    // THÊM MỚI sinh mã mới. Trường thừa vô hại với mô hình 1 (sheet/Excel chỉ đọc đúng cột của nó).
-    if (editingIndex >= 0) {
-      const cu = state.errors[editingIndex] || {};
-      err.id = cu.id || taoErrId();
-      err.trangThai = cu.trangThai === 'go' ? 'go' : 'song';
-      err.ketLuan = cu.ketLuan || '';
-    } else {
-      err.id = taoErrId();
-      err.trangThai = 'song';
-      err.ketLuan = '';
-    }
     if (editingIndex >= 0) { state.errors[editingIndex] = err; toast('Mistake updated ✓'); }
     else { state.errors.push(err); toast('Mistake added ✓ (' + state.errors.length + ' total)'); }
     clearErrForm();
@@ -813,34 +655,13 @@
   }
 
   function renderErrors() {
-    if (state.cheDo === 'phanbien') { renderErrorsPb(); return; }
     const list = $('errList');
-    const m2Mode = state.moHinh === 2;
-    // (Đợt B) mô hình 2: 'an' (em tự xoá) KHÔNG hiện; 'go' (được Agree) mờ+gạch, chìm xuống cuối;
-    // bật nút DISAGREEMENT thì câu tranh chấp CHƯA xử lý dồn lên đầu (thầy chốt).
-    let ds = state.errors.map((e, i) => ({ e, i }));
-    if (m2Mode) ds = ds.filter((x) => x.e.trangThai !== 'an');
-    ds.sort((a, b) => (tSec(a.e) - tSec(b.e)));
-    if (m2Mode) {
-      const hang = (x) => {
-        if (x.e.trangThai === 'go') return 2;
-        if (m2.disOn && !x.e.ketLuan && phieuCuaLoi(x.e.id).some((p) => p.y === 'phanDoi')) return 0;
-        return 1;
-      };
-      ds.sort((a, b) => hang(a) - hang(b) || (tSec(a.e) - tSec(b.e)));
-    }
-    list.innerHTML = ds.map(({ e, i }, pos) => {
+    const sorted = state.errors.map((e, i) => ({ e, i }))
+      .sort((a, b) => (tSec(a.e) - tSec(b.e)));
+    list.innerHTML = sorted.map(({ e, i }, pos) => {
       const st = TYPE_STYLE[e.type] || { badge: 'bg-slate-100 text-slate-600' };
-      const daGo = m2Mode && e.trangThai === 'go';
-      const phieu = m2Mode ? phieuCuaLoi(e.id) : [];
-      // Icon uploaded (chấm xanh trái ô): câu này ĐÃ nằm trên kho đúng y bản đang thấy
-      const daLuu = m2Mode && m2LoiDaDongBo(e);
-      return '<div class="slidein rounded-2xl border p-3.5 transition group ' +
-        (daGo ? 'err-go border-slate-200' : 'border-slate-200 hover:border-indigo-300') + '">' +
+      return '<div class="slidein rounded-2xl border border-slate-200 p-3.5 hover:border-indigo-300 transition group">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
-        (m2Mode ? '<span class="shrink-0 w-4 h-4 rounded-full flex items-center justify-center ' +
-          (daLuu ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400') + '" title="' +
-          (daLuu ? 'Saved to server' : 'Not submitted yet') + '"><i data-lucide="' + (daLuu ? 'check' : 'arrow-up') + '" class="w-2.5 h-2.5 pointer-events-none"></i></span>' : '') +
         // CHẶNG 33: STT đứng TRƯỚC mốc giờ. Đánh theo THỨ TỰ THỜI GIAN (danh sách đã sort)
         // → khớp cách đánh số của file Excel bên app máy tính.
         '<span class="shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center">' + (pos + 1) + '</span>' +
@@ -848,16 +669,9 @@
         (e.section ? '<span class="text-xs font-bold text-slate-500">Section ' + escapeHtml(e.section) + '</span>' : '') +
         '<span class="text-xs font-bold rounded-full px-2.5 py-1 ' + st.badge + '">' + typeLabel(e.type) + '</span>' +
         (e.who ? '<span class="text-xs font-semibold text-slate-600 flex items-center gap-1">👤 ' + escapeHtml(e.who) + '</span>' : '') +
-        (daGo ? '<span class="text-[10px] font-extrabold text-slate-400 border border-slate-300 rounded-full px-2 py-0.5">RELEASED</span>' : '') +
-        (m2Mode && e.ketLuan === 'keep' ? '<span class="text-[10px] font-extrabold text-rose-500 border border-rose-300 rounded-full px-2 py-0.5">KEPT</span>' : '') +
-        '<span class="ml-auto flex items-center gap-1">' +
-        // (Đợt B) avatar người chấp nhận (nền xanh) / phản đối (nền đỏ) — bấm mở pop-up nội dung
-        (phieu.length ? '<span class="flex items-center mr-1">' + phieu.map((p) => avatarVong(p.voter, p.y, e.id)).join('') + '</span>' : '') +
-        (daGo ? '' :
-          '<span class="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition">' +
-          '<button data-edit="' + i + '" class="p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-600"><i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i></button>' +
-          '<button data-del="' + i + '" class="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500"><i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i></button>' +
-          '</span>') +
+        '<span class="ml-auto flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition">' +
+        '<button data-edit="' + i + '" class="p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-600"><i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i></button>' +
+        '<button data-del="' + i + '" class="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500"><i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i></button>' +
         '</span></div>' +
         // CHẶNG 35 (thầy chốt): thứ tự SENTENCE → MISTAKE → EXPLANATION, mỗi dòng một kiểu chữ:
         // câu chứa lỗi = ĐEN đậm NGHIÊNG · lỗi = ĐỎ đậm thường · giải thích = XANH LÁ đậm thường.
@@ -866,24 +680,21 @@
         (e.explain ? '<div class="mt-0.5 text-sm font-bold text-emerald-600">' + escapeHtml(e.explain) + '</div>' : '') +
         '</div>';
     }).join('');
-    $('errEmpty').style.display = ds.length ? 'none' : '';
+    $('errEmpty').style.display = state.errors.length ? 'none' : '';
 
     // đếm theo loại (badge tab đã bỏ cùng tab bar ở chặng 12)
     // CHẶNG 33: dùng CHỮ CÁI G/P/I (không phải tên đầy đủ) — tên đầy đủ làm ô cuối lòi ra ngoài
     // khung trên điện thoại nhỏ. Chữ cái in đậm + `whitespace-nowrap` để không bao giờ vỡ dòng.
-    // (Đợt B) mô hình 2: chỉ đếm câu CÒN SỐNG — câu 'go'/'an' không tính (thầy chốt).
     const counts = {};
-    (m2Mode ? state.errors.filter((e) => e.trangThai === 'song') : state.errors)
-      .forEach((e) => { counts[e.type] = (counts[e.type] || 0) + 1; });
+    state.errors.forEach((e) => { counts[e.type] = (counts[e.type] || 0) + 1; });
     $('errStats').innerHTML = Object.keys(TYPE_STYLE)
       .filter((t) => counts[t])
       .map((t) => '<span title="' + typeLabel(t) + '" class="rounded-full px-2 py-1 font-extrabold whitespace-nowrap ' +
         TYPE_STYLE[t].badge + '">' + TYPE_STYLE[t].short + ': ' + counts[t] + '</span>').join('');
-    if (m2Mode) { capNhatNutDis(); capNhatNutSubmit(); }
 
     // CHẶNG 33: nút Delete all — chỉ hiện khi có lỗi VÀ không ở chế độ xem lại bài đã nộp
     const da = $('btnDelAll');
-    if (da) da.classList.toggle('hidden', !ds.length || reviewLocked);
+    if (da) da.classList.toggle('hidden', !state.errors.length || reviewLocked);
     refreshIcons();
   }
   function tSec(e) { return (parseInt(e.min, 10) || 0) * 60 + (parseInt(e.sec, 10) || 0); }
@@ -955,13 +766,7 @@
   }
 
   function openSubmitModal() {
-    // (Đợt B) màn PHẢN BIỆN: Submit = gửi các phiếu đồng ý/phản đối, không có tóm tắt/timers
-    if (state.cheDo === 'phanbien') { submitPb(); return; }
-    // (Đợt B) mô hình 2 ĐÃ nộp lần nào thì cho gửi cập nhật kể cả khi đã xoá hết câu (đồng bộ vết xoá)
-    const chuaCoGi = state.moHinh === 2
-      ? (!state.errors.length && !m2.daNopLanNao)
-      : !state.errors.length;
-    if (chuaCoGi) { toast('No mistakes to submit yet. Watch the video closely!', 'err'); return; }
+    if (!state.errors.length) { toast('No mistakes to submit yet. Watch the video closely!', 'err'); return; }
     // BẮT BUỘC: đủ thời gian nói (from → to) của từng thành viên dưới mỗi nút tên
     const miss = missingTimerFields();
     markMissingTimers(miss);
@@ -979,19 +784,13 @@
     // CHẶNG 35 (thầy chốt): icon ĐƠN SẮC (bỏ emoji nhiều màu) · BỎ dòng "Students timed" ·
     // số lỗi ≤ ÍT_LỖI thì tô ĐỎ và khi bấm Submit sẽ hỏi thêm một lần nữa.
     const it = (name) => '<i data-lucide="' + name + '" class="w-4 h-4 text-slate-400 shrink-0"></i>';
-    // (Đợt B) mô hình 2: đếm câu CÒN SỐNG; nộp lại = CẬP NHẬT bản tổng (không đẻ bản mới)
-    const soLoi = state.moHinh === 2
-      ? state.errors.filter((e) => e.trangThai === 'song').length
-      : state.errors.length;
-    const few = soLoi <= IT_LOI;
+    const few = state.errors.length <= IT_LOI;
     const s = $('submitSummary');
     s.innerHTML =
       '<div class="flex items-center gap-2">' + it('user') + '<span>Checked by: <b>' + escapeHtml(state.student) + '</b>' + (state.myTeam ? ' (' + escapeHtml(state.myTeam) + ')' : '') + '</span></div>' +
       (state.checkedTeam ? '<div class="flex items-center gap-2">' + it('users') + '<span>Team checked: <b>' + escapeHtml(state.checkedTeam) + '</b></span></div>' : '') +
-      '<div class="flex items-center gap-2">' + it('flag') + '<span>Mistakes found: <b class="' + (few ? 'text-rose-600' : '') + '">' + soLoi + '</b></span></div>' +
-      (state.submitted ? '<div class="flex items-center gap-2 text-slate-500">' + it('info') + '<span>' +
-        (state.moHinh === 2 ? 'You\'ve already submitted — this will update your saved check.'
-                            : 'You\'ve already submitted once — submitting again creates a new copy.') + '</span></div>' : '');
+      '<div class="flex items-center gap-2">' + it('flag') + '<span>Mistakes found: <b class="' + (few ? 'text-rose-600' : '') + '">' + state.errors.length + '</b></span></div>' +
+      (state.submitted ? '<div class="flex items-center gap-2 text-slate-500">' + it('info') + '<span>You\'ve already submitted once — submitting again creates a new copy.</span></div>' : '');
     $('submitModal').classList.remove('hidden');
     $('submitModal').classList.add('flex');
     refreshIcons();
@@ -1028,8 +827,6 @@
   }
 
   async function submit() {
-    // (Đợt B) mô hình 2: MỘT phát ghi cả bản tổng (create hay update như nhau) + pop-up loading
-    if (state.moHinh === 2) { submitM2(); return; }
     closeSubmitModal();
     if (!state.khoFs && !SCRIPT_URL) {
       toast('The app isn\'t connected to Google Sheets yet — please tap "Export Excel" and send the file to your teacher!', 'err');
@@ -1264,8 +1061,6 @@
     state.classCode = cls.classCode || cls.id;    // khóa route tới đúng file lớp
     state.khoFs = cls._kho === 'fs';              // (Đợt Firebase) buổi này nộp vào kho nào
     state.buoiId = state.khoFs ? maBuoi(state.classCode, state.lesson) : '';
-    state.moHinh = state.khoFs && cls._moHinh === 2 ? 2 : 1;   // (Đợt B) bản tổng lỗi hay nhiều-lần-nộp
-    state.cheDo = 'cham';                         // đường đăng nhập cũ chỉ có màn chấm
     // (Đợt 3) video mọi đội — cho pop-up "All team videos" khi bấm logo
     state.clips = (cls.teams || []).map((t) => ({ t: t.team, v: t.video || '' }));
     saveKey = makeSaveKey(state.student, state.videoUrl);
@@ -1331,21 +1126,13 @@
     state.classCode = g.classCode || '';
     state.khoFs = g.kho === 'fs';                 // (Đợt Firebase) myLesson báo buổi nằm kho nào
     state.buoiId = state.khoFs ? maBuoi(state.classCode, state.lesson) : '';
-    // (Đợt B) gói mang cờ mô hình + chế độ: mh=2 là buổi bản-tổng-lỗi; pb=1 là màn PHẢN BIỆN
-    // (myLesson khi đó gửi video/members của CHÍNH ĐỘI EM, không phải đội bị chấm).
-    state.moHinh = state.khoFs && g.mh === 2 ? 2 : 1;
-    state.cheDo = (g.pb === 1 && state.moHinh === 2) ? 'phanbien' : 'cham';
     // (Đợt 3) gói mang video mọi đội; gói cũ không có thì pop-up tự hỏi kho Firestore
     state.clips = Array.isArray(g.clips) ? g.clips : [];
-    saveKey = makeSaveKey(state.student, state.videoUrl) + (state.cheDo === 'phanbien' ? '_pb' : '');
-    if (state.cheDo === 'phanbien') { startPb(); return; }
+    saveKey = makeSaveKey(state.student, state.videoUrl);
     start();
   }
 
   function start() {
-    // (Đợt B) Buổi MÔ HÌNH 2: bản trên KHO là gốc — bắt buộc loading kéo bản tổng về trước,
-    // localStorage chỉ còn là lưới đỡ (nháp chưa gửi thì hỏi, không âm thầm đè).
-    if (state.moHinh === 2) { startM2(); return; }
     // state.student / myTeam / checkedTeam / members / videoUrl / topic đã set ở handleNamePick
     // khôi phục bài dở nếu cùng người
     const saved = loadSaved();
@@ -1375,361 +1162,6 @@
     autosave();
     refreshIcons();
     maybeRestoreFromServer(saved);   // (CHẶNG 32) máy này trống mà em ĐÃ nộp ở máy khác → kéo bài về
-  }
-
-  // ═══════════════ (Đợt B) MÀN CHẤM BÀI — MÔ HÌNH 2: VÀO BÀI LÀ KÉO BẢN TỔNG VỀ ═══════════════
-  // Thầy chốt: "khi đăng nhập làm bài bắt buộc có bước loading và show hết các câu đã check
-  // được lần trước ra" — bản trên KHO là gốc; máy có NHÁP chưa gửi thì HỎI, không âm thầm đè.
-  function dungManChinh() {
-    const myTeamNo = String(state.myTeam || '').replace(/[^0-9]/g, '');
-    $('hdStudent').textContent = state.student + (myTeamNo ? ' · T' + myTeamNo : '');
-    $('hdTopic').textContent = (state.cheDo === 'phanbien' ? 'REBUTTAL · ' : '') +
-      (state.topic || 'Watch · spot mistakes · improve together');
-    $('appScreen').classList.toggle('pb-mode', state.cheDo === 'phanbien');
-    $('loginScreen').classList.add('hidden');
-    $('identifyScreen').classList.add('hidden');
-    $('appScreen').classList.remove('hidden');
-    refreshIcons();
-  }
-
-  async function startM2() {
-    setReviewLock(false);
-    dungManChinh();
-    loadingHien('Loading your saved check…');
-    let serverDoc = null;
-    try {
-      serverDoc = await tongLoiLay(state.buoiId, slugHs(state.student));
-    } catch (e) { /* mạng/luật hỏng → coi như chưa có bản trên kho, vẫn cho làm bài */ }
-    try {
-      m2.phanHoi = await fsQuery(state.buoiId, 'phanHoi', 'chuLoi', state.student, 2000);
-    } catch (e) { m2.phanHoi = []; }
-
-    const svErrors = ((serverDoc && serverDoc.errors) || []).map(chuanLoi);
-    const svTimers = (serverDoc && serverDoc.timers) || [];
-    m2.daNopLanNao = !!serverDoc;
-
-    // Nháp trên máy (chưa gửi) so với bản kho: khác nhau + cả hai có nội dung → HỎI EM
-    const saved = loadSaved();
-    const nhap = (saved && saved.student === state.student && (saved.errors || []).length)
-      ? { errors: (saved.errors || []).map(chuanLoi), timers: saved.timers || [] } : null;
-    const khac = nhap && JSON.stringify(nhap.errors) !== JSON.stringify(svErrors);
-
-    const apDung = (errors, timers) => {
-      const dungBanKho = errors === svErrors;
-      state.errors = errors;
-      state.submitted = m2.daNopLanNao;
-      state.wasSubmitted = m2.daNopLanNao;
-      initTimers(timers);
-      // serverBan = ảnh chụp BẢN KHO. Dùng đúng bản kho thì chụp SAU khi dựng state (so chuỗi
-      // trùng tuyệt đối → nút xanh lá); dùng NHÁP thì chụp bản kho thô → nút tự VÀNG (còn thứ chưa gửi).
-      m2.serverBan = dungBanKho ? m2ChupCham() : JSON.stringify({ e: svErrors, t: svTimers.filter((t) => t.name) });
-      m2.serverIds = {};
-      svErrors.forEach((e) => { m2.serverIds[e.id] = JSON.stringify(e); });
-      buildStudentField();
-      renderErrors();
-      initVideo();
-      autosave();
-      capNhatNutSubmit();
-      capNhatNutDis();
-      refreshIcons();
-      const soSong = state.errors.filter((e) => e.trangThai === 'song').length;
-      if (soSong) toast('Loaded your check: ' + soSong + ' mistake' + (soSong > 1 ? 's' : '') + ' ✓', 'info');
-    };
-
-    loadingAn();
-    if (khac && serverDoc) {
-      // Hai bản lệch nhau → em chọn (pop-up #draftModal). Chọn xong mới dựng bảng.
-      $('draftModal').classList.remove('hidden');
-      $('draftModal').classList.add('flex');
-      refreshIcons();
-      $('btnDraftServer').onclick = () => {
-        $('draftModal').classList.add('hidden'); $('draftModal').classList.remove('flex');
-        apDung(svErrors, svTimers);
-      };
-      $('btnDraftLocal').onclick = () => {
-        $('draftModal').classList.add('hidden'); $('draftModal').classList.remove('flex');
-        apDung(nhap.errors, nhap.timers);
-      };
-      return;
-    }
-    if (nhap && !serverDoc) { apDung(nhap.errors, nhap.timers); return; }
-    apDung(svErrors, svTimers);
-  }
-
-  // ═══════════════ (Đợt B) MÀN PHẢN BIỆN — xem lỗi ĐỘI MÌNH bị chấm + tích từng câu ═══════════════
-  // Gói ?goi= mang pb:1 (myLesson gửi video/members của CHÍNH đội em). Mỗi câu: cặp tích
-  // Đồng ý / Phản đối LOẠI TRỪ NHAU, phản đối BẮT BUỘC lý do; phiếu ĐỘC LẬP theo từng em.
-  async function startPb() {
-    setReviewLock(false);
-    dungManChinh();
-    loadingHien('Loading the mistakes on your team…');
-    try {
-      const docs = await fsQuery(state.buoiId, 'tongLoi', 'checkedTeam', state.myTeam, 200);
-      m2.dsCham = [];
-      docs.forEach((d) => {
-        ((d.errors || []).map(chuanLoi)).forEach((er) => {
-          if (er.trangThai !== 'an') m2.dsCham.push({ chuLoi: String(d.student || d._id), err: er });
-        });
-      });
-      m2.dsCham.sort((a, b) => tSec(a.err) - tSec(b.err));
-    } catch (e) { m2.dsCham = []; }
-    try {
-      m2.phanHoi = await fsQuery(state.buoiId, 'phanHoi', '', '', 3000);
-    } catch (e) { m2.phanHoi = []; }
-
-    // Phiếu CỦA CHÍNH EM đổ vào bảng đang sửa
-    m2.votes = {};
-    m2.phanHoi.filter((p) => p.voter === state.student).forEach((p) => {
-      m2.votes[p.errId] = { y: p.y, lyDo: p.lyDo || '' };
-    });
-    m2.votesServer = JSON.stringify(m2.votes);
-
-    loadingAn();
-    initVideo();
-    renderErrorsPb();
-    capNhatNutSubmit();
-    refreshIcons();
-    if (!m2.dsCham.length) toast('No mistakes on your team yet — the other team may not have submitted.', 'info');
-  }
-
-  // Vòng tròn avatar (ảnh thật từ kho web; hỏng ảnh → chữ tắt). kind: 'dongY' xanh · 'phanDoi' đỏ
-  function avatarVong(ten, kind, errId) {
-    const nen = kind === 'phanDoi' ? 'bg-rose-500 ring-rose-300' : 'bg-emerald-500 ring-emerald-300';
-    return '<button data-pv="' + escapeHtml(errId) + '__' + escapeHtml(ten) + '" title="' + escapeHtml(ten) + '"' +
-      ' class="pv-av relative w-7 h-7 rounded-full ring-2 ' + nen + ' text-white text-[9px] font-extrabold' +
-      ' flex items-center justify-center overflow-hidden shrink-0 -ml-1.5 first:ml-0">' +
-      '<img src="' + escapeHtml(avatarUrl(ten)) + '" alt="" class="absolute inset-0 w-full h-full object-cover"' +
-      ' onerror="this.remove()">' +
-      '<span class="pointer-events-none">' + escapeHtml(initialsOf(ten)) + '</span></button>';
-  }
-  function phieuCuaLoi(errId) { return m2.phanHoi.filter((p) => p.errId === errId); }
-
-  // ─── (Đợt B) BẢNG PHẢN BIỆN ───
-  function renderErrorsPb() {
-    const list = $('errList');
-    const song = m2.dsCham.filter((x) => x.err.trangThai === 'song');
-    const go = m2.dsCham.filter((x) => x.err.trangThai === 'go');
-    const thuTu = song.concat(go);   // câu đã gỡ chìm xuống cuối (thầy chốt)
-    list.innerHTML = thuTu.map((x, pos) => {
-      const e = x.err;
-      const st = TYPE_STYLE[e.type] || { badge: 'bg-slate-100 text-slate-600' };
-      const daGo = e.trangThai === 'go';
-      const v = m2.votes[e.id] || null;
-      const phieuKhac = phieuCuaLoi(e.id).filter((p) => p.voter !== state.student);
-      const chonY = v && v.y === 'dongY', chonN = v && v.y === 'phanDoi';
-      return '<div class="slidein rounded-2xl border p-3.5 transition ' +
-        (daGo ? 'err-go border-slate-200' : 'border-slate-200 hover:border-indigo-300') + '" data-pbrow="' + escapeHtml(e.id) + '">' +
-        '<div class="flex items-center gap-2 flex-wrap">' +
-        '<span class="shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center">' + (pos + 1) + '</span>' +
-        '<button data-pbseek="' + tSec(e) + '" class="font-mono font-bold text-sm bg-slate-900 text-white rounded-lg px-2 py-0.5 hover:bg-indigo-700 transition">' + fmtTime(e) + '</button>' +
-        '<span class="text-xs font-bold rounded-full px-2.5 py-1 ' + st.badge + '">' + typeLabel(e.type) + '</span>' +
-        (e.who ? '<span class="text-xs font-semibold text-slate-600 flex items-center gap-1">👤 ' + escapeHtml(e.who) + '</span>' : '') +
-        (daGo ? '<span class="text-[10px] font-extrabold text-slate-400 border border-slate-300 rounded-full px-2 py-0.5">REMOVED</span>' : '') +
-        '<span class="ml-auto flex items-center">' + phieuKhac.map((p) => avatarVong(p.voter, p.y, e.id)).join('') + '</span>' +
-        '</div>' +
-        (e.sentence ? '<div class="mt-1.5 text-sm font-bold italic text-slate-900">“' + escapeHtml(e.sentence) + '”</div>' : '') +
-        '<div class="mt-0.5 text-sm font-bold text-rose-600">' + escapeHtml(e.detail) + '</div>' +
-        (e.explain ? '<div class="mt-0.5 text-sm font-bold text-emerald-600">' + escapeHtml(e.explain) + '</div>' : '') +
-        '<div class="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2 flex-wrap">' +
-        '<span class="text-[11px] font-bold text-slate-400">Checked by ' + escapeHtml(x.chuLoi) + '</span>' +
-        (daGo ? '' :
-          '<span class="ml-auto flex items-center gap-1.5">' +
-          '<button data-pbvote="dongY" data-err="' + escapeHtml(e.id) + '" class="rounded-xl border-2 px-3 py-1.5 text-xs font-extrabold transition ' +
-          (chonY ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-emerald-300 text-emerald-600 hover:bg-emerald-50') + '">✓ AGREE</button>' +
-          '<button data-pbvote="phanDoi" data-err="' + escapeHtml(e.id) + '" class="rounded-xl border-2 px-3 py-1.5 text-xs font-extrabold transition ' +
-          (chonN ? 'border-rose-500 bg-rose-500 text-white' : 'border-rose-300 text-rose-600 hover:bg-rose-50') + '">✗ DISAGREE</button>' +
-          '</span>') +
-        '</div>' +
-        (chonN && !daGo ?
-          '<textarea data-pblydo="' + escapeHtml(e.id) + '" rows="2" maxlength="300" placeholder="Why do you disagree? (required)"' +
-          ' class="autogrow mt-2 w-full rounded-xl border border-rose-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-rose-400">' +
-          escapeHtml(v.lyDo || '') + '</textarea>' : '') +
-        '</div>';
-    }).join('');
-    $('errEmpty').style.display = thuTu.length ? 'none' : '';
-    // G/P/I đếm các câu CÒN SỐNG của đội mình
-    const counts = {};
-    song.forEach((x) => { counts[x.err.type] = (counts[x.err.type] || 0) + 1; });
-    $('errStats').innerHTML = Object.keys(TYPE_STYLE).filter((t) => counts[t])
-      .map((t) => '<span title="' + typeLabel(t) + '" class="rounded-full px-2 py-1 font-extrabold whitespace-nowrap ' +
-        TYPE_STYLE[t].badge + '">' + TYPE_STYLE[t].short + ': ' + counts[t] + '</span>').join('');
-    $('btnDelAll').classList.add('hidden');
-    refreshIcons();
-  }
-
-  // Nộp phiếu phản biện: chỉ ghi các phiếu ĐỔI so với lần đồng bộ trước; phản đối thiếu lý do = chặn
-  async function submitPb() {
-    const thieu = Object.keys(m2.votes).filter((id) => m2.votes[id].y === 'phanDoi' && !String(m2.votes[id].lyDo || '').trim());
-    if (thieu.length) {
-      toast('Please write WHY you disagree — every disagree needs a reason!', 'err');
-      const o = document.querySelector('[data-pblydo="' + thieu[0] + '"]');
-      if (o) { o.focus(); o.classList.add('ring-2', 'ring-rose-400'); }
-      return;
-    }
-    const cu = JSON.parse(m2.votesServer || '{}');
-    const doi = Object.keys(m2.votes).filter((id) => JSON.stringify(m2.votes[id]) !== JSON.stringify(cu[id]));
-    if (!doi.length) { toast('Nothing new to submit.', 'info'); return; }
-    loadingHien('Saving your feedback…');
-    try {
-      for (const id of doi) {
-        const it = m2.dsCham.find((x) => x.err.id === id);
-        await phanHoiGhi(state.buoiId, id + '__' + slugHs(state.student), {
-          errId: id,
-          chuLoi: it ? it.chuLoi : '',
-          voter: state.student,
-          voterTeam: state.myTeam,
-          y: m2.votes[id].y,
-          lyDo: String(m2.votes[id].lyDo || '').trim(),
-          luc: Date.now(),
-        });
-      }
-      m2.votesServer = JSON.stringify(m2.votes);
-      // vẽ lại để avatar/phiếu vừa gửi hiện chắc chắn + nút về xanh lá
-      m2.phanHoi = m2.phanHoi.filter((p) => p.voter !== state.student);
-      Object.keys(m2.votes).forEach((id) => {
-        const it = m2.dsCham.find((x) => x.err.id === id);
-        m2.phanHoi.push({ errId: id, chuLoi: it ? it.chuLoi : '', voter: state.student, voterTeam: state.myTeam, y: m2.votes[id].y, lyDo: m2.votes[id].lyDo || '' });
-      });
-      loadingAn();
-      renderErrorsPb();
-      capNhatNutSubmit();
-      toast('🎉 Feedback submitted — thank you!');
-    } catch (e) {
-      loadingAn();
-      toast('Could not save (' + e.message + '). Please try again.', 'err');
-    }
-  }
-
-  // ─── (Đợt B) NỘP BẢN TỔNG (màn chấm, mô hình 2) — MỘT phát ghi cả bản, pop-up loading ───
-  async function submitM2() {
-    closeSubmitModal();
-    loadingHien('Saving your check…');
-    try {
-      await tongLoiGhi(state.buoiId, slugHs(state.student), {
-        student: state.student, myTeam: state.myTeam, checkedTeam: state.checkedTeam,
-        videoUrl: state.videoUrl, videoId: state.videoId,
-        classCode: state.classCode, lesson: state.lesson,
-        errors: state.errors, timers: cleanTimers(),
-        daNop: true, capNhatLuc: Date.now(),
-      });
-      m2.daNopLanNao = true;
-      m2GhiNhanDongBo();
-      state.submitted = true;
-      state.wasSubmitted = true;
-      autosave();
-      loadingAn();
-      renderErrors();          // icon uploaded xanh hiện đủ ở từng ô
-      capNhatNutSubmit();
-      toast('🎉 Submitted successfully! Thank you.');
-    } catch (e) {
-      loadingAn();
-      toast('Submission failed (' + e.message + '). Try again or tap Export Excel to send to your teacher.', 'err');
-    }
-  }
-
-  // Gửi NGẦM các kết luận Keep/Agree (thầy chốt: bấm lại nút DISAGREEMENT cũng gửi dữ liệu lên)
-  async function guiNgamKetLuan() {
-    if (!m2CoSuaChuaGui()) return;
-    try {
-      await tongLoiGhi(state.buoiId, slugHs(state.student), {
-        student: state.student, myTeam: state.myTeam, checkedTeam: state.checkedTeam,
-        videoUrl: state.videoUrl, videoId: state.videoId,
-        classCode: state.classCode, lesson: state.lesson,
-        errors: state.errors, timers: cleanTimers(),
-        daNop: true, capNhatLuc: Date.now(),
-      });
-      m2.daNopLanNao = true;
-      m2GhiNhanDongBo();
-      renderErrors();
-      capNhatNutSubmit();
-      toast('Saved ✓', 'info');
-    } catch (e) { toast('Could not save (' + e.message + ') — press Submit to retry.', 'err'); }
-  }
-
-  // ─── (Đợt B) NÚT DISAGREEMENT — đếm câu có phản đối CHƯA xử lý (thầy chốt) ───
-  function demTranhChap() {
-    return state.errors.filter((e) => e.trangThai === 'song' && !e.ketLuan &&
-      phieuCuaLoi(e.id).some((p) => p.y === 'phanDoi')).length;
-  }
-  function capNhatNutDis() {
-    const b = $('btnDisagree');
-    if (!b) return;
-    const hien = state.moHinh === 2 && state.cheDo === 'cham' &&
-      state.errors.some((e) => phieuCuaLoi(e.id).some((p) => p.y === 'phanDoi'));
-    b.classList.toggle('hidden', !hien);
-    if (!hien) { m2.disOn = false; return; }
-    const n = demTranhChap();
-    b.textContent = 'DISAGREEMENT: ' + n;
-    b.className = 'mx-2 rounded-full px-3 py-1 text-xs font-extrabold text-white transition ' +
-      (n > 0 ? 'bg-rose-600 hover:bg-rose-500' : 'bg-slate-400 hover:bg-slate-300') +
-      (m2.disOn ? ' dis-halo' : '');
-  }
-
-  // ─── (Đợt B) POP-UP NHỎ CẠNH AVATAR — nội dung phản biện + Keep/Agree ───
-  let kaDangXu = null;   // { errId, hanhDong: 'keep'|'agree' } đang chờ xác nhận
-  function moPopPhanHoi(nut, errId, voter) {
-    const p = phieuCuaLoi(errId).find((x) => x.voter === voter);
-    if (!p) return;
-    const e = state.errors.find((x) => x.id === errId);
-    const pop = $('pbPop');
-    const laPhanDoi = p.y === 'phanDoi';
-    pop.innerHTML =
-      '<div class="flex items-center gap-2 mb-1.5">' +
-      '<span class="w-6 h-6 rounded-full ' + (laPhanDoi ? 'bg-rose-500' : 'bg-emerald-500') + ' text-white text-[9px] font-extrabold flex items-center justify-center overflow-hidden relative">' +
-      '<img src="' + escapeHtml(avatarUrl(voter)) + '" alt="" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()">' +
-      '<span>' + escapeHtml(initialsOf(voter)) + '</span></span>' +
-      '<b class="text-xs">' + escapeHtml(voter) + '</b>' +
-      '<span class="text-[10px] font-extrabold ' + (laPhanDoi ? 'text-rose-600' : 'text-emerald-600') + '">' +
-      (laPhanDoi ? 'DISAGREES' : 'AGREES') + '</span>' +
-      '<button id="pbPopX" class="ml-auto text-slate-400 hover:text-slate-600 font-bold px-1">✕</button></div>' +
-      (laPhanDoi ? '<div class="text-xs text-slate-700 whitespace-pre-wrap">' + escapeHtml(p.lyDo || '') + '</div>' : '') +
-      (laPhanDoi && e && e.trangThai === 'song' ?
-        '<div class="flex gap-2 mt-2.5">' +
-        '<button id="pbPopKeep" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white rounded-xl py-1.5 text-xs font-extrabold' + (e.ketLuan === 'keep' ? ' ring-2 ring-rose-300' : '') + '">KEEP' + (e.ketLuan === 'keep' ? ' ✓' : '') + '</button>' +
-        '<button id="pbPopAgree" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-1.5 text-xs font-extrabold">AGREE</button>' +
-        '</div>' : '');
-    pop.classList.remove('hidden');
-    const r = nut.getBoundingClientRect();
-    const w = 290;
-    pop.style.left = Math.max(8, Math.min(r.left - w + r.width + 8, window.innerWidth - w - 8)) + 'px';
-    pop.style.top = Math.min(r.bottom + 8, window.innerHeight - 180) + 'px';
-    $('pbPopX').onclick = dongPopPhanHoi;
-    const keep = $('pbPopKeep'), agree = $('pbPopAgree');
-    if (keep) keep.onclick = () => hoiKetLuan(errId, 'keep');
-    if (agree) agree.onclick = () => hoiKetLuan(errId, 'agree');
-  }
-  function dongPopPhanHoi() { $('pbPop').classList.add('hidden'); }
-
-  // Mỗi thao tác Keep/Agree đều HỎI CHỐT (thầy chốt)
-  function hoiKetLuan(errId, hanhDong) {
-    dongPopPhanHoi();
-    kaDangXu = { errId, hanhDong };
-    const e = state.errors.find((x) => x.id === errId);
-    $('kaTitle').textContent = hanhDong === 'agree' ? 'Accept the rebuttal?' : 'Keep this mistake?';
-    $('kaText').innerHTML = hanhDong === 'agree'
-      ? 'The mistake <b>“' + escapeHtml((e && (e.detail || e.sentence)) || '') + '”</b> will be <b>released</b> — it stays visible (crossed out) but no longer counts. Your teacher still sees the full history.'
-      : 'You will <b>keep</b> the mistake <b>“' + escapeHtml((e && (e.detail || e.sentence)) || '') + '”</b>. It stays disputed — your teacher will decide in class.';
-    $('btnKaOk').textContent = hanhDong === 'agree' ? 'Agree ✓' : 'Keep it';
-    $('btnKaOk').className = 'flex-1 text-white rounded-xl py-2.5 font-bold text-sm ' +
-      (hanhDong === 'agree' ? 'bg-blue-600 hover:bg-blue-500' : 'bg-rose-600 hover:bg-rose-500');
-    $('kaModal').classList.remove('hidden');
-    $('kaModal').classList.add('flex');
-    refreshIcons();
-  }
-  function dongKaModal() { $('kaModal').classList.add('hidden'); $('kaModal').classList.remove('flex'); kaDangXu = null; }
-  function chotKetLuan() {
-    if (!kaDangXu) return;
-    const e = state.errors.find((x) => x.id === kaDangXu.errId);
-    if (e) {
-      e.ketLuan = kaDangXu.hanhDong;
-      if (kaDangXu.hanhDong === 'agree') e.trangThai = 'go';
-    }
-    dongKaModal();
-    renderErrors();
-    capNhatNutDis();
-    capNhatNutSubmit();
-    autosave();
-    toast(e && e.ketLuan === 'agree' ? 'Mistake released — remember to Submit!' : 'Kept — your teacher will decide. Remember to Submit!', 'info');
   }
 
   // ═══════════════ CHẶNG 32→35 — BÀI ĐÃ NỘP: HỎI TRƯỚC, KHÔNG TỰ MỞ ═══════════════
@@ -1874,8 +1306,6 @@
     state.wasSubmitted = !!(saved.wasSubmitted || saved.submitted);
     state.khoFs = !!saved.khoFs;
     state.buoiId = saved.buoiId || '';
-    state.moHinh = saved.moHinh === 2 ? 2 : 1;   // (Đợt B) xem lại bài mô hình 2 vẫn lọc đúng câu ẩn/gỡ
-    state.cheDo = 'cham';
     state.clips = Array.isArray(saved.clips) ? saved.clips : [];   // (Đợt 3) pop-up video
 
     // dựng UI y hệt start() nhưng từ dữ liệu đã lưu — video YouTube phát bình thường, không cần server
@@ -2091,10 +1521,7 @@
     // còn dữ liệu chưa submit thì hỏi trước rồi mới cho đi.
     $('btnVidExit').addEventListener('click', () => {
       dongVideosModal();
-      // (Đợt B) mô hình 2: "chưa gửi" = có SỬA chưa đồng bộ (kể cả phiếu phản biện)
-      const unsubmitted = state.moHinh === 2
-        ? m2CoSuaChuaGui()
-        : (state.errors.length && !state.submitted);
+      const unsubmitted = state.errors.length && !state.submitted;
       if (unsubmitted) { $('leaveModal').classList.remove('hidden'); $('leaveModal').classList.add('flex'); }
       else window.location.href = window.location.pathname;
     });
@@ -2115,33 +1542,7 @@
     $('btnAddErr').addEventListener('click', addOrUpdateError);
     $('btnCancelEdit').addEventListener('click', clearErrForm);
 
-    // ── (Đợt B) sự kiện của mô hình 2 + màn phản biện ──
-    // Avatar phản hồi (màn chấm): bấm mở pop-up nhỏ nội dung phản biện + Keep/Agree
     $('errList').addEventListener('click', (ev) => {
-      const av = ev.target.closest('[data-pv]');
-      if (av) {
-        const phan = av.dataset.pv.split('__');
-        moPopPhanHoi(av, phan[0], phan.slice(1).join('__'));
-        ev.stopPropagation();
-        return;
-      }
-      // (phản biện) bấm mốc giờ → video nhảy đúng đoạn bị chấm
-      const seek = ev.target.closest('[data-pbseek]');
-      if (seek) { seekVideoTo(+seek.dataset.pbseek || 0); return; }
-      // (phản biện) cặp tích Đồng ý / Phản đối — loại trừ nhau, phiếu của CHÍNH EM
-      const vote = ev.target.closest('[data-pbvote]');
-      if (vote) {
-        const id = vote.dataset.err;
-        const cu = m2.votes[id] || { y: '', lyDo: '' };
-        m2.votes[id] = { y: vote.dataset.pbvote, lyDo: cu.lyDo || '' };
-        renderErrorsPb();
-        capNhatNutSubmit();
-        if (vote.dataset.pbvote === 'phanDoi') {
-          const o = document.querySelector('[data-pblydo="' + id + '"]');
-          if (o && !o.value.trim()) o.focus();
-        }
-        return;
-      }
       const edit = ev.target.closest('[data-edit]');
       const del = ev.target.closest('[data-del]');
       if (edit) {
@@ -2197,15 +1598,9 @@
       const i = pendingDelIndex;
       closeDelOne();
       if (i < 0 || i >= state.errors.length) return;
-      if (state.moHinh === 2) {
-        // (Đợt B) XOÁ MỀM: ẩn khỏi danh sách nhưng kho GIỮ VẾT (thầy phân tích trên lớp thấy đủ)
-        state.errors[i].trangThai = 'an';
-        if (editingIndex === i) clearErrForm();
-      } else {
-        state.errors.splice(i, 1);
-        if (editingIndex === i) clearErrForm();
-        else if (editingIndex > i) editingIndex--;   // các lỗi phía sau tụt 1 bậc
-      }
+      state.errors.splice(i, 1);
+      if (editingIndex === i) clearErrForm();
+      else if (editingIndex > i) editingIndex--;   // các lỗi phía sau tụt 1 bậc
       renderErrors(); autosave();
       toast('Mistake deleted', 'info');
     });
@@ -2222,11 +1617,7 @@
     $('btnDelAllOk').addEventListener('click', () => {
       closeDelAll();
       const n = state.errors.length;
-      if (state.moHinh === 2) {
-        state.errors.forEach((e) => { e.trangThai = 'an'; });   // (Đợt B) xoá mềm cả loạt — giữ vết
-      } else {
-        state.errors = [];
-      }
+      state.errors = [];
       clearErrForm();
       renderErrors(); autosave();
       toast('Deleted all ' + n + ' mistakes', 'info');
@@ -2251,14 +1642,10 @@
     $('btnSubmitCancel').addEventListener('click', closeSubmitModal);
     // (CHẶNG 35) ít lỗi quá thì HỎI THÊM một lần nữa trước khi gửi thật
     $('btnSubmitOk').addEventListener('click', () => {
-      // (Đợt B) mô hình 2 đếm câu CÒN SỐNG; đã nộp rồi thì cập nhật không cần hỏi thêm vụ ít lỗi
-      const soLoi = state.moHinh === 2
-        ? state.errors.filter((e) => e.trangThai === 'song').length
-        : state.errors.length;
-      if (soLoi <= IT_LOI && !(state.moHinh === 2 && m2.daNopLanNao)) {
+      if (state.errors.length <= IT_LOI) {
         closeSubmitModal();
-        $('fewMistakesN').textContent = soLoi;
-        $('fewMistakesS').textContent = soLoi === 1 ? '' : 's';   // "1 mistake" chứ không "1 mistakes"
+        $('fewMistakesN').textContent = state.errors.length;
+        $('fewMistakesS').textContent = state.errors.length === 1 ? '' : 's';   // "1 mistake" chứ không "1 mistakes"
         $('fewMistakesModal').classList.remove('hidden');
         $('fewMistakesModal').classList.add('flex');
         refreshIcons();
@@ -2269,42 +1656,5 @@
     const closeFew = () => { $('fewMistakesModal').classList.add('hidden'); $('fewMistakesModal').classList.remove('flex'); };
     $('btnFewReturn').addEventListener('click', closeFew);   // quay lại soi tiếp, KHÔNG gửi
     $('btnFewSubmit').addEventListener('click', () => { closeFew(); submit(); });
-
-    // ── (Đợt B) các sự kiện còn lại của mô hình 2 ──
-    // Ô lý do phản đối (màn phản biện) — gõ tới đâu nhớ tới đó, đổi là nút Submit VÀNG
-    $('errList').addEventListener('input', (ev) => {
-      const o = ev.target.closest('[data-pblydo]');
-      if (!o) return;
-      const id = o.dataset.pblydo;
-      if (!m2.votes[id]) m2.votes[id] = { y: 'phanDoi', lyDo: '' };
-      m2.votes[id].lyDo = o.value;
-      o.classList.remove('ring-2', 'ring-rose-400');
-      autoGrow(o);
-      capNhatNutSubmit();
-    });
-
-    // Nút DISAGREEMENT: bật = sáng + nhấp nháy hào quang + dồn câu tranh chấp lên đầu;
-    // bấm LẦN NỮA (tắt) = gửi ngầm các kết luận Keep/Agree lên kho (thầy chốt).
-    $('btnDisagree').addEventListener('click', () => {
-      m2.disOn = !m2.disOn;
-      renderErrors();
-      if (!m2.disOn) guiNgamKetLuan();
-    });
-
-    // Pop-up xác nhận Keep/Agree
-    $('btnKaCancel').addEventListener('click', dongKaModal);
-    $('btnKaOk').addEventListener('click', chotKetLuan);
-
-    // Pop-up nhỏ nội dung phản biện: bấm ra ngoài là đóng
-    document.addEventListener('click', (ev) => {
-      const pop = $('pbPop');
-      if (pop.classList.contains('hidden')) return;
-      if (!pop.contains(ev.target) && !ev.target.closest('[data-pv]')) dongPopPhanHoi();
-    });
-
-    // Rời trang (đóng tab / F5 / bấm link ngoài) khi còn thứ chưa gửi → trình duyệt hỏi lại
-    window.addEventListener('beforeunload', (ev) => {
-      if (state.moHinh === 2 && m2CoSuaChuaGui()) { ev.preventDefault(); ev.returnValue = ''; }
-    });
   }
 })();

@@ -1528,3 +1528,56 @@ Thầy chốt 2 điều chỉnh trong "ok build đợt 3":
 phát, chuyển đội đổi video, đóng dừng tiếng; và cả đường gói `?goi=` từ myLesson (buổi test
 ZTHUNGHIEM): vào thẳng bài, khoFs=true, clips đủ. ⛔ `state.clips` đi theo autosave nên bài mở
 lại từ "My submitted checks" vẫn có video xem.
+
+## CHẶNG — 27/08/2026: ĐỢT B — BẢN TỔNG LỖI THỐNG NHẤT + MÀN PHẢN BIỆN (?v=29)
+
+### Thầy chốt (26/08 khuya, chi tiết đầy đủ: mySpeaking app `GHI CHU DU AN.md` mục v1.6.0)
+Buổi **MÔ HÌNH 2** (spBuoi có `moHinh:2` — app v1.7.0 đóng dấu khi Đẩy bài): bỏ kiểu
+nhiều-lần-nộp, mỗi em chấm giữ **MỘT bản tổng lỗi SỐNG**; thêm màn **PHẢN BIỆN** cho đội bị
+chấm tích đồng ý/phản đối từng câu; em chấm thấy phiếu và **Keep/Agree**. Buổi CŨ giữ nguyên
+100% đường baiNop/Sheets.
+
+### Kho + luật (đã dán + Publish 27/08, thầy cho phép dán qua Chrome)
+- `spBuoi/{id}/tongLoi/{slug-em}` — bản tổng: errors[] mỗi câu có `id` ổn định +
+  `trangThai` ('song'·'an' em xoá·'go' được Agree) + `ketLuan` (''·'keep'·'agree') + 6 mục cũ;
+  timers; daNop; capNhatLuc. Luật: read mở, create+update (hasOnly 11 trường, ≤500 câu), cấm xoá.
+- `spBuoi/{id}/phanHoi/{errId__slug-em-tích}` — mỗi phiếu 1 tài liệu {errId, chuLoi, voter,
+  voterTeam, y, lyDo, luc}. Luật: **phản đối mà lyDo rỗng bị 403 ngay tại kho**; cấm xoá
+  (đổi ý = update phiếu của chính mình). File luật: `myLesson-data\tai-lieu\LUAT FIRESTORE
+  CAN DAN (27-08 THEM PHAN BIEN).md`.
+
+### app.js (?v=29) — các khối chính
+- `startM2()`: vào bài BẮT BUỘC loading → kéo bản tổng + phiếu về; máy có NHÁP khác bản kho
+  → pop-up `#draftModal` hỏi (server/nháp), không âm thầm đè. CHẶNG 32→35 (pop-up chọn lượt
+  nộp, cảnh báo "ít hơn lần trước") TẮT ở mô hình 2 — mô hình mới không còn vấn đề đó.
+- `renderErrors()` mô hình 2: chấm 'an' ẩn; 'go' mờ+gạch+RELEASED chìm cuối; icon uploaded
+  (chấm xanh trái ô — so JSON từng câu với bản kho); avatar phải ô (ảnh thật
+  `andrewclasses.com/assets/avatar/<lop>/<ten>.jpg`, onerror → chữ tắt; nền xanh=đồng ý
+  đỏ=phản đối); huy hiệu KEPT.
+- Nút **DISAGREEMENT: x** (giữa dòng Mistakes found): đếm câu có phản đối CHƯA xử lý; đỏ khi
+  >0, xám khi 0; bật = hào quang `dis-halo` + dồn câu tranh chấp lên đầu; **tắt = gửi ngầm
+  kết luận** (`guiNgamKetLuan`). Pop-up `#pbPop` cạnh avatar: lý do + **Keep** (đỏ)/**Agree**
+  (xanh dương), mỗi lần bấm qua `#kaModal` hỏi chốt; Agree → câu thành 'go' (giữ vết).
+- `startPb()` + `renderErrorsPb()` (gói `?goi=` có `pb:1`): video ĐỘI MÌNH, mốc giờ bấm là
+  video nhảy; mỗi câu cặp AGREE/DISAGREE loại trừ nhau, phản đối bắt buộc lý do (chặn cả ở
+  submit lẫn luật); phiếu độc lập từng em; câu 'go' hiện REMOVED không tích được. CSS
+  `.pb-mode` ẩn form + Export, khung Mistakes chiếm cả cột phải.
+- Nút SUBMIT 3 màu (mô hình 2): TRẮNG chưa gửi lần nào · XANH LÁ đã gửi · VÀNG
+  `nut-vang-nhay` (to-nhỏ) khi có sửa chưa gửi; `beforeunload` + nút thoát trong pop-up video
+  đều hỏi khi còn thứ chưa gửi. `submitM2()` = MỘT phát ghi cả bản tổng (loading `#m2LoadModal`).
+
+### Đã test (11/11 luật qua REST + trọn vòng trên bàn thử cổng 8341, buổi giả B2B_ZTHUNGHIEM2)
+create/update 200 · trường lạ 403 · xoá 403 · phản đối thiếu lý do 403 · đổi ý update 200 ·
+chấm: nạp bản kho (2 câu, câu 'an' ẩn), draftModal khi nháp lệch, icon uploaded, avatar
+đỏ/xanh, DISAGREEMENT 1→0, Agree trọn chuỗi (hỏi chốt → RELEASED → gửi ngầm → kho xác nhận
+`trangThai:'go', ketLuan:'agree'`) · phản biện: 2 câu (REMOVED chìm cuối), tích phản đối →
+nút vàng nháy, submit thiếu lý do bị chặn, có lý do → phiếu lên kho, quay lại màn chấm thấy
+avatar đỏ + DISAGREEMENT: 1. Buổi giả để `active:false` CHỜ THẦY BẤM TAY rồi dọn.
+
+### ⛔ Bẫy mới trả giá trong chặng
+- **`slugKey` KHÔNG dùng được làm mã tài liệu**: nó gọt `[^A-Z0-9-]` nên CẮT CHỮ CÓ DẤU
+  ('HÀ'→'H', 'THẢO'→'THO') — tài liệu tìm không ra, web tưởng em chưa nộp. Mã tài liệu
+  tongLoi/phanHoi phải đi `slugHs` (bỏ dấu kiểu avatar: 'HÀ'→'ha', 'DUY MINH'→'duy-minh').
+- **Thư mục avatar theo LỚP phải bỏ HẾT ký tự không phải chữ-số** — "B2B" (speaking) và
+  "B2-B" (myStudent) phải ra cùng `b2b`; script xuất `myLesson/app/tools/xuat-avatar.py`
+  dùng y hệt luật với `avatarUrl()` bên này — đổi một bên là đổi CẢ HAI.
