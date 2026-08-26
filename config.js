@@ -16,4 +16,14 @@ window.MYSPEAKING_CONFIG = {
 
   // Tên hiển thị trên app
   APP_TITLE: "SPEAKING TEAM CHECK",
+
+  // (Đợt Firebase 26/08/2026) KHO MỚI — Firestore project aword-70dae, dùng chung với
+  // AWord + myLesson (thầy chốt "chuyển trọn"). apiKey là khoá CÔNG KHAI theo thiết kế
+  // Firebase (chỉ định danh project, không phải mật khẩu) — ai chặn người lạ là LUẬT
+  // trên Console, không phải đoạn chữ này. Bộ não Apps Script ở trên GIỮ NGUYÊN làm
+  // đường lùi cho các buổi CŨ còn trong Google Sheets.
+  FIREBASE: {
+    projectId: "aword-70dae",
+    apiKey: "AIzaSyAV_yoyAQM2fKKdOsJyuAxxf4AN7MsF7XY",
+  },
 };

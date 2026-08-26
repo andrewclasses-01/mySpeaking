@@ -26,6 +26,8 @@
     timers: [],   // {name, sMin, sSec, eMin, eSec}
     submitted: false,
     wasSubmitted: false,   // CHẶNG 29: đã từng nộp ít nhất 1 lần (giữ bài trong "My submitted checks" kể cả khi đang mở khoá sửa)
+    khoFs: false,          // (Đợt Firebase) buổi này nằm ở KHO NÀO: true = Firestore, false = bộ não cũ
+    buoiId: '',            // mã buổi LOP_BAI trong Firestore (chỉ có nghĩa khi khoFs)
   };
   let editingIndex = -1;
   let fType = '';
@@ -34,6 +36,147 @@
 
   const SCRIPT_URL = CFG.SCRIPT_URL || '';
   let saveKey = 'myspeaking_manual';   // đặt lại khi biết videoUrl (sau bước chọn tên)
+
+  // ═══════════════ KHO FIRESTORE (Đợt Firebase 26/08/2026 — thầy chốt "chuyển trọn") ═══════════════
+  // Kho MỚI cho cấu hình buổi + bài nộp: Firestore project aword-70dae (chung AWord/myLesson).
+  //   spBuoi/{LOP_BAI}              — cấu hình một buổi (teams/pairs/video/mã)
+  //   spBuoi/{LOP_BAI}/baiNop/{sid} — MỖI LƯỢT NỘP = 1 tài liệu
+  // Đi bằng REST thuần (fetch + API key công khai) — không nạp SDK, không thêm thư viện.
+  // Bộ não Apps Script cũ GIỮ NGUYÊN làm đường lùi cho buổi CŨ trong Google Sheets:
+  // đăng nhập ưu tiên buổi Firestore (nhanh <1s), buổi cũ vẫn hiện sau khi bộ não trả lời.
+  // ⛔ CHƯA DÁN LUẬT FIRESTORE (khối spBuoi/baiNop) thì mọi lượt gọi ở đây bị từ chối —
+  //    web tự rơi về đường cũ, không vỡ gì. Luật ở: myLesson-data\tai-lieu\LUAT FIRESTORE CAN DAN.md
+  const FS_CFG = CFG.FIREBASE || null;
+  const FS_GOC = FS_CFG
+    ? 'https://firestore.googleapis.com/v1/projects/' + FS_CFG.projectId + '/databases/(default)/documents'
+    : '';
+  const fsKey = () => '?key=' + (FS_CFG ? FS_CFG.apiKey : '');
+
+  // Mã buổi LOP_BAI — ⛔ PHẢI Y HỆT maBuoi() trong kho-fs.js (app máy tính) + lop.html (myLesson).
+  function maBuoi(classCode, lesson) {
+    const lop = String(classCode || '').replace(/\s+/g, '').trim().toUpperCase();
+    const bai = String(lesson || '').replace(/\s+/g, ' ').trim().toUpperCase().replace(/\//g, '-');
+    return lop + '_' + bai;
+  }
+
+  // Đổi qua lại giữa JS và định dạng giá trị của Firestore REST
+  function fsMa(v) {
+    if (v === null || v === undefined) return { nullValue: null };
+    if (typeof v === 'boolean') return { booleanValue: v };
+    if (typeof v === 'number') return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+    if (typeof v === 'string') return { stringValue: v };
+    if (Array.isArray(v)) return { arrayValue: { values: v.map(fsMa) } };
+    if (typeof v === 'object') {
+      const fields = {};
+      Object.keys(v).forEach((k) => { fields[k] = fsMa(v[k]); });
+      return { mapValue: { fields } };
+    }
+    return { stringValue: String(v) };
+  }
+  function fsGiai(f) {
+    if (!f || typeof f !== 'object') return null;
+    if ('stringValue' in f) return f.stringValue;
+    if ('integerValue' in f) return parseInt(f.integerValue, 10);
+    if ('doubleValue' in f) return f.doubleValue;
+    if ('booleanValue' in f) return f.booleanValue;
+    if ('nullValue' in f) return null;
+    if ('arrayValue' in f) return ((f.arrayValue && f.arrayValue.values) || []).map(fsGiai);
+    if ('mapValue' in f) {
+      const o = {};
+      const fields = (f.mapValue && f.mapValue.fields) || {};
+      Object.keys(fields).forEach((k) => { o[k] = fsGiai(fields[k]); });
+      return o;
+    }
+    return null;
+  }
+  function fsGiaiDoc(doc) {
+    const o = {};
+    const fields = (doc && doc.fields) || {};
+    Object.keys(fields).forEach((k) => { o[k] = fsGiai(fields[k]); });
+    if (doc && doc.name) o._id = String(doc.name).split('/').pop();
+    return o;
+  }
+
+  // Mọi buổi đang mở (mọi lớp) → hình dạng Y HỆT phần tử CLASSES.classes của bộ não cũ,
+  // kèm cờ `_kho:'fs'` để các bước sau biết bài này nộp vào đâu.
+  async function buoiDangMoFs() {
+    if (!FS_GOC) return [];
+    const body = {
+      structuredQuery: {
+        from: [{ collectionId: 'spBuoi' }],
+        where: { fieldFilter: { field: { fieldPath: 'active' }, op: 'EQUAL', value: { booleanValue: true } } },
+        limit: 50,
+      },
+    };
+    const r = await fetch(FS_GOC + ':runQuery' + fsKey(), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error('FS_' + r.status);
+    const ds = await r.json();
+    return (Array.isArray(ds) ? ds : []).filter((x) => x.document).map((x) => {
+      const b = fsGiaiDoc(x.document);
+      return {
+        id: (b.classCode || '') + '-' + (b.lesson || ''),
+        name: b.className || ('CLASS ' + (b.classCode || '')),
+        classCode: b.classCode || '', code: b.code || '',
+        lesson: b.lesson || '', topic: b.topic || b.lesson || '',
+        teams: (b.teams || []).map((t) => ({ team: t.team, video: t.video || '', members: t.members || [] })),
+        pairs: b.pairs || [],
+        _kho: 'fs',
+      };
+    });
+  }
+
+  // Các lượt nộp CỦA CHÍNH EM trong một buổi (khôi phục bài + đếm "nộp thiếu")
+  async function baiCuaEmFs(buoiId, student) {
+    const body = {
+      structuredQuery: {
+        from: [{ collectionId: 'baiNop' }],
+        where: { fieldFilter: { field: { fieldPath: 'student' }, op: 'EQUAL', value: { stringValue: String(student || '') } } },
+        limit: 100,
+      },
+    };
+    const r = await fetch(FS_GOC + '/spBuoi/' + encodeURIComponent(buoiId) + ':runQuery' + fsKey(), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error('FS_' + r.status);
+    const ds = await r.json();
+    return (Array.isArray(ds) ? ds : []).filter((x) => x.document).map((x) => fsGiaiDoc(x.document))
+      .sort((a, b) => String(a.sid || '') < String(b.sid || '') ? 1 : -1);   // mới nhất trước
+  }
+
+  // Ghi MỘT lượt nộp. `documentId` = sid ⇒ tạo mới rõ ràng (luật chỉ cho create, cấm sửa/xoá).
+  async function nopFs(buoiId, sid, duLieu) {
+    const fields = {};
+    Object.keys(duLieu).forEach((k) => { fields[k] = fsMa(duLieu[k]); });
+    const r = await fetch(FS_GOC + '/spBuoi/' + encodeURIComponent(buoiId) + '/baiNop' + fsKey() +
+      '&documentId=' + encodeURIComponent(sid), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }),
+    });
+    if (!r.ok) {
+      let msg = 'FS_' + r.status;
+      try { const j = await r.json(); msg = (j.error && j.error.message) || msg; } catch (e) {}
+      throw new Error(msg);
+    }
+    return true;
+  }
+
+  // Mã lượt nộp yyMMdd-HHmmss-<3 số>, giờ VN — ⛔ CÙNG ĐỊNH DẠNG makeSid trong Code.gs
+  // (sid là "khoá thời gian" của cả hệ: so chuỗi = so thời gian, python khử trùng theo nó).
+  function taoSid() {
+    const t = new Date(Date.now() + 7 * 3600 * 1000);
+    const p = (n) => String(n).padStart(2, '0');
+    return String(t.getUTCFullYear()).slice(2) + p(t.getUTCMonth() + 1) + p(t.getUTCDate()) +
+      '-' + p(t.getUTCHours()) + p(t.getUTCMinutes()) + p(t.getUTCSeconds()) +
+      '-' + Math.floor(Math.random() * 900 + 100);
+  }
+  // 'dd/MM/yyyy HH:mm' từ chuỗi ISO — cùng dạng chữ `luc` mà bộ não cũ trả về cho pop-up lịch sử
+  function gioDep(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const p = (n) => String(n).padStart(2, '0');
+    return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
 
   // ─── Lưu / khôi phục tạm (localStorage) ───
   let saveTimer = null;
@@ -656,9 +799,35 @@
     $('submitModal').classList.remove('flex');
   }
 
+  // (Đợt Firebase) NỘP VÀO FIRESTORE — 1 lượt nộp = 1 tài liệu, mã sid làm tên tài liệu.
+  // Lưới "nộp thiếu" (CHẶNG 32) tự đếm ở đây: xem lượt gần nhất của chính em trước khi ghi —
+  // lượt mới ÍT LỖI HƠN thì VẪN ghi (không bao giờ chặn bài), chỉ trả cờ để nhắc.
+  async function submitFs(payload) {
+    let canhBao = null;
+    try {
+      const cu = await baiCuaEmFs(state.buoiId, state.student);
+      if (cu.length) {
+        const truoc = (cu[0].errors || []).length;
+        if (payload.errors.length < truoc) canhBao = { truoc, nay: payload.errors.length };
+      }
+    } catch (e) { /* lưới phụ — hỏng thì thôi, không được cản bài nộp */ }
+    const sid = taoSid();
+    await nopFs(state.buoiId, sid, {
+      sid,
+      submittedAt: payload.submittedAt,
+      classCode: payload.classCode, lesson: payload.lesson,
+      student: payload.student, myTeam: payload.myTeam,
+      checkedTeam: payload.checkedTeam,
+      videoUrl: payload.videoUrl, videoId: payload.videoId,
+      errors: payload.errors, timers: payload.timers,
+      createdAt: Date.now(),
+    });
+    return { ok: true, saved: payload.errors.length, submissionId: sid, canhBaoNopThieu: canhBao };
+  }
+
   async function submit() {
     closeSubmitModal();
-    if (!SCRIPT_URL) {
+    if (!state.khoFs && !SCRIPT_URL) {
       toast('The app isn\'t connected to Google Sheets yet — please tap "Export Excel" and send the file to your teacher!', 'err');
       return;
     }
@@ -676,12 +845,19 @@
         videoUrl: state.videoUrl, videoId: state.videoId,
         errors: state.errors, timers: cleanTimers(),
       };
-      const res = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload),
-      });
-      const out = await res.json();
+      let out;
+      if (state.khoFs) {
+        // Kho mới: buổi do app đẩy lên Firestore thì bài nộp cũng vào Firestore —
+        // KHÔNG rơi về Sheets kẻo dữ liệu một buổi nằm hai kho.
+        out = await submitFs(payload);
+      } else {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload),
+        });
+        out = await res.json();
+      }
       if (!out.ok) throw new Error(out.error || 'unknown');
       state.submitted = true;
       state.wasSubmitted = true;   // CHẶNG 29: cờ ĐÃ TỪNG NỘP — giữ bài trong "My submitted checks" kể cả khi mở khoá sửa
@@ -745,18 +921,36 @@
   // ═══════════════ KHỞI ĐỘNG — luồng 1 LINK CHUNG + đăng nhập lớp ═══════════════
 
   // Tải danh sách lớp + bài đang chạy.
-  // ƯU TIÊN đọc LIVE từ "bộ não" (Apps Script ?config=1) — thầy ra bài mới KHÔNG cần đăng lại web.
-  // DỰ PHÒNG file tĩnh data/classes.json khi bộ não chưa sẵn / lỗi mạng.
+  // (Đợt Firebase) ƯU TIÊN kho FIRESTORE — trả lời dưới 1 giây, thầy ra bài mới là thấy ngay.
+  // Bộ não Apps Script cũ vẫn được hỏi NGẦM PHÍA SAU (8-40 giây) rồi GHÉP THÊM những lớp chưa
+  // có buổi Firestore — buổi cũ trong Google Sheets vẫn đăng nhập được, chỉ hiện muộn hơn.
+  // Lớp ĐÃ có buổi Firestore thì buổi Sheets cùng lớp bị che (kho mới thắng, tránh nộp lệch kho).
+  // DỰ PHÒNG CUỐI: file tĩnh data/classes.json khi cả hai kho đều hỏng.
   async function loadClasses() {
-    if (SCRIPT_URL) {
+    let coFs = false;
+    try {
+      const ds = await buoiDangMoFs();
+      if (ds.length) { CLASSES = { classes: ds }; fixClassNames(); coFs = true; }
+    } catch (e) { /* chưa dán luật / mạng — coi như kho mới trống */ }
+
+    // Bộ não cũ: có buổi Firestore rồi thì hỏi NGẦM (không chờ); chưa có gì thì đành chờ như xưa
+    const hoiGas = async () => {
+      if (!SCRIPT_URL) return false;
       try {
         const r = await fetch(SCRIPT_URL + '?config=1&_=' + Date.now(), { cache: 'no-store' });
-        if (r.ok) {
-          const j = await r.json();
-          if (j && Array.isArray(j.classes) && j.classes.length) { CLASSES = j; fixClassNames(); return; }
-        }
-      } catch (e) { /* rơi xuống dự phòng */ }
-    }
+        if (!r.ok) return false;
+        const j = await r.json();
+        if (!(j && Array.isArray(j.classes) && j.classes.length)) return false;
+        const daCo = {};
+        (CLASSES.classes || []).forEach((c) => { daCo[String(c.classCode || '').toUpperCase()] = 1; });
+        const them = j.classes.filter((c) => !daCo[String(c.classCode || '').toUpperCase()]);
+        if (them.length) { CLASSES.classes = (CLASSES.classes || []).concat(them); fixClassNames(); }
+        return true;
+      } catch (e) { return false; }
+    };
+
+    if (coFs) { hoiGas(); return; }     // kho mới có bài → vào ngay, kho cũ ghép thêm sau
+    if (await hoiGas()) return;
     try {
       const r = await fetch('data/classes.json?_=' + Date.now(), { cache: 'no-store' });
       if (r.ok) CLASSES = await r.json();
@@ -864,6 +1058,8 @@
     state.topic = cls.topic || cls.lesson || '';
     state.className = cls.name || cls.id;
     state.classCode = cls.classCode || cls.id;    // khóa route tới đúng file lớp
+    state.khoFs = cls._kho === 'fs';              // (Đợt Firebase) buổi này nộp vào kho nào
+    state.buoiId = state.khoFs ? maBuoi(state.classCode, state.lesson) : '';
     saveKey = makeSaveKey(state.student, state.videoUrl);
 
     // ảnh HS: dùng ảnh thật nếu có, tạm thời hiện chữ cái đầu
@@ -925,6 +1121,8 @@
     state.topic = g.topic || g.lesson || '';
     state.className = g.tenLop || g.classCode || '';
     state.classCode = g.classCode || '';
+    state.khoFs = g.kho === 'fs';                 // (Đợt Firebase) myLesson báo buổi nằm kho nào
+    state.buoiId = state.khoFs ? maBuoi(state.classCode, state.lesson) : '';
     saveKey = makeSaveKey(state.student, state.videoUrl);
     start();
   }
@@ -968,31 +1166,39 @@
   // Nay: hỏi bằng pop-up "tìm thấy N bản nộp lúc … — muốn xem bản nào?"; chọn bản → mở CHẾ ĐỘ XEM;
   // bấm "start a new check" → làm bài MỚI TINH. Nộp thêm lần nữa thì lần sau danh sách có N+1 bản.
   // LUẬT AN TOÀN: mạng hỏng / quá 8 giây / bộ não bản cũ → vào làm bài BÌNH THƯỜNG, không chặn HS.
-  let serverSubs = [];   // các lượt nộp lấy về từ bộ não (mới nhất trước)
+  let serverSubs = [];   // các lượt nộp lấy về từ kho (mới nhất trước)
   async function maybeRestoreFromServer(saved) {
-    if (!SCRIPT_URL) return;
+    if (!state.khoFs && !SCRIPT_URL) return;
     // Máy này đã có dấu vết bài của chính em (lỗi đã lưu hoặc từng nộp) → ưu tiên bản máy, không hỏi mạng
     if (saved && saved.student === state.student && ((saved.errors || []).length || saved.wasSubmitted)) return;
     try {
-      const ctl = new AbortController();
-      const tm = setTimeout(() => ctl.abort(), 8000);
-      const u = SCRIPT_URL + '?mine=1&classCode=' + encodeURIComponent(state.classCode) +
-        '&lesson=' + encodeURIComponent(state.lesson) + '&student=' + encodeURIComponent(state.student) +
-        '&_=' + Date.now();
-      const r = await fetch(u, { cache: 'no-store', signal: ctl.signal });
-      clearTimeout(tm);
-      if (!r.ok) return;
-      const j = await r.json();
-      if (!j || !j.ok) return;
-      // Bộ não bản CŨ chỉ trả `errors` gộp → dựng thành 1 lượt để vẫn hỏi được (đường lùi)
-      let subs = Array.isArray(j.lansNop) ? j.lansNop : [];
-      if (!subs.length && (j.errors || []).length) subs = [{ luc: '', errors: j.errors, timers: j.timers || [] }];
+      let subs = [];
+      if (state.khoFs) {
+        // (Đợt Firebase) kho mới trả lời dưới 1 giây — mỗi tài liệu là một lượt nộp sẵn hình dạng
+        subs = (await baiCuaEmFs(state.buoiId, state.student)).map((d) => ({
+          sid: d.sid || d._id, luc: gioDep(d.submittedAt), errors: d.errors || [], timers: d.timers || [],
+        }));
+      } else {
+        const ctl = new AbortController();
+        const tm = setTimeout(() => ctl.abort(), 8000);
+        const u = SCRIPT_URL + '?mine=1&classCode=' + encodeURIComponent(state.classCode) +
+          '&lesson=' + encodeURIComponent(state.lesson) + '&student=' + encodeURIComponent(state.student) +
+          '&_=' + Date.now();
+        const r = await fetch(u, { cache: 'no-store', signal: ctl.signal });
+        clearTimeout(tm);
+        if (!r.ok) return;
+        const j = await r.json();
+        if (!j || !j.ok) return;
+        // Bộ não bản CŨ chỉ trả `errors` gộp → dựng thành 1 lượt để vẫn hỏi được (đường lùi)
+        subs = Array.isArray(j.lansNop) ? j.lansNop : [];
+        if (!subs.length && (j.errors || []).length) subs = [{ luc: '', errors: j.errors, timers: j.timers || [] }];
+      }
       subs = subs.filter((s) => s && (s.errors || []).length);
       if (!subs.length) return;                 // em chưa nộp gì → làm bài mới, không làm phiền
       if (state.errors.length) return;          // trong lúc chờ mạng em đã kịp thêm lỗi → đừng chen ngang
       serverSubs = subs;
       showHistoryModal();
-    } catch (e) { /* mạng hỏng → làm bài bình thường, không làm phiền */ }
+    } catch (e) { /* mạng/kho hỏng → làm bài bình thường, không làm phiền */ }
   }
 
   function showHistoryModal() {

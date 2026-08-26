@@ -1468,3 +1468,41 @@ bản triển khai → sửa bản ĐANG CHẠY → "Phiên bản mới"**.
 ⛔ **ĐỪNG "New deployment"** — đẻ ra địa chỉ `/exec` khác, web và app đều trỏ địa chỉ cũ.
 Kiểm sau khi deploy: `…/exec?danop=1&classCode=B2B&lesson=GERMS` phải trả mảng `daNop`
 (hiện đang trả `{"ok":true,"app":"mySpeaking"}` vì cửa chưa có).
+
+---
+
+## CHẶNG — 26/08/2026: ĐỢT FIREBASE — KHO BÀI NỘP CHUYỂN SANG FIRESTORE (thầy chốt "chuyển trọn")
+
+### Bối cảnh
+Bộ não Apps Script chậm 8–40 giây, deploy tay dễ nhầm, từng bị xoá trong sự cố Drive 27/07.
+Thầy chốt (bản nghiên cứu 26/08): chuyển kho bài nộp sang **Firestore project `aword-70dae`**
+(dùng chung AWord + myLesson), bộ não cũ GIỮ NGUYÊN làm đường lùi cho buổi cũ trong Sheets.
+
+### Kho mới
+- `spBuoi/{LOP_BAI}` — cấu hình buổi (teams/pairs/video/code), do app máy tính ghi bằng khoá quản trị.
+- `spBuoi/{LOP_BAI}/baiNop/{sid}` — MỖI LƯỢT NỘP = 1 tài liệu (sid giữ nguyên dạng `yyMMdd-HHmmss-NNN`).
+- Mã buổi `maBuoi()` phải Y HỆT ở BA nơi: `js/app.js` (web này) · `app/src/main/lib/kho-fs.js` · `lop.html` myLesson.
+
+### Việc đã làm (js/app.js ?v=27, config.js ?v=27)
+- `config.js` thêm khối `FIREBASE` (projectId + apiKey công khai).
+- Khối "KHO FIRESTORE" trong `js/app.js`: REST thuần (fetch + API key), KHÔNG nạp SDK —
+  `buoiDangMoFs()` (thay ?config=1) · `baiCuaEmFs()` (thay ?mine=1) · `nopFs()` (thay doPost) ·
+  `taoSid()` (cùng định dạng makeSid của Code.gs) · state thêm `khoFs` + `buoiId`.
+- `loadClasses()`: Firestore TRƯỚC (dưới 1 giây) → bộ não cũ hỏi NGẦM rồi GHÉP THÊM lớp chưa có
+  buổi Firestore (lớp đã có buổi FS thì buổi Sheets cùng lớp bị che — tránh nộp lệch kho) → classes.json.
+- `submit()`: buổi FS thì ghi Firestore (`submitFs`, tự đếm lưới "nộp thiếu" CHẶNG 32 ở client);
+  buổi cũ vẫn POST bộ não y nguyên. `maybeRestoreFromServer()` cùng nếp.
+- Gói `?goi=` từ myLesson nay mang thêm `kho:'fs'|'gas'` — web theo đó biết nộp vào đâu.
+
+### Đã đo thật (local 8126, TRƯỚC khi dán luật)
+- Firestore trả **403 "Missing or insufficient permissions"** (luật chưa dán) → web tự rơi về bộ não
+  cũ: ?config=1 trả 4 lớp sau 18 giây, đăng nhập B1AH/germs ra đủ 4 đội. **Không vỡ gì khi chưa dán luật.**
+
+### Chờ thầy (2 việc, xem `D:\APP AND DATA\myLesson-data\tai-lieu\LUAT FIRESTORE CAN DAN (26-08 THEM SPEAKING).md`)
+1. Dán 3 khối luật Firestore (khối 3 = spBuoi/baiNop) rồi Publish.
+2. Tải khoá service account về `D:\APP AND DATA\mySpeaking-data\data\firebase-admin.json` (cho app ra bài).
+
+### Bẫy
+- ⛔ Luật khoá cứng danh sách trường của `baiNop` — thêm trường mới phải sửa luật TRƯỚC.
+- ⛔ `?mine=1`/`?danop=1`/doPost của Code.gs KHÔNG được đụng — buổi cũ còn sống nhờ chúng.
+- ⛔ runQuery bị từ chối trả 403 kèm BODY dạng mảng — cứ dựa vào `r.ok`, đừng parse body đoán lỗi.

@@ -1,5 +1,11 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> ⭐⭐ **CẬP NHẬT 26/08/2026 — ĐỢT FIREBASE (đọc chặng cuối `GHI CHU DU AN.md` trước):** kho bài
+> nộp cho buổi MỚI đã chuyển sang **Firestore `aword-70dae`** (`spBuoi/{LOP_BAI}/baiNop/{sid}`,
+> khối "KHO FIRESTORE" đầu `js/app.js`). Bộ não Apps Script + toàn bộ mô tả Sheets bên dưới CHỈ
+> còn đúng cho buổi CŨ (đường lùi — vẫn phải giữ sống, ĐỪNG gỡ). Chưa dán luật Firestore thì web
+> tự rơi về đường cũ, không vỡ gì.
+>
 > ⚠️ **CẬP NHẬT 19/07/2026 — ĐỌC `GHI CHU DU AN.md` mục CHẶNG 17 + ⭐HANDOFF TRƯỚC.** Từ chặng 17, mô hình dữ liệu đã ĐỔI so với phần lớn mô tả cũ bên dưới file này:
 > - **Cấu hình bài đọc LIVE** từ Apps Script `?config=1` (file Google Sheet "MYSPEAKING - CẤU HÌNH": CLASSES + LESSONS) — KHÔNG còn dùng `data/classes.json` (chỉ còn là dự phòng).
 > - **(CHẶNG 21, 20/07/2026 — Phiên bản 5): MỖI LỚP MỘT SHEET BÀI RIÊNG `LESSONS <LỚP>`** trong file CẤU HÌNH (8 cột giữ nguyên, cột CLASS là lưới an toàn); sheet `LESSONS` gộp cũ đã đổi tên `LESSONS CU (da chuyen)`. Đủ 8 lớp có sheet riêng + file kết quả (`mySpeaking Sheets\<lớp>`). Lệnh quản trị `action:'setup'` chia lớp idempotent. Giao ước `?config=1` / `adminPush` / `adminResults` / bài nộp HS KHÔNG đổi.
