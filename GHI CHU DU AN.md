@@ -1498,9 +1498,11 @@ Thầy chốt (bản nghiên cứu 26/08): chuyển kho bài nộp sang **Firest
 - Firestore trả **403 "Missing or insufficient permissions"** (luật chưa dán) → web tự rơi về bộ não
   cũ: ?config=1 trả 4 lớp sau 18 giây, đăng nhập B1AH/germs ra đủ 4 đội. **Không vỡ gì khi chưa dán luật.**
 
-### Chờ thầy (2 việc, xem `D:\APP AND DATA\myLesson-data\tai-lieu\LUAT FIRESTORE CAN DAN (26-08 THEM SPEAKING).md`)
-1. Dán 3 khối luật Firestore (khối 3 = spBuoi/baiNop) rồi Publish.
-2. Tải khoá service account về `D:\APP AND DATA\mySpeaking-data\data\firebase-admin.json` (cho app ra bài).
+### ✅ Hai việc chờ thầy — XONG ngay 26/08 (qua Claude in Chrome, thầy cho phép)
+1. ✅ Đã dán 3 khối luật + Publish (kiểm sống: đọc `spBuoi` từ 403 chuyển 404).
+2. ✅ Khoá service account đã nằm ở `D:\APP AND DATA\mySpeaking-data\data\firebase-admin.json`.
+Kèm test vòng tròn **8/8 ĐẠT** (ra bài → nộp qua luật → trích 13 cột → luật chặn sửa/trường lạ →
+dọn sạch bằng token quản trị) — chi tiết ở nhật ký APP mục 26/08. **KHO MỚI CHÍNH THỨC SỐNG.**
 
 ### Bẫy
 - ⛔ Luật khoá cứng danh sách trường của `baiNop` — thêm trường mới phải sửa luật TRƯỚC.
