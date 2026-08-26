@@ -1508,3 +1508,23 @@ dọn sạch bằng token quản trị) — chi tiết ở nhật ký APP mục 
 - ⛔ Luật khoá cứng danh sách trường của `baiNop` — thêm trường mới phải sửa luật TRƯỚC.
 - ⛔ `?mine=1`/`?danop=1`/doPost của Code.gs KHÔNG được đụng — buổi cũ còn sống nhờ chúng.
 - ⛔ runQuery bị từ chối trả 403 kèm BODY dạng mảng — cứ dựa vào `r.ok`, đừng parse body đoán lỗi.
+
+---
+
+## CHẶNG — 26/08/2026 (tối): ĐỢT 3 FIREBASE — POP-UP VIDEO CẢ LỚP + ĐỔI LOGO TRANG CHECK (?v=28)
+
+Thầy chốt 2 điều chỉnh trong "ok build đợt 3":
+- **Bấm logo (trang check lỗi) = pop-up "All team videos"** — học sinh xem video MỌI đội trong
+  buổi để học hỏi tham khảo. Nguồn video theo thứ tự: `state.clips` (đường đăng nhập lấy từ
+  `teams`; gói `?goi=` từ myLesson v1.18.0 mang sẵn trường `clips`) → hỏi kho Firestore `spBuoi`
+  (link cũ chưa có clips) → báo hiền. Tab đội có nhãn `mine`/`checking`, mặc định mở video đội
+  MÌNH; YouTube nhúng nocookie, Drive nhúng preview, link lạ thì nút mở tab mới. Đóng pop-up là
+  gỡ iframe (dừng hẳn tiếng). Đường "về trang đăng nhập" cũ của logo DỜI vào nút nhỏ trong
+  pop-up — vẫn hỏi trước nếu còn dữ liệu chưa submit.
+- **Logo trang check lỗi = ảnh đăng nhập của myLesson** (`img/avatar-tron.jpg`, chép từ
+  myLesson/web/assets) — hai hệ nhìn là một nhà. Màn đăng nhập + favicon GIỮ ảnh chibi cũ.
+
+Đã test local 8126 (đăng nhập B1AH/germs thật, đường GAS): pop-up hiện 4 đội, video YouTube
+phát, chuyển đội đổi video, đóng dừng tiếng; và cả đường gói `?goi=` từ myLesson (buổi test
+ZTHUNGHIEM): vào thẳng bài, khoFs=true, clips đủ. ⛔ `state.clips` đi theo autosave nên bài mở
+lại từ "My submitted checks" vẫn có video xem.

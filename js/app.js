@@ -28,6 +28,7 @@
     wasSubmitted: false,   // CHẶNG 29: đã từng nộp ít nhất 1 lần (giữ bài trong "My submitted checks" kể cả khi đang mở khoá sửa)
     khoFs: false,          // (Đợt Firebase) buổi này nằm ở KHO NÀO: true = Firestore, false = bộ não cũ
     buoiId: '',            // mã buổi LOP_BAI trong Firestore (chỉ có nghĩa khi khoFs)
+    clips: [],             // (Đợt 3) video MỌI đội [{t: số đội, v: link}] — pop-up "All team videos"
   };
   let editingIndex = -1;
   let fType = '';
@@ -1060,6 +1061,8 @@
     state.classCode = cls.classCode || cls.id;    // khóa route tới đúng file lớp
     state.khoFs = cls._kho === 'fs';              // (Đợt Firebase) buổi này nộp vào kho nào
     state.buoiId = state.khoFs ? maBuoi(state.classCode, state.lesson) : '';
+    // (Đợt 3) video mọi đội — cho pop-up "All team videos" khi bấm logo
+    state.clips = (cls.teams || []).map((t) => ({ t: t.team, v: t.video || '' }));
     saveKey = makeSaveKey(state.student, state.videoUrl);
 
     // ảnh HS: dùng ảnh thật nếu có, tạm thời hiện chữ cái đầu
@@ -1123,6 +1126,8 @@
     state.classCode = g.classCode || '';
     state.khoFs = g.kho === 'fs';                 // (Đợt Firebase) myLesson báo buổi nằm kho nào
     state.buoiId = state.khoFs ? maBuoi(state.classCode, state.lesson) : '';
+    // (Đợt 3) gói mang video mọi đội; gói cũ không có thì pop-up tự hỏi kho Firestore
+    state.clips = Array.isArray(g.clips) ? g.clips : [];
     saveKey = makeSaveKey(state.student, state.videoUrl);
     start();
   }
@@ -1299,6 +1304,9 @@
     state.errors = saved.errors || [];
     state.submitted = !!saved.submitted;
     state.wasSubmitted = !!(saved.wasSubmitted || saved.submitted);
+    state.khoFs = !!saved.khoFs;
+    state.buoiId = saved.buoiId || '';
+    state.clips = Array.isArray(saved.clips) ? saved.clips : [];   // (Đợt 3) pop-up video
 
     // dựng UI y hệt start() nhưng từ dữ liệu đã lưu — video YouTube phát bình thường, không cần server
     const myTeamNo = String(state.myTeam || '').replace(/[^0-9]/g, '');
@@ -1326,6 +1334,85 @@
     $('btnDelAll').classList.toggle('hidden', on || !state.errors.length);
   }
   function hideEditAgainModal() { $('editAgainModal').classList.add('hidden'); $('editAgainModal').classList.remove('flex'); }
+
+  // ═══════════════ (Đợt 3 Firebase) POP-UP VIDEO CẢ LỚP — bấm logo là mở ═══════════════
+  // Thầy chốt 26/08/2026: học sinh xem được bài của CÁC ĐỘI KHÁC để học hỏi tham khảo.
+  // Nguồn video (theo thứ tự): state.clips (đường đăng nhập lấy từ teams; gói ?goi=
+  // mang sẵn từ myLesson) → hỏi kho Firestore spBuoi (link cũ chưa có clips) → báo hiền.
+  // Đường "về trang đăng nhập" cũ của logo DỜI vào nút nhỏ trong pop-up (vẫn hỏi
+  // trước nếu còn dữ liệu chưa submit — không đổi lưới an toàn cũ).
+  let vidChon = 0;   // đội đang xem trong pop-up
+
+  async function layClips() {
+    if (Array.isArray(state.clips) && state.clips.length) return state.clips;
+    if (state.khoFs && state.buoiId && FS_GOC) {
+      try {
+        const r = await fetch(FS_GOC + '/spBuoi/' + encodeURIComponent(state.buoiId) + fsKey());
+        if (r.ok) {
+          const b = fsGiaiDoc(await r.json());
+          state.clips = (b.teams || []).map((t) => ({ t: t.team, v: t.video || '' }));
+          autosave();
+          return state.clips;
+        }
+      } catch (e) { /* mạng hỏng — báo hiền bên dưới */ }
+    }
+    return state.clips || [];
+  }
+
+  // Khung phát cho một link: YouTube -> iframe nocookie; Drive -> iframe preview;
+  // còn lại -> nút mở tab mới (không đoán bừa cách nhúng).
+  function vidKhung(url) {
+    const p = parseVideoUrl(url);
+    if (p && p.type === 'youtube') {
+      return '<iframe class="w-full h-full" src="https://www.youtube-nocookie.com/embed/' + p.id +
+        '?rel=0" title="Team video" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+    }
+    if (p && p.type === 'drive') {
+      return '<iframe class="w-full h-full" src="https://drive.google.com/file/d/' + p.id +
+        '/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+    }
+    return '<div class="w-full h-full flex items-center justify-center">' +
+      '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener" ' +
+      'class="bg-white/10 hover:bg-white/20 text-white font-bold text-sm rounded-xl px-4 py-2">Open video ↗</a></div>';
+  }
+
+  function veVidTabs(clips) {
+    $('vidTabs').innerHTML = clips.map((c) => {
+      const co = !!c.v;
+      const minh = 'TEAM ' + c.t === state.myTeam;
+      const cham = 'TEAM ' + c.t === state.checkedTeam;
+      const on = Number(c.t) === Number(vidChon);
+      return '<button data-vid="' + escapeHtml(String(c.t)) + '"' + (co ? '' : ' disabled') +
+        ' class="rounded-xl border-2 px-3 py-1.5 text-xs font-bold transition ' +
+        (on ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+            : co ? 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                 : 'border-slate-100 bg-slate-50 text-slate-300') + '">' +
+        'TEAM ' + escapeHtml(String(c.t)) +
+        (minh ? ' · mine' : (cham ? ' · checking' : '')) + '</button>';
+    }).join('');
+  }
+
+  async function moVideosModal() {
+    const clips = (await layClips()).filter((c) => c && c.t);
+    const co = clips.filter((c) => c.v);
+    if (!co.length) {
+      toast('No team videos to watch here yet.', 'info');
+      return;
+    }
+    // Mặc định mở video của đội MÌNH (xem lại bài mình trước) — không có thì đội đầu tiên
+    const minh = co.find((c) => 'TEAM ' + c.t === state.myTeam);
+    vidChon = (minh || co[0]).t;
+    veVidTabs(clips);
+    $('vidBox').innerHTML = vidKhung((clips.find((c) => Number(c.t) === Number(vidChon)) || co[0]).v);
+    $('videosModal').classList.remove('hidden');
+    $('videosModal').classList.add('flex');
+    refreshIcons();
+  }
+  function dongVideosModal() {
+    $('videosModal').classList.add('hidden');
+    $('videosModal').classList.remove('flex');
+    $('vidBox').innerHTML = '';        // gỡ iframe = dừng hẳn tiếng video trong pop-up
+  }
 
   // ─── Gắn sự kiện ───
   document.addEventListener('DOMContentLoaded', async () => {
@@ -1421,11 +1508,33 @@
       $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); manualTimeSeek(); e.target.blur(); } });
     });
 
-    // Bấm logo → về trang chủ đăng nhập lại; còn dữ liệu chưa submit thì hỏi trước
+    // (Đợt 3) Bấm logo → POP-UP VIDEO CẢ LỚP (thầy chốt 26/08). Đang ở màn đăng
+    // nhập/chọn tên (chưa vào bài) thì giữ nếp cũ: về trang chủ.
     $('btnHome').addEventListener('click', () => {
-      const unsubmitted = !$('appScreen').classList.contains('hidden') && state.errors.length && !state.submitted;
+      if ($('appScreen').classList.contains('hidden')) {
+        window.location.href = window.location.pathname;
+        return;
+      }
+      moVideosModal();
+    });
+    // Đường "về trang đăng nhập" dời vào nút nhỏ trong pop-up — lưới cũ giữ nguyên:
+    // còn dữ liệu chưa submit thì hỏi trước rồi mới cho đi.
+    $('btnVidExit').addEventListener('click', () => {
+      dongVideosModal();
+      const unsubmitted = state.errors.length && !state.submitted;
       if (unsubmitted) { $('leaveModal').classList.remove('hidden'); $('leaveModal').classList.add('flex'); }
       else window.location.href = window.location.pathname;
+    });
+    $('btnVidClose').addEventListener('click', dongVideosModal);
+    $('videosModal').addEventListener('click', (ev) => { if (ev.target.id === 'videosModal') dongVideosModal(); });
+    $('vidTabs').addEventListener('click', async (ev) => {
+      const b = ev.target.closest('[data-vid]');
+      if (!b || b.disabled) return;
+      vidChon = b.dataset.vid;
+      const clips = await layClips();
+      veVidTabs(clips);
+      const c = clips.find((x) => String(x.t) === String(vidChon));
+      if (c && c.v) $('vidBox').innerHTML = vidKhung(c.v);
     });
     $('btnLeaveCancel').addEventListener('click', () => { $('leaveModal').classList.add('hidden'); $('leaveModal').classList.remove('flex'); });
     $('btnLeaveOk').addEventListener('click', () => { window.location.href = window.location.pathname; });
