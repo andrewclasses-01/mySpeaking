@@ -1517,13 +1517,20 @@
       const v = m2.votes[e.id] || null;
       const phieuKhac = phieuCuaLoi(e.id).filter((p) => p.voter !== state.student);
       const chonY = v && v.y === 'dongY', chonN = v && v.y === 'phanDoi';
+      // (Đợt yêu cầu mới) Lỗi CỦA CHÍNH EM (e.who === tên em) BẮT BUỘC phải AGREE/DISAGREE mới
+      // nộp được — lỗi của đồng đội vẫn TUỲ Ý (xem chặn ở submitPb()). So chuỗi y hệt cách app
+      // đã so `p.voter === state.student` ở startPb() — cùng một mảng tên thành viên, không lệch.
+      const laCuaMinh = !!(e.who && state.student && e.who === state.student);
+      const canVoteBatBuoc = laCuaMinh && !daGo && !v;
       return '<div class="slidein rounded-2xl border p-3.5 transition ' +
-        (daGo ? 'err-go border-slate-200' : 'border-slate-200 hover:border-indigo-300') + '" data-pbrow="' + escapeHtml(e.id) + '">' +
+        (daGo ? 'err-go border-slate-200' : (canVoteBatBuoc ? 'border-amber-400 bg-amber-50/50 ring-2 ring-amber-300' : 'border-slate-200 hover:border-indigo-300')) + '" data-pbrow="' + escapeHtml(e.id) + '">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
         '<span class="shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center">' + (pos + 1) + '</span>' +
         '<button data-pbseek="' + tSec(e) + '" class="font-mono font-bold text-sm bg-slate-900 text-white rounded-lg px-2 py-0.5 hover:bg-indigo-700 transition">' + fmtTime(e) + '</button>' +
         '<span class="text-xs font-bold rounded-full px-2.5 py-1 ' + st.badge + '">' + typeLabel(e.type) + '</span>' +
-        (e.who ? '<span class="text-xs font-semibold text-slate-600 flex items-center gap-1">👤 ' + escapeHtml(e.who) + '</span>' : '') +
+        (laCuaMinh
+      ? '<span class="text-xs font-extrabold text-amber-700 bg-amber-100 rounded-full px-2.5 py-1 flex items-center gap-1">⭐ YOUR MISTAKE' + (canVoteBatBuoc ? ' — vote required' : '') + '</span>'
+      : (e.who ? '<span class="text-xs font-semibold text-slate-600 flex items-center gap-1">👤 ' + escapeHtml(e.who) + '</span>' : '')) +
         (daGo ? '<span class="text-[10px] font-extrabold text-slate-400 border border-slate-300 rounded-full px-2 py-0.5">REMOVED</span>' : '') +
         '<span class="ml-auto flex items-center">' + phieuKhac.map((p) => avatarVong(p.voter, p.y, e.id)).join('') + '</span>' +
         '</div>' +
@@ -1559,6 +1566,16 @@
 
   // Nộp phiếu phản biện: chỉ ghi các phiếu ĐỔI so với lần đồng bộ trước; phản đối thiếu lý do = chặn
   async function submitPb() {
+    // (Đợt yêu cầu mới) BẮT BUỘC vote (Agree HOẶC Disagree) cho MỌI lỗi của CHÍNH EM trước khi
+    // nộp — lỗi của đồng đội vẫn tuỳ ý, KHÔNG chặn. Câu đã 'go' (đồng đội khác đã Agree/gỡ) thì
+    // không còn nút vote nữa nên bỏ qua, đừng bắt vote câu không vote được.
+    const thieuBatBuoc = m2.dsCham.filter((x) => x.err.trangThai !== 'go' &&
+      x.err.who && state.student && x.err.who === state.student && !m2.votes[x.err.id]);
+    if (thieuBatBuoc.length) {
+      toast('You must AGREE or DISAGREE on every mistake about YOU before submitting (' + thieuBatBuoc.length + ' left).', 'err');
+      flashBox(document.querySelector('[data-pbrow="' + thieuBatBuoc[0].err.id + '"]'));
+      return;
+    }
     const thieu = Object.keys(m2.votes).filter((id) => m2.votes[id].y === 'phanDoi' && !String(m2.votes[id].lyDo || '').trim());
     if (thieu.length) {
       toast('Please write WHY you disagree — every disagree needs a reason!', 'err');

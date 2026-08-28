@@ -1581,3 +1581,43 @@ avatar đỏ + DISAGREEMENT: 1. Buổi giả để `active:false` CHỜ THẦY B
 - **Thư mục avatar theo LỚP phải bỏ HẾT ký tự không phải chữ-số** — "B2B" (speaking) và
   "B2-B" (myStudent) phải ra cùng `b2b`; script xuất `myLesson/app/tools/xuat-avatar.py`
   dùng y hệt luật với `avatarUrl()` bên này — đổi một bên là đổi CẢ HAI.
+
+---
+
+## CHẶNG — 28/08/2026 khuya: MÀN PHẢN BIỆN — BẮT BUỘC VOTE LỖI CỦA CHÍNH MÌNH (?v=30)
+
+### Yêu cầu của thầy
+Trong màn PHẢN BIỆN, người đang phản biện (thành viên đội bị chấm) **buộc phải** bấm
+AGREE/DISAGREE cho những câu lỗi mà `who` (ai nói câu đó) là **CHÍNH MÌNH**; còn lỗi ghi tên
+**đồng đội** thì **tuỳ ý** — bấm hay không cũng nộp được.
+
+### Đã làm (chỉ `js/app.js`, không đụng kho/luật Firestore — `phanHoi` vẫn đúng hình dạng cũ)
+- `renderErrorsPb()`: thêm `laCuaMinh = e.who === state.student` (so chuỗi y hệt cách
+  `startPb()` đã so `p.voter === state.student` — cùng lấy tên từ một mảng thành viên, không
+  lệch chính tả/khoảng trắng). Câu của chính mình đổi nhãn 👤 tên thành **"⭐ YOUR MISTAKE"**
+  (thêm "— vote required" khi chưa vote); viền/nền cả khối câu tô **vàng amber** khi vừa là của
+  mình vừa chưa vote (`canVoteBatBuoc`) — để em nhìn lướt bảng cũng biết ngay câu nào phải làm,
+  không phải đợi bấm Submit mới biết bị chặn.
+- `submitPb()`: thêm rào **TRƯỚC** rào "phản đối thiếu lý do" cũ — lọc `m2.dsCham` còn sống
+  (`trangThai !== 'go'`, câu đã gỡ thì không còn nút vote nên không bắt) mà `who === tên em` và
+  **chưa có trong `m2.votes`** → chặn nộp, toast kèm số câu còn thiếu, `flashBox()` (hàm cuộn +
+  nháy viền đỏ có sẵn, dùng chung với các chỗ báo thiếu khác trong app) tới đúng câu đầu tiên.
+- Bấm dongY/phanDoi chỉ đổi `m2.votes` cục bộ (xem tay bắt sự kiện `data-pbvote`, dòng ~2149) —
+  ghi thật lên Firestore CHỈ xảy ra trong `submitPb()`, nên chặn đúng một chỗ là đủ, không sợ
+  vote "lọt lưới" qua đường khác.
+- `index.html`: `js/app.js?v=29` → `?v=30` (đúng luật cache-bust ghi ngay trên dòng đó).
+
+### Bẫy đã tránh khi build
+- Repo `web` này lúc mở phiên đang **tụt 5 commit** so với GitHub dù `git status` báo "up to
+  date" — vì local chưa `git fetch`, ref `origin/master` cũ. Đã `git fetch` + so `HEAD..origin/
+  master` bắt được `a8c6d69` (chính đợt B dựng màn PHẢN BIỆN) chưa có ở máy này, `git pull
+  --ff-only` mới lấy đủ code trước khi sửa — đúng bẫy "3 máy build song song" đã ghi trong hồ sơ
+  chung `_DONG BO`.
+- KHÔNG bắt vote câu đã `trangThai:'go'` (đồng đội khác lỡ Agree/gỡ mất) — câu đó không còn nút
+  AGREE/DISAGREE nữa, bắt vote sẽ là chặn nộp VĨNH VIỄN không có lối ra.
+
+### Đã kiểm / CHƯA kiểm
+`node --check js/app.js` sạch. **CHƯA bấm tay thật** (không có buổi Firestore thật + tài khoản
+học sinh trong phiên sửa) — cần thầy mở màn PHẢN BIỆN của một buổi có ít nhất 1 câu lỗi ghi tên
+chính em đang đăng nhập, xác nhận: câu đó tô vàng + không bấm Submit được tới khi vote, câu ghi
+tên đồng đội vẫn nộp được khi bỏ trống.

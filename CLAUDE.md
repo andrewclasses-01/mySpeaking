@@ -1,5 +1,12 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> ⭐⭐⭐ **CẬP NHẬT 28/08/2026 khuya (?v=30) — MÀN PHẢN BIỆN: BẮT BUỘC VOTE LỖI CỦA CHÍNH MÌNH.**
+> Thầy chốt: em đang phản biện (đội bị chấm) **buộc phải AGREE hoặc DISAGREE** cho MỌI lỗi mà
+> `who` ghi đúng TÊN MÌNH — lỗi ghi tên đồng đội khác thì vẫn **tuỳ ý**, không bắt buộc. Đã sửa
+> `submitPb()` (chặn nộp + toast + cuộn tới đúng câu còn thiếu, dùng lại `flashBox` có sẵn) và
+> `renderErrorsPb()` (câu "YOUR MISTAKE" tô viền vàng khi chưa vote). Xem chi tiết ở
+> `GHI CHU DU AN.md` mục cuối cùng.
+>
 > ⭐⭐ **CẬP NHẬT 26/08/2026 — ĐỢT FIREBASE (đọc chặng cuối `GHI CHU DU AN.md` trước):** kho bài
 > nộp cho buổi MỚI đã chuyển sang **Firestore `aword-70dae`** (`spBuoi/{LOP_BAI}/baiNop/{sid}`,
 > khối "KHO FIRESTORE" đầu `js/app.js`). Bộ não Apps Script + toàn bộ mô tả Sheets bên dưới CHỈ
