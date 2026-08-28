@@ -131,5 +131,8 @@ teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo
 - [x] Giới hạn API key theo website (chặng 14)
 - [x] Deploy Apps Script + điền SCRIPT_URL (chặng 14 — test end-to-end: submit từ app → Sheet OK)
 - [x] Push GitHub + bật Pages (chặng 14 — live, video Drive phát trực tiếp trên trang live)
-- [ ] (Ý tưởng) Dashboard cho thầy xem tổng hợp lỗi theo đội/loại từ Google Sheet
+- [x] Dashboard cho thầy xem tổng hợp lỗi theo đội/loại — LÀM XONG 28/08/2026 tối, nhưng đọc
+  THẲNG Firestore (không qua Google Sheet như ý tưởng gốc): tab "Kết quả" trong `mySpeaking/app`
+  (v1.12.0) + trang `sp-chitiet.html` bên `myLesson/web` (mở từ dashboard.html) — xem
+  `mySpeaking/app/GHI CHU DU AN.md` mục 28/08/2026 tối.
 - [ ] (Ý tưởng) Chấm chéo: đối chiếu lỗi các HS cùng bắt được ở cùng mốc thời gian
