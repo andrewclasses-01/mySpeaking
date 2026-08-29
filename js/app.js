@@ -191,6 +191,7 @@
                             // MỘT LẦN ngay sau lượt gửi ĐẦU TIÊN, các lượt sau luôn 'UPDATED'.
     locMine: false,   // (Đợt ALL/MINE, màn phản biện) false = hiện mọi lỗi cả đội · true = chỉ lỗi của em
     vuaGuiPb: [],   // (Đợt STT xanh/xám) errId vừa gửi xong trong 1 giây gần nhất — hiện icon thay số
+    draftPb: {},   // (Đợt lưu nháp) errId -> nội dung đang gõ dở CHƯA gửi, nạp/lưu vào localStorage
   };
 
   // Bỏ dấu tiếng Việt + về chữ-số-thường — dùng cho tên file avatar + khớp tên
@@ -767,6 +768,32 @@
     editingIndex = -1;
     $('btnAddErrLabel').textContent = 'Add this mistake';
     $('btnCancelEdit').classList.add('hidden');
+    xoaNhapTamCham();   // (Đợt lưu nháp) form trống lại thì dọn luôn ô nhớ nháp, khỏi vương lại
+  }
+
+  // (Đợt lưu nháp form CHẤM) đừng để HS gõ dở SENTENCE/MISTAKE/EXPLANATION mà lỡ thoát/tải lại
+  // trang là mất sạch — lưu tạm dưới khoá RIÊNG theo saveKey (mỗi HS/mỗi video một ô nhớ, giống
+  // luật CHẶNG 33), KHÔNG trộn vào state.errors thật nên không ảnh hưởng logic Submit sẵn có.
+  function khoaNhapTamCham() { return saveKey + '_nhaptam'; }
+  function luuNhapTamCham() {
+    try {
+      localStorage.setItem(khoaNhapTamCham(), JSON.stringify({
+        min: $('fMin').value, sec: $('fSec').value, who: fWhoSel, type: fType,
+        sentence: $('fSentence').value, detail: $('fDetail').value, explain: $('fExplain').value,
+      }));
+    } catch (e) {}
+  }
+  function xoaNhapTamCham() { try { localStorage.removeItem(khoaNhapTamCham()); } catch (e) {} }
+  function khoiPhucNhapTamCham() {
+    let nhap;
+    try { nhap = JSON.parse(localStorage.getItem(khoaNhapTamCham()) || 'null'); } catch (e) { nhap = null; }
+    if (!nhap) return;
+    const coGi = nhap.sentence || nhap.detail || nhap.explain || nhap.who || nhap.type || nhap.min !== '' || nhap.sec !== '';
+    if (!coGi || editingIndex >= 0) return;   // đang sửa lỗi có sẵn thì đừng đè nháp lên
+    $('fMin').value = nhap.min || ''; $('fSec').value = nhap.sec || '';
+    setWho(nhap.who || ''); fType = nhap.type || ''; renderTypeBtns();
+    $('fSentence').value = nhap.sentence || ''; $('fDetail').value = nhap.detail || ''; $('fExplain').value = nhap.explain || '';
+    autoGrowAll();
   }
 
   // Khi THÊM lỗi mới: LUÔN lùi 3 giây (HS nghe thấy lỗi rồi mới gõ nên mốc thật sớm hơn ~3s).
@@ -1457,6 +1484,7 @@
       svErrors.forEach((e) => { m2.serverIds[e.id] = JSON.stringify(e); });
       buildStudentField();
       renderErrors();
+      khoiPhucNhapTamCham();   // (Đợt lưu nháp) form chưa Add có sẵn nội dung cũ thì nạp lại
       initVideo();
       autosave();
       capNhatNutSubmit();
@@ -1513,6 +1541,11 @@
       m2.votes[p.errId] = { y: p.y, lyDo: p.lyDo || '' };
     });
     m2.votesServer = JSON.stringify(m2.votes);
+    // (Đợt lưu nháp) nạp lại chữ đang gõ dở CHƯA gửi của MÁY này, buổi này, em này. Câu nào có
+    // nháp mà CHƯA từng bấm DISAGREE (m2.votes chưa có, vì chưa gửi thật lần nào) thì tự chọn
+    // DISAGREE hộ — không thì ô nhập (đang giữ nháp) không hiện ra vì nút chưa ở trạng thái chọn.
+    try { m2.draftPb = JSON.parse(localStorage.getItem(khoaNhapTamPb()) || '{}'); } catch (e) { m2.draftPb = {}; }
+    Object.keys(m2.draftPb).forEach((id) => { if (m2.draftPb[id] && !m2.votes[id]) m2.votes[id] = { y: 'phanDoi', lyDo: '' }; });
 
     loadingAn();
     initVideo();
@@ -1566,10 +1599,22 @@
       return;
     }
     m2.votes[errId] = { y: 'phanDoi', lyDo: text };
+    suaNhapTamPb(errId, '');   // đã gửi thật rồi thì xoá nháp cục bộ (nội dung giờ nằm ở m2.votes)
     const dich = document.querySelector('[data-pbrebut="' + errId + '"]') || el.closest('[data-pbrow]');
     if (dich) flyPhanBien(el, dich, text);
     capNhatNutSubmit();
     renderErrorsPb();
+  }
+  // (Đợt lưu nháp) mỗi câu 1 ô nhớ riêng trong cùng khoá localStorage (map errId->chữ đang gõ
+  // dở CHƯA gửi) — khoá theo buổi+em nên đổi máy/tải lại trang không mất, tách bạch hẳn với
+  // m2.votes (giá trị ĐÃ gửi thật). Đợt cũ cố tình KHÔNG cho m2 vào autosave() vì nặng — bảng
+  // nháp nhỏ này để lưu riêng, không đụng luật đó.
+  function khoaNhapTamPb() { return 'myspeaking_draftpb_' + state.buoiId + '_' + state.student; }
+  function luuNhapTamPbMap() { try { localStorage.setItem(khoaNhapTamPb(), JSON.stringify(m2.draftPb || {})); } catch (e) {} }
+  function suaNhapTamPb(errId, text) {
+    if (!m2.draftPb) m2.draftPb = {};
+    if (text) m2.draftPb[errId] = text; else delete m2.draftPb[errId];
+    luuNhapTamPbMap();
   }
   // (Đợt STT xanh/xám) so phiếu CỤC BỘ của đúng 1 câu với bản đã đồng bộ lần cuối (cùng cách
   // diff `doi` trong submitPbThatSu, chỉ khác là soi TỪNG errId thay vì cả cục JSON) — true = câu
@@ -1603,12 +1648,13 @@
       // (Đợt viền dày hơn) "border" 1px cũ + "ring-2" chỉ 2px NGOÀI viền — nhìn mờ, khó nhận ra.
       // Đổi hẳn ĐỘ DÀY viền theo từng trường hợp (không cộng "border" nền + "border-4" chồng lên,
       // 2 lớp cùng đặt border-width dễ ăn nhau lung tung tuỳ thứ tự nạp CSS của Tailwind CDN).
-      // (Đợt viền vàng cho MỌI lỗi của mình) thầy chốt lại: viền VÀNG dày áp cho MỌI lỗi của
-      // chính em — dù đã AGREE/DISAGREE hay chưa — để luôn nổi bật giữa danh sách; chỉ chữ
-      // "— vote required" mới phân biệt đã vote hay chưa (xem khối laCuaMinh bên dưới).
+      // (Đợt bỏ nền vàng khi đã vote) viền VÀNG dày áp cho MỌI lỗi của chính em — dù đã
+      // AGREE/DISAGREE hay chưa — để luôn nổi bật giữa danh sách; NHƯNG nền vàng đặc chỉ còn
+      // dành riêng cho câu CHƯA vote (canVoteBatBuoc — "cần chú ý"), đã vote rồi thì bỏ nền,
+      // chỉ còn viền, mới phân biệt được câu đã xong với câu chưa (thầy chốt, đợt polish 4).
       return '<div class="slidein rounded-2xl p-3.5 transition ' +
         (daGo ? 'border border-slate-200 err-go' :
-          laCuaMinh ? 'border-4 border-amber-400 bg-amber-100/70' :
+          laCuaMinh ? 'border-4 border-amber-400' + (canVoteBatBuoc ? ' bg-amber-100/70' : '') :
           'border border-slate-200 hover:border-indigo-300') +
         '" data-pbrow="' + escapeHtml(e.id) + '">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
@@ -1673,9 +1719,12 @@
           // `input, select, textarea{font-size:16px!important}` dưới 1024px đã TỰ ép lên 16px
           // đúng ngưỡng iOS cần để không tự zoom (CLAUDE.md CHẶNG 18), khỏi cần ép cứng ở đây và
           // làm to hơn mức cần trên desktop — cùng cách fSentence/fDetail/fExplain đang dùng.
-          ' class="autogrow w-full rounded-xl border border-rose-300 pl-3 pr-9 py-2 text-xs leading-snug focus:outline-none focus:ring-2 focus:ring-rose-400"></textarea>' +
-          '<button data-pbsend="' + escapeHtml(e.id) + '" title="Send" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-rose-500 hover:text-rose-600 transition">' +
-          '<i data-lucide="send" class="w-4 h-4 pointer-events-none"></i></button>' +
+          ' class="autogrow w-full rounded-xl border border-rose-300 pl-3 pr-9 py-2 text-xs leading-snug focus:outline-none focus:ring-2 focus:ring-rose-400">' +
+          // (Đợt lưu nháp) chữ đang gõ dở CHƯA gửi nạp lại từ m2.draftPb — KHÔNG phải nội dung
+          // đã gửi thật (v.lyDo), hai nguồn tách bạch hẳn nhau.
+          escapeHtml((m2.draftPb && m2.draftPb[e.id]) || '') + '</textarea>' +
+          '<button data-pbsend="' + escapeHtml(e.id) + '" title="Send" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-600 transition">' +
+          '<i data-lucide="send-horizontal" class="w-4 h-4 pointer-events-none"></i></button>' +
           '</div>' : '') +
         '</div>';
     }).join('');
@@ -1689,6 +1738,8 @@
     $('btnDelAll').classList.add('hidden');
     capNhatBadgeThieuPb();
     veNutLocPb();
+    // (Đợt lưu nháp) ô nào vừa nạp lại nháp nhiều dòng thì giãn cao luôn, khỏi cụt còn 1 dòng
+    document.querySelectorAll('[data-pblydo]').forEach(autoGrow);
     refreshIcons();
   }
 
@@ -2240,10 +2291,10 @@
     $('btnStartCheck').addEventListener('click', start);
     $('btnBackNames').addEventListener('click', renderIdentify);
 
-    document.querySelectorAll('.errType').forEach((b) => b.addEventListener('click', () => { fType = b.dataset.type; renderTypeBtns(); }));
+    document.querySelectorAll('.errType').forEach((b) => b.addEventListener('click', () => { fType = b.dataset.type; renderTypeBtns(); luuNhapTamCham(); }));
 
-    // Ô SENTENCE / MISTAKE / EXPLANATION tự giãn cao khi gõ để xem hết chữ
-    ['fSentence', 'fDetail', 'fExplain'].forEach((id) => $(id).addEventListener('input', (e) => autoGrow(e.target)));
+    // Ô SENTENCE / MISTAKE / EXPLANATION tự giãn cao khi gõ để xem hết chữ + lưu nháp cục bộ
+    ['fSentence', 'fDetail', 'fExplain'].forEach((id) => $(id).addEventListener('input', (e) => { autoGrow(e.target); luuNhapTamCham(); }));
 
     // Nút chọn HS có lỗi (delegation — wrap tồn tại sẵn, nút dựng lại sau mỗi buildStudentField)
     $('fStudentWrap').addEventListener('click', (ev) => {
@@ -2251,6 +2302,7 @@
       if (!b) return;
       fWhoSel = (fWhoSel === b.dataset.who) ? '' : b.dataset.who;  // bấm lại tên đang sáng = bỏ chọn
       renderWhoBtns();
+      luuNhapTamCham();
     });
 
     // Khung điều khiển video luôn hiện
@@ -2352,7 +2404,10 @@
         const id = pbEdit.dataset.pbedit;
         const cur = m2.votes[id];
         const o = document.querySelector('[data-pblydo="' + id + '"]');
-        if (o) { o.value = cur ? cur.lyDo : ''; autoGrow(o); o.focus(); }
+        if (o) {
+          o.value = cur ? cur.lyDo : ''; autoGrow(o); o.focus();
+          suaNhapTamPb(id, o.value);   // (Đợt lưu nháp) set .value bằng JS không tự bắn 'input'
+        }
         return;
       }
       const edit = ev.target.closest('[data-edit]');
@@ -2497,6 +2552,7 @@
       if (!o) return;
       o.classList.remove('ring-2', 'ring-rose-400');
       autoGrow(o);
+      suaNhapTamPb(o.dataset.pblydo, o.value);   // (Đợt lưu nháp) gõ tới đâu lưu tạm tới đó
     });
     // Enter (không giữ Shift) trong ô lý do = gửi luôn, khỏi phải với chuột sang icon gửi
     $('errList').addEventListener('keydown', (ev) => {
