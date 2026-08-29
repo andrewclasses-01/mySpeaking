@@ -854,9 +854,12 @@
       const coTranhChap = phieuPhanDoi.length > 0;
       // Icon uploaded (chấm xanh trái ô): câu này ĐÃ nằm trên kho đúng y bản đang thấy
       const daLuu = m2Mode && m2LoiDaDongBo(e);
-      return '<div class="slidein rounded-2xl border p-3.5 transition group ' +
+      // (Đợt viền dày hơn) đổi hẳn ĐỘ DÀY viền cho câu tranh chấp (border-4) thay vì chỉ đổi màu
+      // trên viền 1px cũ — viền mỏng amber-400 quá mờ, khó nhận ra giữa các ô khác.
+      return '<div class="slidein rounded-2xl p-3.5 transition group ' +
         (daGo ? 'err-go ' : '') +
-        (coTranhChap ? 'border-amber-400 bg-amber-50/40' : 'border-slate-200' + (daGo ? '' : ' hover:border-indigo-300')) + '">' +
+        (coTranhChap ? 'border-4 border-amber-400 bg-amber-100/60' :
+          'border border-slate-200' + (daGo ? '' : ' hover:border-indigo-300')) + '">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
         (m2Mode ? '<span class="shrink-0 w-4 h-4 rounded-full flex items-center justify-center ' +
           (daLuu ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400') + '" title="' +
@@ -1548,8 +1551,13 @@
       // đã so `p.voter === state.student` ở startPb() — cùng một mảng tên thành viên, không lệch.
       const laCuaMinh = !!(e.who && state.student && e.who === state.student);
       const canVoteBatBuoc = laCuaMinh && !daGo && !v;
-      return '<div class="slidein rounded-2xl border p-3.5 transition ' +
-        (daGo ? 'err-go border-slate-200' : (canVoteBatBuoc ? 'border-amber-400 bg-amber-50/50 ring-2 ring-amber-300' : 'border-slate-200 hover:border-indigo-300')) + '" data-pbrow="' + escapeHtml(e.id) + '">' +
+      // (Đợt viền dày hơn) "border" 1px cũ + "ring-2" chỉ 2px NGOÀI viền — nhìn mờ, khó nhận ra.
+      // Đổi hẳn ĐỘ DÀY viền theo từng trường hợp (không cộng "border" nền + "border-4" chồng lên,
+      // 2 lớp cùng đặt border-width dễ ăn nhau lung tung tuỳ thứ tự nạp CSS của Tailwind CDN).
+      return '<div class="slidein rounded-2xl p-3.5 transition ' +
+        (daGo ? 'border border-slate-200 err-go' :
+          (canVoteBatBuoc ? 'border-4 border-amber-400 bg-amber-100/70' : 'border border-slate-200 hover:border-indigo-300')) +
+        '" data-pbrow="' + escapeHtml(e.id) + '">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
         '<span class="shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center">' + (pos + 1) + '</span>' +
         '<button data-pbseek="' + tSec(e) + '" class="font-mono font-bold text-sm bg-slate-900 text-white rounded-lg px-2 py-0.5 hover:bg-indigo-700 transition">' + fmtTime(e) + '</button>' +
