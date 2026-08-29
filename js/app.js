@@ -1612,13 +1612,14 @@
           'border border-slate-200 hover:border-indigo-300') +
         '" data-pbrow="' + escapeHtml(e.id) + '">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
-        // (Đợt STT xanh/xám) xanh lá = câu này đã đồng bộ (hoặc chưa hề đụng tới) · xám nhạt = có
-        // sửa cục bộ chưa gửi · vừa Submit xong thì đứng icon ✓ đúng 1 giây rồi mới về số xanh.
+        // (Đợt STT xanh đậm nổi bật hơn) xanh lá ĐẬM (nền + chữ trắng) = câu này đã đồng bộ (hoặc
+        // chưa hề đụng tới) · xám nhạt = có sửa cục bộ chưa gửi · vừa Submit xong thì đứng icon ✓
+        // đúng 1 giây (cùng nền xanh đậm, chỉ khác nội dung) rồi mới về số.
         (function(){
           const vuaGui = m2.vuaGuiPb.indexOf(e.id) >= 0;
           const dongBo = daDongBoPhieu(e.id);
           return '<span class="shrink-0 w-6 h-6 rounded-full font-extrabold text-xs flex items-center justify-center ' +
-            (vuaGui ? 'bg-emerald-500 text-white' : dongBo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-400') + '">' +
+            (vuaGui || dongBo ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400') + '">' +
             (vuaGui ? '<i data-lucide="check" class="w-3.5 h-3.5 pointer-events-none"></i>' : (pos + 1)) + '</span>';
         })() +
         '<button data-pbseek="' + tSec(e) + '" class="font-mono font-bold text-sm bg-slate-900 text-white rounded-lg px-2 py-0.5 hover:bg-indigo-700 transition">' + fmtTime(e) + '</button>' +
@@ -1662,13 +1663,18 @@
         // (Đợt ô gửi riêng) ô nhập KHÔNG bao giờ tự điền lại nội dung đã gửi (chỉ trống hoặc đang
         // sửa qua nút bút) — gõ xong bấm icon gửi mới đẩy lên danh sách phía trên (xem guiPhanBienMotCau).
         (chonN && !daGo ?
-          // (Đợt căn giữa nút gửi) items-stretch thay items-end + BỎ h-9 cố định trên nút — nút
-          // giãn ĐÚNG BẰNG chiều cao thật của ô nhập (autogrow đổi cao thì nút đổi theo), luôn
-          // khít chứ không lệch trên/dưới như khi ô cao hơn 36px cố định của nút.
-          '<div class="mt-2 flex items-stretch gap-1.5">' +
+          // (Đợt icon gửi trần) bỏ hẳn khung nút màu — chỉ còn icon, ĐÈ TUYỆT ĐỐI lên góc phải ô
+          // nhập (position:absolute + top-1/2 -translate-y-1/2) nên LUÔN đứng giữa theo chiều cao
+          // thật của ô bất kể ô cao thêm bao nhiêu do autogrow, cỡ icon không đổi theo. Ô nhập
+          // chừa chỗ bên phải (pr-9) để chữ không đè lên icon.
+          '<div class="mt-2 relative">' +
           '<textarea data-pblydo="' + escapeHtml(e.id) + '" rows="1" maxlength="300" placeholder="Why do you disagree? (required)"' +
-          ' class="autogrow flex-1 rounded-xl border border-rose-300 px-3 py-2 text-xs leading-snug focus:outline-none focus:ring-2 focus:ring-rose-400"></textarea>' +
-          '<button data-pbsend="' + escapeHtml(e.id) + '" title="Send" class="shrink-0 w-9 rounded-xl bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center transition">' +
+          // (Đợt cỡ chữ tối thiểu) text-xs (12px) như mọi ô nhập khác trong app — luật CSS chung
+          // `input, select, textarea{font-size:16px!important}` dưới 1024px đã TỰ ép lên 16px
+          // đúng ngưỡng iOS cần để không tự zoom (CLAUDE.md CHẶNG 18), khỏi cần ép cứng ở đây và
+          // làm to hơn mức cần trên desktop — cùng cách fSentence/fDetail/fExplain đang dùng.
+          ' class="autogrow w-full rounded-xl border border-rose-300 pl-3 pr-9 py-2 text-xs leading-snug focus:outline-none focus:ring-2 focus:ring-rose-400"></textarea>' +
+          '<button data-pbsend="' + escapeHtml(e.id) + '" title="Send" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-rose-500 hover:text-rose-600 transition">' +
           '<i data-lucide="send" class="w-4 h-4 pointer-events-none"></i></button>' +
           '</div>' : '') +
         '</div>';
