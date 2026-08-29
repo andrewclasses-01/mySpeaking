@@ -1621,3 +1621,109 @@ AGREE/DISAGREE cho những câu lỗi mà `who` (ai nói câu đó) là **CHÍNH
 học sinh trong phiên sửa) — cần thầy mở màn PHẢN BIỆN của một buổi có ít nhất 1 câu lỗi ghi tên
 chính em đang đăng nhập, xác nhận: câu đó tô vàng + không bấm Submit được tới khi vote, câu ghi
 tên đồng đội vẫn nộp được khi bỏ trống.
+
+---
+
+## CHẶNG — 29/08/2026: LÀM LẠI MÀN PHẢN BIỆN (10 đợt liên tiếp, `?v=31` → `?v=40`, LIVE)
+
+### Bối cảnh
+Nối tiếp CHẶNG trên (28/08 khuya, `?v=30`). Thầy đưa yêu cầu theo TỪNG ĐỢT nhỏ trong cùng một
+phiên — mỗi đợt: nghe yêu cầu → (đợt lớn thì hỏi rõ bằng AskUserQuestion trước khi build) → sửa
+`js/app.js`/`index.html` → **kiểm bằng trang thử độc lập** (copy nguyên logic thật ra file HTML
+riêng, nạp Tailwind CDN + Lucide CDN thật, KHÔNG đoán mò) → tăng `?v=` → commit + push → chờ
+GitHub Pages build xong → so mã băm `curl` vs `git hash-object` bản local, khớp 100% mới báo
+thầy. 10 commit riêng biệt, mỗi commit đúng 1 đợt phản hồi:
+
+### Đợt 1 (`?v=31`, `3c3e22f`) — nút SUBMIT/UPDATE + khung vàng CHẤM + giới hạn AGREE
+- Nút Submit màn CHẤM/PHẢN BIỆN đổi CẢ CHỮ theo trạng thái (trước chỉ đổi màu, chữ luôn "Submit"
+  cứng): SUBMIT/SUBMITTED (lần đầu) hay UPDATE/UPDATED (từ lần 2), trắng/vàng/xanh — xem công
+  thức đủ ở `CLAUDE.md` mục "Màn PHẢN BIỆN". `m2.nhanXanh` nhớ chữ XANH đúng của LẦN GỬI GẦN NHẤT
+  (chốt TRƯỚC khi cờ `daNopLanNao` đổi true, không thì mất phân biệt lần-đầu-hay-không).
+- Màn CHẤM: lỗi có ≥1 phiếu phản đối viền vàng dày + hiện đủ "TÊN: lý do" từng dòng ngay trong ô
+  (trước chỉ có avatar, phải bấm mới xem được lý do).
+- Màn PHẢN BIỆN: ẩn nút AGREE với lỗi không phải của mình (chỉ chính chủ mới được tự gỡ lỗi của
+  mình) + hộp hỏi lại `#pbThieuModal` thay vì chặn cứng khi Submit mà còn câu của mình chưa vote.
+
+### Đợt 2 (`?v=32`, `ccdbbe7`) — viền vàng quá mờ
+Thầy: "viền hiện tại khó nhận biết". Đổi hẳn ĐỘ DÀY viền (`border` 1px → `border-4`) thay vì chỉ
+đổi màu trên viền mỏng cũ — `border` + `border-4` cộng chung dễ ăn nhau lung tung tuỳ thứ tự nạp
+CSS của Tailwind CDN nên phải bỏ hẳn `border` nền, chọn ĐÚNG MỘT lớp theo từng trường hợp.
+
+### Đợt 3 (`?v=33`) — nút ALL/MINE thay tiêu đề "Mistakes found"
+Bấm ALL hiện mọi lỗi cả đội, MINE chỉ lỗi của mình. **Đợt đầu làm SAI** — chỉ đổi CHỮ trên 1 nút
+tròn (không phải dạng chia đôi thầy muốn), viền vàng cho câu ĐÃ vote đổi nhầm sang màu indigo.
+
+### Đợt 4 (`?v=34`, `1b46623`) — sửa lại đúng theo phản hồi
+Thầy: viền màu indigo → phải VÀNG (không phải "hết vàng khi đã vote" như hiểu lầm đợt 3); nút
+ALL/MINE → phải CHIA ĐÔI THẬT (2 `<button>` con trong 1 khung, bên chọn sáng bên kia xám mờ), event
+delegation `data-loc="all"/"mine"` trên khung cha.
+
+### Đợt 5 (`?v=35`, `cdf5cba`) — làm lại toàn bộ ô nhập lý do phản đối
+Thay đổi lớn nhất đợt này: ô nhập lý do KHÔNG còn ghi thẳng `m2.votes` mỗi phím gõ — chỉ CHỐT khi
+bấm icon gửi riêng cạnh ô (hoặc Enter không giữ Shift). Gửi xong có hoạt cảnh chữ "bay" lên đầu
+"danh sách phản biện" mới (chính chủ luôn đứng đầu, tên vàng, icon bút sửa lại — sửa+gửi lại THAY
+dòng cũ). Badge UNCONFIRMED cố định luôn hiện, đếm số câu của mình chưa vote.
+
+### Đợt 6 (`?v=36`) — polish theo ảnh chụp: nút gửi lệch + STT xanh/xám
+- Nút gửi (khi đó còn là nút hình vuông màu) lệch khỏi ô nhập → đổi `items-end` (bám đáy) sang
+  `items-stretch` + bỏ `h-9` cố định, nút giãn đúng bằng chiều cao ô.
+- STT (số thứ tự) đổi màu theo trạng thái đồng bộ TỪNG CÂU: xanh = đã gửi lên kho (hoặc chưa đụng
+  tới) · xám = có sửa cục bộ chưa gửi (`daDongBoPhieu()`, so `m2.votes[errId]` với `m2.votesServer`
+  đã parse). Vừa Submit xong: icon ✓ đứng 1 giây rồi mới về số (`m2.vuaGuiPb` + `setTimeout`).
+
+### Đợt 7 (`?v=37`) — STT chưa đủ nổi bật + icon gửi cần trần hẳn
+Thầy: xanh nhạt (`bg-emerald-100`) chưa nổi bật → đổi xanh ĐẬM (`bg-emerald-500 text-white`) cho
+cả 2 trạng thái "đã đồng bộ" lẫn "vừa gửi" (chỉ khác icon/số). Nút gửi bỏ hẳn khung nút màu, chỉ
+còn ICON TRẦN đặt `position:absolute` đè góc phải ô (`top-1/2 -translate-y-1/2`) — ý định là để
+icon LUÔN đứng giữa bất kể ô cao thêm do gõ nhiều dòng (xem đợt 9, ý định này lúc đầu SAI kỹ thuật).
+
+### Đợt 8 (`?v=38`) — icon dạng khác + lưu nháp + bỏ nền vàng khi đã vote
+- Icon gửi đổi `send` (chéo) → `send-horizontal` (ngang, đúng ảnh thầy gửi mẫu) + màu đỏ thật
+  (`red-500`, trước dùng `rose-500` gần đỏ nhưng thầy muốn đỏ rõ hơn) — đã tra icon này CÓ THẬT
+  trong bundle Lucide 0.454.0 đang dùng trước khi đổi tên (`grep` thẳng file `.js` tải về, không
+  đoán tên icon).
+- **Lưu nháp cục bộ** cả 2 màn: CHẤM (form SENTENCE/MISTAKE/EXPLANATION, khoá theo `saveKey`) và
+  PHẢN BIỆN (mỗi câu 1 ô nhớ trong `m2.draftPb`, khoá theo buổi+em) — gõ dở thoát/tải lại không
+  mất. ⛔ **Bẫy bắt được qua trang thử, không phải mắt người**: câu CHƯA từng gửi thì sau khi tải
+  lại `m2.votes` rỗng (không lưu localStorage) → nút DISAGREE mất trạng thái chọn → ô đang giữ
+  nháp KHÔNG HIỆN RA (điều kiện render `chonN && !daGo`). Vá bằng cách trong `startPb()`, câu nào
+  có nháp mà chưa có phiếu thì TỰ GÁN `m2.votes[id]={y:'phanDoi',lyDo:''}` để nút bật sáng lại.
+- Ô "chính chủ" đã AGREE/DISAGREE bỏ nền vàng đặc, chỉ còn viền — thầy: "có câu AGREE/DISAGREE rồi
+  mà vẫn nền vàng nên không phân biệt được câu đã xong với câu chưa" (khớp ý đợt 4 nhưng đợt đó
+  code thật chưa làm đúng, vẫn giữ nền cho MỌI câu chính chủ).
+
+### Đợt 9 (`?v=39`, `9274dc5`) — TÌM RA NGUYÊN NHÂN THẬT của lệch icon
+Thầy vẫn thấy icon lệch (kèm 2 ảnh chụp). Đo bằng trang thử (KHÔNG đoán): SVG icon và ô nhập lệch
+tâm đúng **3px cố định** mọi trường hợp (rỗng/1 dòng/nhiều dòng), thêm `flex items-center
+justify-center` lên nút KHÔNG đổi kết quả đo — sai hướng đợt 7. Đo tiếp `getBoundingClientRect()`
+của khung cha `.relative` so với chính ô nhập bên trong: khung cha **CAO HƠN ô nhập 6px** dù chỉ
+chứa mỗi ô nhập. Nguyên nhân: `<textarea>` mặc định `display:inline-block`, nằm trong dòng chữ kế
+thừa `line-height` của trang → khung cha bị tính thêm khoảng trống dưới đáy theo line-box (đúng
+họ lỗi "khoảng trống dưới `<img>`" kinh điển) — icon canh giữa ĐÚNG theo khung cha (đã phình) nên
+NHÌN lệch so với ô nhập thật. Thêm `block` vào class ô nhập → đo lại lệch tâm = **0px chính xác**
+qua nhiều lần đo độc lập trên trang thử thật (Tailwind CDN + Lucide CDN thật, không giả lập).
+
+### Đợt 10 (`?v=40`, `dda5b1b`) — cuộn tới câu chưa xác nhận + hiện số trên ALL/MINE
+- Bấm badge UNCONFIRMED / mở màn phản biện / đổi ALL-MINE đều tự cuộn tới câu ĐẦU TIÊN chưa xác
+  nhận (`data-pbunconfirmed="1"` gắn đúng nghĩa theo CHẾ ĐỘ đang xem — ALL xét theo chủ nhân thật
+  `e.who` bất kể ai, MINE chỉ xét chính mình). Bấm badge cuộn NGAY; mở màn/đổi chế độ hiện bình
+  thường 1 giây rồi mới cuộn (giữ cảm giác không giật cục).
+- Nút ALL/MINE hiện thêm số câu sẽ thấy khi bấm sang, số luôn đỏ: `"ALL • 120"` / `"MINE • 65"`.
+
+### Cách kiểm mỗi đợt (áp dụng suốt 10 đợt)
+Không có buổi Firestore thật trong phiên sửa nên KHÔNG bấm tay được app thật — bù lại bằng
+**trang thử độc lập**: copy nguyên văn hàm render/logic thật ra 1 file `.html` riêng (nạp CDN
+Tailwind + Lucide THẬT, không giả lập DOM), gắn dữ liệu giả đủ các ca biên (câu của mình/của bạn,
+đã vote/chưa vote, đã gỡ/còn sống, nhiều người phản đối cùng câu…), bấm/gõ bằng
+`javascript_tool`/`computer` giống người dùng thật, đo bằng `getBoundingClientRect()` chứ không
+chỉ nhìn ảnh chụp. Cách này bắt được ít nhất 2 lỗi thật KHÔNG thể thấy nếu chỉ đọc code (đợt 8:
+nháp không hiện lại sau tải lại trang; đợt 9: nguyên nhân lệch icon là `inline-block`, không phải
+CSS căn giữa sai như tưởng ở đợt 7). File thử luôn xoá sau khi kiểm xong, không để lọt vào repo.
+
+### Đã kiểm / CHƯA kiểm (áp dụng chung cả 10 đợt)
+`node --check js/app.js` sạch mỗi đợt. Mọi đợt đều so mã băm `curl` (live) khớp `git hash-object`
+(local) 100% sau khi Pages build xong. **CHƯA có ai bấm tay trên buổi Firestore thật** — cần thầy
+mở một buổi mô hình 2 đang có tranh chấp thật, thử đủ luồng: chọn DISAGREE → gõ → bấm icon gửi →
+thấy dòng mình nhảy lên đầu danh sách + STT chuyển xanh sau khi bấm SUBMIT lớn; bấm bút sửa lại
+một câu đã gửi; gõ dở rồi tải lại trang xem nháp còn không; bấm badge UNCONFIRMED xem có cuộn
+đúng chỗ; đổi ALL/MINE xem số + cuộn tự động có đúng không.

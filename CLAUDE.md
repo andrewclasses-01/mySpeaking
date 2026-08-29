@@ -1,5 +1,15 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> ⭐⭐⭐⭐ **CẬP NHẬT 29/08/2026 (`?v=40`, LIVE, đã so mã băm khớp) — LÀM LẠI TOÀN BỘ MÀN PHẢN
+> BIỆN theo 6 đợt phản hồi liên tiếp của thầy trong cùng một phiên.** Đọc mục **"Màn PHẢN BIỆN —
+> trạng thái hiện tại"** bên dưới để biết NGUYÊN VĂN hành vi đang chạy (nút SUBMIT/UPDATE 4 trạng
+> thái, ô gửi riêng cho từng câu phản đối + lưu nháp cục bộ, khung vàng chỉ-viền/có-nền phân biệt
+> đã-vote hay chưa, nút ALL/MINE hiện số + tự cuộn tới câu chưa xác nhận). Nhật ký đầy đủ 10 đợt
+> (từ `?v=31` tới `?v=40`, mỗi đợt 1 commit riêng): `GHI CHU DU AN.md` mục cuối cùng — **CHẶNG
+> 29/08/2026: LÀM LẠI MÀN PHẢN BIỆN**. ⚠️ Toàn bộ đợt này build xong **kiểm bằng trang thử độc
+> lập** (chép logic thật ra ngoài + Tailwind/Lucide thật, KHÔNG đoán mò — có bắt được ít nhất 2
+> lỗi thật qua cách này, xem mục "Bẫy đã tránh"), **CHƯA có ai bấm tay trên buổi Firestore thật**.
+>
 > ⭐⭐⭐ **CẬP NHẬT 28/08/2026 khuya (?v=30) — MÀN PHẢN BIỆN: BẮT BUỘC VOTE LỖI CỦA CHÍNH MÌNH.**
 > Thầy chốt: em đang phản biện (đội bị chấm) **buộc phải AGREE hoặc DISAGREE** cho MỌI lỗi mà
 > `who` ghi đúng TÊN MÌNH — lỗi ghi tên đồng đội khác thì vẫn **tuỳ ý**, không bắt buộc. Đã sửa
@@ -125,6 +135,55 @@ teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo
 - **Submit chặn 3 tầng**: (1) thiếu ô giờ → viền đỏ + toast; (2) giờ sai — end≤start hoặc 2 HS đan xen (`validateTimerRanges`); (3) modal xác nhận.
 - **Header**: logo chibi + ANDREW CLASSES (BẤM = về trang chủ, còn lỗi chưa submit → pop-up `#leaveModal`) + **nút người chấm "HOANG · T1"** (`#hdStudent`, tên·đội, cỡ = Export, không icon; đã BỎ badge TEAM X) + Export + Submit.
 - **CẤU TRÚC DỮ LIỆU (payload/Sheet/Excel) + việc THỐNG NHẤT sắp tới**: xem mục **⭐ KHUNG DỮ LIỆU** trong `GHI CHU DU AN.md`. ✅ **Ô SENTENCE ĐÃ ghi vào Google Sheet từ CHẶNG 17** (`Code.gs`: header dòng 53 có `SENTENCE`, hàng ghi dòng 141 có `er.sentence`) — ghi chú cũ nói "chưa map" là **đã lạc hậu**, đừng đi sửa lại.
+
+## Màn PHẢN BIỆN — trạng thái hiện tại (sau đợt 29/08/2026, `?v=40`, CHỈ mô hình 2/Firestore)
+> `state.cheDo === 'phanbien'` → `renderErrorsPb()`. Toàn bộ mục này chỉ áp dụng buổi mô hình 2
+> (Firestore, từ 26/08/2026) — buổi mô hình cũ (Sheets) không có màn này.
+- **Nút SUBMIT/UPDATE 4 trạng thái** (`capNhatNutSubmit()`, dùng chung với màn CHẤM): TRẮNG
+  "SUBMIT" (chưa nộp lần nào, chưa sửa gì) → VÀNG nhấp nháy "SUBMIT" (chưa nộp, có sửa chờ gửi)
+  → XANH "SUBMITTED" (vừa nộp lần ĐẦU) → VÀNG nhấp nháy "UPDATE" (đã nộp, có sửa mới) → XANH
+  "UPDATED" (vừa nộp lại). "SUBMIT" chỉ hiện TRƯỚC lần nộp đầu tiên, sau đó mãi mãi là "UPDATE"
+  (đọc cờ `m2.daNopLanNao`/`m2.votesServer`, không reset).
+- **Mỗi câu tranh chấp có Ô GỬI RIÊNG** (không còn 1 nút Submit gộp mọi lý do phản đối như bản
+  cũ): chọn DISAGREE → hiện `<textarea data-pblydo>` hẹp + icon `send-horizontal` màu đỏ ĐÈ
+  TUYỆT ĐỐI góc phải (position:absolute + top-1/2/-translate-y-1/2 + **`block`** trên textarea —
+  ⛔ THIẾU `block` là `<textarea>` mặc định `inline-block` làm khung cha phình ~6px theo line-box,
+  icon nhìn lệch dù CSS căn giữa tính đúng, xem CHẶNG 29/08 mục "Bẫy"). Gõ xong bấm icon (hoặc
+  Enter không giữ Shift) mới CHỐT — nội dung KHÔNG hiện thường trực trong ô, chỉ hiện sau khi gửi
+  thật trong "danh sách phản biện" ngay phía trên (chính chủ luôn đứng đầu, tên tô vàng `amber-600`,
+  có icon bút sửa lại — sửa+gửi lại THAY nguyên dòng cũ, không đẻ dòng mới). Gửi xong có hoạt cảnh
+  chữ "bay" từ ô lên đầu danh sách (`flyPhanBien()`, cùng khuôn Web Animations API với `flyLight()`
+  có sẵn).
+- **Lưu nháp cục bộ** (`m2.draftPb`, khoá `myspeaking_draftpb_<buoiId>_<student>`): gõ dở CHƯA
+  gửi vẫn còn khi thoát/tải lại trang — nạp lại trong `startPb()`. ⚠️ Câu nào có nháp mà CHƯA
+  từng bấm DISAGREE thật thì phải **TỰ CHỌN LẠI DISAGREE** hộ (gán `m2.votes[id]={y:'phanDoi',
+  lyDo:''}`) — không thì nút mất trạng thái chọn sau khi tải lại, ô đang giữ nháp không hiện ra.
+- **Khung "YOUR MISTAKE" (`laCuaMinh`)**: viền vàng dày `border-4` LUÔN có (dù đã vote hay chưa)
+  để còn phân biệt với câu của bạn khác giữa danh sách; **nền vàng đặc `bg-amber-100/70` CHỈ còn
+  khi CHƯA vote** (`canVoteBatBuoc`) — đã AGREE/DISAGREE thì bỏ nền, chỉ còn viền, mới phân biệt
+  được câu xong với câu chưa (thầy chốt sau khi thấy bản đầu tô nền cả 2 loại, không phân biệt được).
+- **Chỉ chính chủ mới AGREE được** — lỗi `who` không phải mình thì nút AGREE bị ẨN hẳn, chỉ còn
+  DISAGREE (`who` luôn có sẵn vì màn CHẤM bắt buộc chọn, không có ca rỗng).
+- **STT đổi màu theo đồng bộ** (`daDongBoPhieu()`, so `m2.votes[errId]` cục bộ với bản đã đồng
+  bộ `m2.votesServer`): xanh lá ĐẬM `bg-emerald-500` = đã đồng bộ (hoặc chưa đụng tới) · xám nhạt
+  = có sửa cục bộ chưa gửi. Vừa Submit xong: các câu vừa gửi đứng icon ✓ đúng 1 giây (`m2.vuaGuiPb`
+  + `setTimeout` 1000ms) rồi mới về số.
+- **Nút ALL/MINE** (`#btnPbLoc`, dạng chia đôi thật — 2 `<button data-loc="all"/"mine">` trong 1
+  khung bo tròn, bên đang chọn sáng indigo, bên kia xám mờ) THAY HẲN tiêu đề "Mistakes found" (ẩn/
+  hiện qua CSS `.pb-mode`, không cần JS mỗi lần đổi màn). Hiện thêm SỐ CÂU sẽ thấy khi bấm sang
+  bên đó, luôn đỏ: `"ALL • 120"` / `"MINE • 65"`. ALL lọc `m2.dsCham` đủ cả đội; MINE lọc
+  `who === state.student`.
+- **Badge UNCONFIRMED** (`#btnPbThieu`, luôn hiện, không cần bấm Submit mới thấy) đếm theo ĐÚNG
+  chế độ đang xem: ALL đếm CẢ ĐỘI (mỗi câu tính theo chủ nhân thật `e.who`, tra trên `m2.phanHoi`
+  đã đồng bộ của MỌI người) · MINE chỉ đếm của chính em (`m2.votes` cục bộ, dùng chung với chốt
+  Submit). Bấm badge, mở màn phản biện, hoặc đổi ALL/MINE đều tự **cuộn tới câu ĐẦU TIÊN chưa xác
+  nhận** (`cuonToiCauChuaXacNhan()`, tìm `[data-pbunconfirmed="1"]` đầu tiên theo DOM — đúng thứ
+  tự thời gian video) — bấm badge cuộn NGAY, hai trường hợp kia hiện bình thường 1 giây rồi mới
+  cuộn (`setTimeout` 1000ms), không cuộn gì nếu đã "ALL CONFIRMED".
+- **Submit không còn chặn cứng** khi còn câu của chính mình chưa AGREE/DISAGREE — chỉ hỏi lại qua
+  `#pbThieuModal` ("Go back and check" / "Submit anyway"), bấm "Submit anyway" gọi thẳng
+  `submitPbThatSu()` bỏ qua chốt bắt buộc. Lý do phản đối bị BỎ TRỐNG vẫn CHẶN CỨNG (dữ liệu
+  không hợp lệ, khác với "chưa vote" — chỉ là thiếu lý do thì không có gì để hỏi lại).
 
 ## Triển khai — ĐÃ LIVE (chặng 14, 19/07/2026)
 - **Web HS**: https://andrewclasses-01.github.io/mySpeaking/ — GitHub tài khoản **`andrewclasses-01`** (KHÔNG phải andrewclasses-code như dự kiến cũ — thầy chốt lại chặng 14), repo public `mySpeaking`, Pages nhánh `master` path `/`. Push bằng git thường (`git push origin master`); `gh repo create` bị classifier chặn → tạo repo qua web, teacher bấm.
