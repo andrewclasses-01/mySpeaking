@@ -1719,11 +1719,20 @@
           // `input, select, textarea{font-size:16px!important}` dưới 1024px đã TỰ ép lên 16px
           // đúng ngưỡng iOS cần để không tự zoom (CLAUDE.md CHẶNG 18), khỏi cần ép cứng ở đây và
           // làm to hơn mức cần trên desktop — cùng cách fSentence/fDetail/fExplain đang dùng.
-          ' class="autogrow w-full rounded-xl border border-rose-300 pl-3 pr-9 py-2 text-xs leading-snug focus:outline-none focus:ring-2 focus:ring-rose-400">' +
+          // (Đợt sửa lệch icon — NGUYÊN NHÂN THẬT) <textarea> mặc định display:inline-block, nằm
+          // trong dòng chữ có line-height kế thừa (24px) nên khung cha .relative bị PHÌNH thêm
+          // ~6px "khoảng trống dưới đáy" (đúng họ lỗi <img> lọt hình kinh điển) — icon canh giữa
+          // đúng theo khung cha (đã phình) nên NHÌN lệch xuống so với ô nhập thật. Thêm "block"
+          // là ép ô nhập ra khỏi dòng chữ, khung cha hết phình, đo lại lệch tâm = 0px chính xác.
+          ' class="autogrow block w-full rounded-xl border border-rose-300 pl-3 pr-9 py-2 text-xs leading-snug focus:outline-none focus:ring-2 focus:ring-rose-400">' +
           // (Đợt lưu nháp) chữ đang gõ dở CHƯA gửi nạp lại từ m2.draftPb — KHÔNG phải nội dung
           // đã gửi thật (v.lyDo), hai nguồn tách bạch hẳn nhau.
           escapeHtml((m2.draftPb && m2.draftPb[e.id]) || '') + '</textarea>' +
-          '<button data-pbsend="' + escapeHtml(e.id) + '" title="Send" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-red-500 hover:text-red-600 transition">' +
+          // (Đợt sửa lệch icon) THIẾU flex items-center justify-center là thủ phạm: SVG trong
+          // <button> mặc định canh theo baseline CHỮ (như <img> giữa dòng text) — luôn để hở một
+          // khoảng dưới đáy do "descender", nên NHÌN thấy icon thấp hơn tâm dù bản thân <button>
+          // đã đúng giữa qua top-1/2/-translate-y-1/2. Thêm flex ép SVG căn giữa theo HỘP, hết lệch.
+          '<button data-pbsend="' + escapeHtml(e.id) + '" title="Send" class="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center leading-none text-red-500 hover:text-red-600 transition">' +
           '<i data-lucide="send-horizontal" class="w-4 h-4 pointer-events-none"></i></button>' +
           '</div>' : '') +
         '</div>';
