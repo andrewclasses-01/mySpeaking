@@ -363,9 +363,12 @@ tailwind.config = {
         <div id="errListCard" class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:col-start-2 lg:row-start-2 lg:min-h-[12rem] lg:flex lg:flex-col">
           <div class="flex items-center justify-between mb-3 lg:shrink-0">
             <h2 id="errListTitle" class="font-extrabold flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-indigo-600"></i> Mistakes found</h2>
-            <!-- (Đợt lọc ALL/MINE) màn phản biện: thay hẳn tiêu đề trên bằng nút bấm đổi ALL/MINE
-                 (ẩn/hiện qua CSS .pb-mode bên dưới, không cần đụng JS mỗi lần đổi màn) -->
-            <button id="btnPbLoc" class="hidden font-extrabold text-xs rounded-full px-3 py-1.5 border-2 transition">ALL</button>
+            <!-- (Đợt lọc ALL/MINE) màn phản biện: thay hẳn tiêu đề trên bằng nút DÀI CHIA ĐÔI —
+                 bên đang hiện thì sáng, bên kia xám mờ (ẩn/hiện qua CSS .pb-mode bên dưới) -->
+            <div id="btnPbLoc" class="hidden items-center rounded-full border-2 border-slate-300 overflow-hidden text-xs font-extrabold">
+              <button data-loc="all" class="px-3.5 py-1.5 transition">ALL</button>
+              <button data-loc="mine" class="px-3.5 py-1.5 transition">MINE</button>
+            </div>
             <!-- (Đợt B) nút DISAGREEMENT: số câu có phản đối CHƯA xử lý; bấm = dồn lên đầu + hào quang -->
             <button id="btnDisagree" class="hidden"></button>
             <!-- (Đợt phản biện 2) badge cố định: số lỗi CỦA CHÍNH EM chưa AGREE/DISAGREE (màn phản biện) -->
@@ -591,6 +594,6 @@ tailwind.config = {
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=27"></script>
-<script src="js/app.js?v=33"></script>
+<script src="js/app.js?v=34"></script>
 </body>
 </html>

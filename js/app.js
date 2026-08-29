@@ -1557,13 +1557,12 @@
       // (Đợt viền dày hơn) "border" 1px cũ + "ring-2" chỉ 2px NGOÀI viền — nhìn mờ, khó nhận ra.
       // Đổi hẳn ĐỘ DÀY viền theo từng trường hợp (không cộng "border" nền + "border-4" chồng lên,
       // 2 lớp cùng đặt border-width dễ ăn nhau lung tung tuỳ thứ tự nạp CSS của Tailwind CDN).
-      // (Đợt viền theo trạng thái) VÀNG chỉ dành riêng cho "chưa vote" (đang cần chú ý); ĐÃ vote
-      // rồi vẫn giữ khung DÀY để còn phân biệt "lỗi của mình" giữa danh sách, nhưng đổi màu trung
-      // tính (indigo) — không còn ý "cần làm gì" nữa nên không nên tiếp tục màu vàng cảnh báo.
+      // (Đợt viền vàng cho MỌI lỗi của mình) thầy chốt lại: viền VÀNG dày áp cho MỌI lỗi của
+      // chính em — dù đã AGREE/DISAGREE hay chưa — để luôn nổi bật giữa danh sách; chỉ chữ
+      // "— vote required" mới phân biệt đã vote hay chưa (xem khối laCuaMinh bên dưới).
       return '<div class="slidein rounded-2xl p-3.5 transition ' +
         (daGo ? 'border border-slate-200 err-go' :
-          canVoteBatBuoc ? 'border-4 border-amber-400 bg-amber-100/70' :
-          laCuaMinh ? 'border-4 border-indigo-300' :
+          laCuaMinh ? 'border-4 border-amber-400 bg-amber-100/70' :
           'border border-slate-200 hover:border-indigo-300') +
         '" data-pbrow="' + escapeHtml(e.id) + '">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
@@ -1617,15 +1616,14 @@
   // (Đợt lọc ALL/MINE) nút thay hẳn tiêu đề "Mistakes found" ở màn phản biện — bấm đổi
   // ALL ↔ MINE, chữ trên nút LUÔN là trạng thái ĐANG hiện (không phải trạng thái sẽ đổi tới).
   function veNutLocPb() {
-    const b = $('btnPbLoc');
-    if (!b) return;
-    b.textContent = m2.locMine ? 'MINE' : 'ALL';
-    b.classList.toggle('bg-indigo-600', m2.locMine);
-    b.classList.toggle('border-indigo-600', m2.locMine);
-    b.classList.toggle('text-white', m2.locMine);
-    b.classList.toggle('bg-white', !m2.locMine);
-    b.classList.toggle('border-slate-300', !m2.locMine);
-    b.classList.toggle('text-slate-600', !m2.locMine);
+    const wrap = $('btnPbLoc');
+    if (!wrap) return;
+    const btAll = wrap.querySelector('[data-loc="all"]');
+    const btMine = wrap.querySelector('[data-loc="mine"]');
+    const sang = 'bg-indigo-600 text-white';
+    const mo = 'bg-white text-slate-300';
+    btAll.className = 'px-3.5 py-1.5 transition ' + (m2.locMine ? mo : sang);
+    btMine.className = 'px-3.5 py-1.5 transition ' + (m2.locMine ? sang : mo);
   }
 
   // Danh sách lỗi CỦA CHÍNH EM (who === tên em) chưa AGREE/DISAGREE — dùng chung cho badge cố định
@@ -2410,9 +2408,11 @@
       if (!m2.disOn) guiNgamKetLuan();
     });
 
-    // (Đợt lọc ALL/MINE, màn phản biện) bấm đổi qua lại — chữ trên nút = trạng thái ĐANG hiện
-    $('btnPbLoc').addEventListener('click', () => {
-      m2.locMine = !m2.locMine;
+    // (Đợt lọc ALL/MINE, màn phản biện) nút dài chia đôi — bấm đúng nửa nào thì chuyển sang nửa đó
+    $('btnPbLoc').addEventListener('click', (ev) => {
+      const nut = ev.target.closest('[data-loc]');
+      if (!nut) return;
+      m2.locMine = nut.dataset.loc === 'mine';
       renderErrorsPb();
     });
 
