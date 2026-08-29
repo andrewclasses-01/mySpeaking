@@ -1553,6 +1553,9 @@
     capNhatNutSubmit();
     refreshIcons();
     if (!m2.dsCham.length) toast('No mistakes on your team yet — the other team may not have submitted.', 'info');
+    // (Đợt cuộn tới câu chưa xác nhận) mở màn phản biện: hiện bình thường 1 giây cho em định
+    // hình đã, rồi mới tự cuộn tới câu đầu tiên chưa xác nhận (không có thì im lặng, không cuộn).
+    setTimeout(cuonToiCauChuaXacNhan, 1000);
   }
 
   // Vòng tròn avatar (ảnh thật từ kho web; hỏng ảnh → chữ tắt). kind: 'dongY' xanh · 'phanDoi' đỏ
@@ -1645,6 +1648,11 @@
       // đã so `p.voter === state.student` ở startPb() — cùng một mảng tên thành viên, không lệch.
       const laCuaMinh = !!(e.who && state.student && e.who === state.student);
       const canVoteBatBuoc = laCuaMinh && !daGo && !v;
+      // (Đợt cuộn tới câu chưa xác nhận) đánh dấu ĐÚNG nghĩa "chưa chốt" theo ALL/MINE đang xem:
+      // MINE = chưa vote (canVoteBatBuoc, luôn = lỗi của chính mình vì danh sách đã lọc sẵn) ·
+      // ALL = chủ nhân lỗi (e.who, có thể là bạn khác) CHƯA có phiếu nào trên kho.
+      const chuaXacNhan = !daGo && e.who &&
+        (m2.locMine ? canVoteBatBuoc : !m2.phanHoi.some((p) => p.errId === e.id && p.voter === e.who));
       // (Đợt viền dày hơn) "border" 1px cũ + "ring-2" chỉ 2px NGOÀI viền — nhìn mờ, khó nhận ra.
       // Đổi hẳn ĐỘ DÀY viền theo từng trường hợp (không cộng "border" nền + "border-4" chồng lên,
       // 2 lớp cùng đặt border-width dễ ăn nhau lung tung tuỳ thứ tự nạp CSS của Tailwind CDN).
@@ -1656,7 +1664,7 @@
         (daGo ? 'border border-slate-200 err-go' :
           laCuaMinh ? 'border-4 border-amber-400' + (canVoteBatBuoc ? ' bg-amber-100/70' : '') :
           'border border-slate-200 hover:border-indigo-300') +
-        '" data-pbrow="' + escapeHtml(e.id) + '">' +
+        '" data-pbrow="' + escapeHtml(e.id) + '"' + (chuaXacNhan ? ' data-pbunconfirmed="1"' : '') + '>' +
         '<div class="flex items-center gap-2 flex-wrap">' +
         // (Đợt STT xanh đậm nổi bật hơn) xanh lá ĐẬM (nền + chữ trắng) = câu này đã đồng bộ (hoặc
         // chưa hề đụng tới) · xám nhạt = có sửa cục bộ chưa gửi · vừa Submit xong thì đứng icon ✓
@@ -1754,6 +1762,8 @@
 
   // (Đợt lọc ALL/MINE) nút thay hẳn tiêu đề "Mistakes found" ở màn phản biện — bấm đổi
   // ALL ↔ MINE, chữ trên nút LUÔN là trạng thái ĐANG hiện (không phải trạng thái sẽ đổi tới).
+  // (Đợt hiện số câu) "ALL • 120" / "MINE • 65" — số luôn đỏ dù nút đang sáng hay xám, đếm ĐÚNG
+  // số dòng sẽ hiện ra khi bấm sang bên đó (m2.dsCham đủ cả — không phải lọc theo trạng thái vote).
   function veNutLocPb() {
     const wrap = $('btnPbLoc');
     if (!wrap) return;
@@ -1761,8 +1771,12 @@
     const btMine = wrap.querySelector('[data-loc="mine"]');
     const sang = 'bg-indigo-600 text-white';
     const mo = 'bg-white text-slate-300';
+    const nAll = m2.dsCham.length;
+    const nMine = m2.dsCham.filter((x) => x.err.who === state.student).length;
     btAll.className = 'px-3.5 py-1.5 transition ' + (m2.locMine ? mo : sang);
     btMine.className = 'px-3.5 py-1.5 transition ' + (m2.locMine ? sang : mo);
+    btAll.innerHTML = 'ALL <span class="text-red-500">• ' + nAll + '</span>';
+    btMine.innerHTML = 'MINE <span class="text-red-500">• ' + nMine + '</span>';
   }
 
   // Danh sách lỗi CỦA CHÍNH EM (who === tên em) chưa AGREE/DISAGREE — dùng chung cho badge cố định
@@ -1772,12 +1786,20 @@
     return m2.dsCham.filter((x) => x.err.trangThai !== 'go' &&
       x.err.who && state.student && x.err.who === state.student && !m2.votes[x.err.id]);
   }
-  // (Đợt badge theo ALL/MINE) đếm lỗi CHƯA CHỐT của CẢ ĐỘI — mỗi lỗi tính theo đúng chủ nhân
-  // (e.who), tra trên KHO đã đồng bộ (m2.phanHoi, có phiếu của MỌI thành viên chứ không riêng
-  // em) vì em không biết bạn khác đang gõ dở gì trên máy họ — chỉ tính được cái đã GỬI THẬT.
-  function demChuaChotCaDoi() {
+  // (Đợt badge theo ALL/MINE) danh sách lỗi CHƯA CHỐT của CẢ ĐỘI — mỗi lỗi tính theo đúng chủ
+  // nhân (e.who), tra trên KHO đã đồng bộ (m2.phanHoi, có phiếu của MỌI thành viên chứ không
+  // riêng em) vì em không biết bạn khác đang gõ dở gì trên máy họ — chỉ tính được cái đã GỬI THẬT.
+  function layChuaChotCaDoi() {
     return m2.dsCham.filter((x) => x.err.trangThai !== 'go' && x.err.who &&
-      !m2.phanHoi.some((p) => p.errId === x.err.id && p.voter === x.err.who)).length;
+      !m2.phanHoi.some((p) => p.errId === x.err.id && p.voter === x.err.who));
+  }
+  function demChuaChotCaDoi() { return layChuaChotCaDoi().length; }
+  // (Đợt cuộn tới câu chưa xác nhận) bấm badge UNCONFIRMED, mở màn phản biện, hoặc đổi ALL/MINE
+  // đều gọi hàm này — cuộn tới câu ĐẦU TIÊN đang đánh dấu data-pbunconfirmed="1" (render đã tự
+  // gắn đúng nghĩa "chưa chốt" theo ĐÚNG chế độ ALL/MINE đang xem, xem renderErrorsPb()).
+  function cuonToiCauChuaXacNhan() {
+    const el = document.querySelector('[data-pbunconfirmed="1"]');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   // Badge cố định luôn hiện trên đầu khung "Mistakes found" ở màn phản biện — bấm ALL thì đếm
   // CẢ ĐỘI, bấm MINE thì chỉ đếm của chính em (thầy chốt: KHÔNG chặn Submit, chỉ nhắc thường trực).
@@ -1790,7 +1812,7 @@
     const n = m2.locMine ? layThieuBatBuocPb().length : demChuaChotCaDoi();
     b.textContent = n ? ('UNCONFIRMED: ' + n) : 'ALL CONFIRMED ✓';
     b.className = 'mx-2 rounded-full px-3 py-1 text-xs font-extrabold transition ' +
-      (n ? 'bg-amber-500 text-white' : 'bg-emerald-100 text-emerald-700');
+      (n ? 'bg-amber-500 text-white hover:bg-amber-600 cursor-pointer' : 'bg-emerald-100 text-emerald-700');
   }
 
   // Nộp phiếu phản biện — cửa kiểm tra: lý do phản đối thiếu vẫn CHẶN cứng (dữ liệu không hợp lệ);
@@ -2585,7 +2607,11 @@
       if (!nut) return;
       m2.locMine = nut.dataset.loc === 'mine';
       renderErrorsPb();
+      // (Đợt cuộn tới câu chưa xác nhận) đổi ALL/MINE: hiện bình thường 1 giây rồi mới tự cuộn
+      setTimeout(cuonToiCauChuaXacNhan, 1000);
     });
+    // (Đợt cuộn tới câu chưa xác nhận) bấm thẳng badge UNCONFIRMED = cuộn NGAY, khỏi chờ 1 giây
+    $('btnPbThieu').addEventListener('click', cuonToiCauChuaXacNhan);
 
     // Pop-up xác nhận Keep/Agree
     $('btnKaCancel').addEventListener('click', dongKaModal);
