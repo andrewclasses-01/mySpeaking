@@ -190,6 +190,7 @@
     nhanXanh: 'UPDATED',   // (Đợt SUBMIT/UPDATE) chữ hiện khi nút XANH LÁ — 'SUBMITTED' chỉ đúng
                             // MỘT LẦN ngay sau lượt gửi ĐẦU TIÊN, các lượt sau luôn 'UPDATED'.
     locMine: false,   // (Đợt ALL/MINE, màn phản biện) false = hiện mọi lỗi cả đội · true = chỉ lỗi của em
+    vuaGuiPb: [],   // (Đợt STT xanh/xám) errId vừa gửi xong trong 1 giây gần nhất — hiện icon thay số
   };
 
   // Bỏ dấu tiếng Việt + về chữ-số-thường — dùng cho tên file avatar + khớp tên
@@ -1570,6 +1571,13 @@
     capNhatNutSubmit();
     renderErrorsPb();
   }
+  // (Đợt STT xanh/xám) so phiếu CỤC BỘ của đúng 1 câu với bản đã đồng bộ lần cuối (cùng cách
+  // diff `doi` trong submitPbThatSu, chỉ khác là soi TỪNG errId thay vì cả cục JSON) — true = câu
+  // này KHÔNG có gì chờ gửi (đã cập nhật hoặc chưa hề đụng tới, cả hai đều coi là "đã update").
+  function daDongBoPhieu(errId) {
+    const cu = JSON.parse(m2.votesServer || '{}');
+    return JSON.stringify(m2.votes[errId] || null) === JSON.stringify(cu[errId] || null);
+  }
 
   // ─── (Đợt B) BẢNG PHẢN BIỆN ───
   function renderErrorsPb() {
@@ -1604,7 +1612,15 @@
           'border border-slate-200 hover:border-indigo-300') +
         '" data-pbrow="' + escapeHtml(e.id) + '">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
-        '<span class="shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center">' + (pos + 1) + '</span>' +
+        // (Đợt STT xanh/xám) xanh lá = câu này đã đồng bộ (hoặc chưa hề đụng tới) · xám nhạt = có
+        // sửa cục bộ chưa gửi · vừa Submit xong thì đứng icon ✓ đúng 1 giây rồi mới về số xanh.
+        (function(){
+          const vuaGui = m2.vuaGuiPb.indexOf(e.id) >= 0;
+          const dongBo = daDongBoPhieu(e.id);
+          return '<span class="shrink-0 w-6 h-6 rounded-full font-extrabold text-xs flex items-center justify-center ' +
+            (vuaGui ? 'bg-emerald-500 text-white' : dongBo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-400') + '">' +
+            (vuaGui ? '<i data-lucide="check" class="w-3.5 h-3.5 pointer-events-none"></i>' : (pos + 1)) + '</span>';
+        })() +
         '<button data-pbseek="' + tSec(e) + '" class="font-mono font-bold text-sm bg-slate-900 text-white rounded-lg px-2 py-0.5 hover:bg-indigo-700 transition">' + fmtTime(e) + '</button>' +
         '<span class="text-xs font-bold rounded-full px-2.5 py-1 ' + st.badge + '">' + typeLabel(e.type) + '</span>' +
         (laCuaMinh
@@ -1646,10 +1662,13 @@
         // (Đợt ô gửi riêng) ô nhập KHÔNG bao giờ tự điền lại nội dung đã gửi (chỉ trống hoặc đang
         // sửa qua nút bút) — gõ xong bấm icon gửi mới đẩy lên danh sách phía trên (xem guiPhanBienMotCau).
         (chonN && !daGo ?
-          '<div class="mt-2 flex items-end gap-1.5">' +
+          // (Đợt căn giữa nút gửi) items-stretch thay items-end + BỎ h-9 cố định trên nút — nút
+          // giãn ĐÚNG BẰNG chiều cao thật của ô nhập (autogrow đổi cao thì nút đổi theo), luôn
+          // khít chứ không lệch trên/dưới như khi ô cao hơn 36px cố định của nút.
+          '<div class="mt-2 flex items-stretch gap-1.5">' +
           '<textarea data-pblydo="' + escapeHtml(e.id) + '" rows="1" maxlength="300" placeholder="Why do you disagree? (required)"' +
-          ' class="autogrow flex-1 rounded-xl border border-rose-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-rose-400"></textarea>' +
-          '<button data-pbsend="' + escapeHtml(e.id) + '" title="Send" class="shrink-0 w-9 h-9 rounded-xl bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center transition">' +
+          ' class="autogrow flex-1 rounded-xl border border-rose-300 px-3 py-2 text-xs leading-snug focus:outline-none focus:ring-2 focus:ring-rose-400"></textarea>' +
+          '<button data-pbsend="' + escapeHtml(e.id) + '" title="Send" class="shrink-0 w-9 rounded-xl bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center transition">' +
           '<i data-lucide="send" class="w-4 h-4 pointer-events-none"></i></button>' +
           '</div>' : '') +
         '</div>';
@@ -1759,10 +1778,13 @@
         const it = m2.dsCham.find((x) => x.err.id === id);
         m2.phanHoi.push({ errId: id, chuLoi: it ? it.chuLoi : '', voter: state.student, voterTeam: state.myTeam, y: m2.votes[id].y, lyDo: m2.votes[id].lyDo || '' });
       });
+      // (Đợt STT xanh/xám) mọi câu VỪA GỬI đứng icon ✓ đúng 1 giây rồi mới về số xanh lá
+      m2.vuaGuiPb = doi.slice();
       loadingAn();
       renderErrorsPb();
       capNhatNutSubmit();
       toast('🎉 Feedback submitted — thank you!');
+      setTimeout(() => { m2.vuaGuiPb = []; renderErrorsPb(); }, 1000);
     } catch (e) {
       loadingAn();
       toast('Could not save (' + e.message + '). Please try again.', 'err');
