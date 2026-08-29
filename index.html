@@ -361,6 +361,8 @@ tailwind.config = {
             <h2 class="font-extrabold flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-indigo-600"></i> Mistakes found</h2>
             <!-- (Đợt B) nút DISAGREEMENT: số câu có phản đối CHƯA xử lý; bấm = dồn lên đầu + hào quang -->
             <button id="btnDisagree" class="hidden"></button>
+            <!-- (Đợt phản biện 2) badge cố định: số lỗi CỦA CHÍNH EM chưa AGREE/DISAGREE (màn phản biện) -->
+            <button id="btnPbThieu" class="hidden" disabled></button>
             <div id="errStats" class="flex gap-1.5 text-xs font-bold"></div>
           </div>
           <div class="lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
@@ -517,6 +519,21 @@ tailwind.config = {
   </div>
 </div>
 
+<!-- (Đợt phản biện 2) hỏi lại khi Submit mà còn lỗi CỦA CHÍNH EM chưa AGREE/DISAGREE — thầy chốt:
+     KHÔNG chặn, chỉ hỏi lại rồi vẫn cho nộp nếu bấm "Submit anyway" -->
+<div id="pbThieuModal" class="fixed inset-0 z-[57] bg-black/50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop text-center">
+    <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
+      <i data-lucide="alert-triangle" class="w-6 h-6 text-amber-500"></i>
+    </div>
+    <p class="text-slate-700 font-semibold mb-4 leading-relaxed">You still have <b id="pbThieuN">0</b> mistake<span id="pbThieuS">s</span> about <b>you</b> that you haven't AGREEd or DISAGREEd with. Submit anyway?</p>
+    <div class="flex gap-2">
+      <button id="btnPbThieuCancel" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">Go back and check</button>
+      <button id="btnPbThieuOk" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl py-2.5 font-bold text-sm">Submit anyway</button>
+    </div>
+  </div>
+</div>
+
 <!-- Submit confirmation modal -->
 <div id="submitModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop">
@@ -567,6 +584,6 @@ tailwind.config = {
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=27"></script>
-<script src="js/app.js?v=30"></script>
+<script src="js/app.js?v=31"></script>
 </body>
 </html>

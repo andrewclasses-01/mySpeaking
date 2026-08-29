@@ -187,6 +187,8 @@
     votes: {},       // (phản biện) phiếu CỦA CHÍNH EM đang sửa: {errId: {y, lyDo}}
     votesServer: '', // JSON votes đã đồng bộ lần cuối
     daNopLanNao: false,
+    nhanXanh: 'UPDATED',   // (Đợt SUBMIT/UPDATE) chữ hiện khi nút XANH LÁ — 'SUBMITTED' chỉ đúng
+                            // MỘT LẦN ngay sau lượt gửi ĐẦU TIÊN, các lượt sau luôn 'UPDATED'.
   };
 
   // Bỏ dấu tiếng Việt + về chữ-số-thường — dùng cho tên file avatar + khớp tên
@@ -281,17 +283,30 @@
     return m2ChupCham() !== m2.serverBan;
   }
 
-  // Nút SUBMIT 3 màu (thầy chốt): TRẮNG chưa gửi lần nào · XANH LÁ đã gửi ·
-  // VÀNG nhấp nháy to-nhỏ khi có sửa chưa gửi. Chỉ áp cho mô hình 2.
+  // Nút SUBMIT/UPDATE 3 màu + CHỮ (thầy chốt, đợt 2): TRẮNG "SUBMIT" chưa gửi lần nào, chưa sửa
+  // gì · XANH LÁ "SUBMITTED"/"UPDATED" đã gửi, không có gì chờ · VÀNG nhấp nháy to-nhỏ "SUBMIT"/
+  // "UPDATE" có sửa chưa gửi. "SUBMIT" chỉ hiện TRƯỚC lần nộp đầu tiên — sau đó mãi mãi là
+  // "UPDATE" (đọc theo `daCo`/`m2.daNopLanNao`, cờ này set 1 lần rồi giữ mãi). Chỉ áp mô hình 2.
   function capNhatNutSubmit() {
     if (state.moHinh !== 2) return;
     const b = $('btnSubmit');
     b.classList.remove('bg-emerald-500', 'hover:bg-emerald-400', 'bg-white', 'text-emerald-700',
       'hover:bg-emerald-50', 'nut-vang-nhay', 'bg-amber-400', 'hover:bg-amber-300', 'text-slate-900');
     const daCo = state.cheDo === 'phanbien' ? (m2.votesServer !== '' && m2.votesServer !== '{}') : m2.daNopLanNao;
-    if (m2CoSuaChuaGui()) b.classList.add('bg-amber-400', 'hover:bg-amber-300', 'text-slate-900', 'nut-vang-nhay');
-    else if (daCo) b.classList.add('bg-emerald-500', 'hover:bg-emerald-400');
-    else b.classList.add('bg-white', 'text-emerald-700', 'hover:bg-emerald-50');
+    let chu;
+    if (m2CoSuaChuaGui()) {
+      b.classList.add('bg-amber-400', 'hover:bg-amber-300', 'text-slate-900', 'nut-vang-nhay');
+      chu = daCo ? 'UPDATE' : 'SUBMIT';
+    } else if (daCo) {
+      b.classList.add('bg-emerald-500', 'hover:bg-emerald-400');
+      chu = m2.nhanXanh || 'UPDATED';
+    } else {
+      b.classList.add('bg-white', 'text-emerald-700', 'hover:bg-emerald-50');
+      chu = 'SUBMIT';
+    }
+    const nhanChu = b.querySelector('span');
+    if (nhanChu) nhanChu.textContent = chu; else b.textContent = chu;
+    b.title = chu;
   }
 
   // Pop-up loading chặn thao tác (vào bài + SUBMIT — thầy chốt phải có)
@@ -833,10 +848,15 @@
       const st = TYPE_STYLE[e.type] || { badge: 'bg-slate-100 text-slate-600' };
       const daGo = m2Mode && e.trangThai === 'go';
       const phieu = m2Mode ? phieuCuaLoi(e.id) : [];
+      // (Đợt khung vàng) MỌI lỗi có ≥1 phiếu phản đối → viền vàng — KHÔNG tự tắt dù đã KEEP/AGREE
+      // (thầy chốt: giữ như dấu vết lịch sử, badge KEPT/RELEASED đã đánh dấu riêng phần đã quyết).
+      const phieuPhanDoi = phieu.filter((p) => p.y === 'phanDoi');
+      const coTranhChap = phieuPhanDoi.length > 0;
       // Icon uploaded (chấm xanh trái ô): câu này ĐÃ nằm trên kho đúng y bản đang thấy
       const daLuu = m2Mode && m2LoiDaDongBo(e);
       return '<div class="slidein rounded-2xl border p-3.5 transition group ' +
-        (daGo ? 'err-go border-slate-200' : 'border-slate-200 hover:border-indigo-300') + '">' +
+        (daGo ? 'err-go ' : '') +
+        (coTranhChap ? 'border-amber-400 bg-amber-50/40' : 'border-slate-200' + (daGo ? '' : ' hover:border-indigo-300')) + '">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
         (m2Mode ? '<span class="shrink-0 w-4 h-4 rounded-full flex items-center justify-center ' +
           (daLuu ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400') + '" title="' +
@@ -864,6 +884,11 @@
         (e.sentence ? '<div class="mt-1.5 text-sm font-bold italic text-slate-900">“' + escapeHtml(e.sentence) + '”</div>' : '') +
         '<div class="mt-0.5 text-sm font-bold text-rose-600">' + escapeHtml(e.detail) + '</div>' +
         (e.explain ? '<div class="mt-0.5 text-sm font-bold text-emerald-600">' + escapeHtml(e.explain) + '</div>' : '') +
+        // (Đợt khung vàng) hiện đủ TỪNG DÒNG "TÊN: lý do" của mọi người đã phản đối, không chỉ avatar
+        (phieuPhanDoi.length ? '<div class="mt-2 pt-2 border-t border-amber-200 space-y-1">' +
+          phieuPhanDoi.map((p) => '<div class="text-xs font-bold text-amber-700"><b>' +
+            escapeHtml(p.voter) + '</b>: ' + escapeHtml(p.lyDo || '(no reason given)') + '</div>').join('') +
+          '</div>' : '') +
         '</div>';
     }).join('');
     $('errEmpty').style.display = ds.length ? 'none' : '';
@@ -1516,6 +1541,7 @@
       const daGo = e.trangThai === 'go';
       const v = m2.votes[e.id] || null;
       const phieuKhac = phieuCuaLoi(e.id).filter((p) => p.voter !== state.student);
+      const phieuKhacPhanDoi = phieuKhac.filter((p) => p.y === 'phanDoi');
       const chonY = v && v.y === 'dongY', chonN = v && v.y === 'phanDoi';
       // (Đợt yêu cầu mới) Lỗi CỦA CHÍNH EM (e.who === tên em) BẮT BUỘC phải AGREE/DISAGREE mới
       // nộp được — lỗi của đồng đội vẫn TUỲ Ý (xem chặn ở submitPb()). So chuỗi y hệt cách app
@@ -1537,12 +1563,18 @@
         (e.sentence ? '<div class="mt-1.5 text-sm font-bold italic text-slate-900">“' + escapeHtml(e.sentence) + '”</div>' : '') +
         '<div class="mt-0.5 text-sm font-bold text-rose-600">' + escapeHtml(e.detail) + '</div>' +
         (e.explain ? '<div class="mt-0.5 text-sm font-bold text-emerald-600">' + escapeHtml(e.explain) + '</div>' : '') +
+        // (Đợt khung vàng) hiện đủ TỪNG DÒNG "TÊN: lý do" của mọi người khác đã phản đối
+        (phieuKhacPhanDoi.length ? '<div class="mt-2 space-y-1">' +
+          phieuKhacPhanDoi.map((p) => '<div class="text-xs font-bold text-amber-700"><b>' +
+            escapeHtml(p.voter) + '</b>: ' + escapeHtml(p.lyDo || '(no reason given)') + '</div>').join('') +
+          '</div>' : '') +
         '<div class="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2 flex-wrap">' +
         '<span class="text-[11px] font-bold text-slate-400">Checked by ' + escapeHtml(x.chuLoi) + '</span>' +
         (daGo ? '' :
           '<span class="ml-auto flex items-center gap-1.5">' +
-          '<button data-pbvote="dongY" data-err="' + escapeHtml(e.id) + '" class="rounded-xl border-2 px-3 py-1.5 text-xs font-extrabold transition ' +
-          (chonY ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-emerald-300 text-emerald-600 hover:bg-emerald-50') + '">✓ AGREE</button>' +
+          // (Đợt "chỉ chính chủ AGREE") lỗi KHÔNG phải của mình → không được AGREE, chỉ DISAGREE
+          (laCuaMinh ? '<button data-pbvote="dongY" data-err="' + escapeHtml(e.id) + '" class="rounded-xl border-2 px-3 py-1.5 text-xs font-extrabold transition ' +
+          (chonY ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-emerald-300 text-emerald-600 hover:bg-emerald-50') + '">✓ AGREE</button>' : '') +
           '<button data-pbvote="phanDoi" data-err="' + escapeHtml(e.id) + '" class="rounded-xl border-2 px-3 py-1.5 text-xs font-extrabold transition ' +
           (chonN ? 'border-rose-500 bg-rose-500 text-white' : 'border-rose-300 text-rose-600 hover:bg-rose-50') + '">✗ DISAGREE</button>' +
           '</span>') +
@@ -1561,31 +1593,60 @@
       .map((t) => '<span title="' + typeLabel(t) + '" class="rounded-full px-2 py-1 font-extrabold whitespace-nowrap ' +
         TYPE_STYLE[t].badge + '">' + TYPE_STYLE[t].short + ': ' + counts[t] + '</span>').join('');
     $('btnDelAll').classList.add('hidden');
+    capNhatBadgeThieuPb();
     refreshIcons();
   }
 
-  // Nộp phiếu phản biện: chỉ ghi các phiếu ĐỔI so với lần đồng bộ trước; phản đối thiếu lý do = chặn
-  async function submitPb() {
-    // (Đợt yêu cầu mới) BẮT BUỘC vote (Agree HOẶC Disagree) cho MỌI lỗi của CHÍNH EM trước khi
-    // nộp — lỗi của đồng đội vẫn tuỳ ý, KHÔNG chặn. Câu đã 'go' (đồng đội khác đã Agree/gỡ) thì
-    // không còn nút vote nữa nên bỏ qua, đừng bắt vote câu không vote được.
-    const thieuBatBuoc = m2.dsCham.filter((x) => x.err.trangThai !== 'go' &&
+  // Danh sách lỗi CỦA CHÍNH EM (who === tên em) chưa AGREE/DISAGREE — dùng chung cho badge cố định
+  // (capNhatBadgeThieuPb) và hộp hỏi lại lúc Submit (submitPb). Câu đã 'go' (đồng đội đã Agree/gỡ)
+  // thì bỏ qua, không còn vote được nữa.
+  function layThieuBatBuocPb() {
+    return m2.dsCham.filter((x) => x.err.trangThai !== 'go' &&
       x.err.who && state.student && x.err.who === state.student && !m2.votes[x.err.id]);
-    if (thieuBatBuoc.length) {
-      toast('You must AGREE or DISAGREE on every mistake about YOU before submitting (' + thieuBatBuoc.length + ' left).', 'err');
-      flashBox(document.querySelector('[data-pbrow="' + thieuBatBuoc[0].err.id + '"]'));
-      return;
-    }
-    const thieu = Object.keys(m2.votes).filter((id) => m2.votes[id].y === 'phanDoi' && !String(m2.votes[id].lyDo || '').trim());
-    if (thieu.length) {
+  }
+  // Badge cố định luôn hiện trên đầu khung "Mistakes found" ở màn phản biện — đếm số lỗi của
+  // chính em còn chưa xác nhận (thầy chốt: KHÔNG chặn Submit, chỉ nhắc thường trực).
+  function capNhatBadgeThieuPb() {
+    const b = $('btnPbThieu');
+    if (!b) return;
+    const hien = state.moHinh === 2 && state.cheDo === 'phanbien';
+    b.classList.toggle('hidden', !hien);
+    if (!hien) return;
+    const n = layThieuBatBuocPb().length;
+    b.textContent = n ? ('UNCONFIRMED: ' + n) : 'ALL CONFIRMED ✓';
+    b.className = 'mx-2 rounded-full px-3 py-1 text-xs font-extrabold transition ' +
+      (n ? 'bg-amber-500 text-white' : 'bg-emerald-100 text-emerald-700');
+  }
+
+  // Nộp phiếu phản biện — cửa kiểm tra: lý do phản đối thiếu vẫn CHẶN cứng (dữ liệu không hợp lệ);
+  // còn lỗi của CHÍNH EM chưa AGREE/DISAGREE hết thì KHÔNG chặn nữa (thầy chốt, đợt 2) — chỉ hỏi
+  // lại qua #pbThieuModal, bấm "Submit anyway" mới gọi submitPbThatSu() gửi thật.
+  async function submitPb() {
+    const thieuLyDo = Object.keys(m2.votes).filter((id) => m2.votes[id].y === 'phanDoi' && !String(m2.votes[id].lyDo || '').trim());
+    if (thieuLyDo.length) {
       toast('Please write WHY you disagree — every disagree needs a reason!', 'err');
-      const o = document.querySelector('[data-pblydo="' + thieu[0] + '"]');
+      const o = document.querySelector('[data-pblydo="' + thieuLyDo[0] + '"]');
       if (o) { o.focus(); o.classList.add('ring-2', 'ring-rose-400'); }
       return;
     }
+    const thieuBatBuoc = layThieuBatBuocPb();
+    if (thieuBatBuoc.length) {
+      $('pbThieuN').textContent = thieuBatBuoc.length;
+      $('pbThieuS').textContent = thieuBatBuoc.length > 1 ? 's' : '';
+      $('pbThieuModal').classList.remove('hidden');
+      $('pbThieuModal').classList.add('flex');
+      refreshIcons();
+      return;
+    }
+    await submitPbThatSu();
+  }
+  // Phần GỬI THẬT — tách riêng khỏi các cửa kiểm tra ở trên để nút "Submit anyway" của
+  // #pbThieuModal gọi thẳng, bỏ qua chốt bắt buộc vote hết.
+  async function submitPbThatSu() {
     const cu = JSON.parse(m2.votesServer || '{}');
     const doi = Object.keys(m2.votes).filter((id) => JSON.stringify(m2.votes[id]) !== JSON.stringify(cu[id]));
     if (!doi.length) { toast('Nothing new to submit.', 'info'); return; }
+    const laLanDauTien = !(m2.votesServer && m2.votesServer !== '{}');
     loadingHien('Saving your feedback…');
     try {
       for (const id of doi) {
@@ -1601,6 +1662,7 @@
         });
       }
       m2.votesServer = JSON.stringify(m2.votes);
+      m2.nhanXanh = laLanDauTien ? 'SUBMITTED' : 'UPDATED';
       // vẽ lại để avatar/phiếu vừa gửi hiện chắc chắn + nút về xanh lá
       m2.phanHoi = m2.phanHoi.filter((p) => p.voter !== state.student);
       Object.keys(m2.votes).forEach((id) => {
@@ -1621,6 +1683,7 @@
   async function submitM2() {
     closeSubmitModal();
     loadingHien('Saving your check…');
+    const laLanDauTien = !m2.daNopLanNao;   // (Đợt SUBMIT/UPDATE) chốt SUBMITTED/UPDATED TRƯỚC khi cờ đổi true
     try {
       await tongLoiGhi(state.buoiId, slugHs(state.student), {
         student: state.student, myTeam: state.myTeam, checkedTeam: state.checkedTeam,
@@ -1630,6 +1693,7 @@
         daNop: true, capNhatLuc: Date.now(),
       });
       m2.daNopLanNao = true;
+      m2.nhanXanh = laLanDauTien ? 'SUBMITTED' : 'UPDATED';
       m2GhiNhanDongBo();
       state.submitted = true;
       state.wasSubmitted = true;
@@ -1647,6 +1711,7 @@
   // Gửi NGẦM các kết luận Keep/Agree (thầy chốt: bấm lại nút DISAGREEMENT cũng gửi dữ liệu lên)
   async function guiNgamKetLuan() {
     if (!m2CoSuaChuaGui()) return;
+    const laLanDauTien = !m2.daNopLanNao;
     try {
       await tongLoiGhi(state.buoiId, slugHs(state.student), {
         student: state.student, myTeam: state.myTeam, checkedTeam: state.checkedTeam,
@@ -1656,6 +1721,7 @@
         daNop: true, capNhatLuc: Date.now(),
       });
       m2.daNopLanNao = true;
+      m2.nhanXanh = laLanDauTien ? 'SUBMITTED' : 'UPDATED';
       m2GhiNhanDongBo();
       renderErrors();
       capNhatNutSubmit();
@@ -2286,6 +2352,11 @@
     const closeFew = () => { $('fewMistakesModal').classList.add('hidden'); $('fewMistakesModal').classList.remove('flex'); };
     $('btnFewReturn').addEventListener('click', closeFew);   // quay lại soi tiếp, KHÔNG gửi
     $('btnFewSubmit').addEventListener('click', () => { closeFew(); submit(); });
+
+    // (Đợt phản biện 2) hộp hỏi lại khi Submit mà còn lỗi của chính em chưa AGREE/DISAGREE
+    const closePbThieu = () => { $('pbThieuModal').classList.add('hidden'); $('pbThieuModal').classList.remove('flex'); };
+    $('btnPbThieuCancel').addEventListener('click', closePbThieu);
+    $('btnPbThieuOk').addEventListener('click', () => { closePbThieu(); submitPbThatSu(); });
 
     // ── (Đợt B) các sự kiện còn lại của mô hình 2 ──
     // Ô lý do phản đối (màn phản biện) — gõ tới đâu nhớ tới đó, đổi là nút Submit VÀNG
