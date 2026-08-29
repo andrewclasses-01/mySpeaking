@@ -81,6 +81,10 @@ tailwind.config = {
   /* ══ (Đợt B 27/08/2026) MÔ HÌNH 2 — bản tổng lỗi + màn phản biện ══ */
   /* Màn PHẢN BIỆN: ẩn form thêm lỗi + nút Export — chỉ còn video + danh sách câu bị chấm */
   #appScreen.pb-mode #errFormCard, #appScreen.pb-mode #btnExport{ display:none; }
+  /* (Đợt lọc ALL/MINE) màn phản biện: thay hẳn tiêu đề "Mistakes found" bằng nút ALL/MINE —
+     2 ID + 1 class ăn đứt độ đặc hiệu của .hidden nên không cần JS bật/tắt mỗi lần đổi màn. */
+  #appScreen.pb-mode #errListTitle{ display:none; }
+  #appScreen.pb-mode #btnPbLoc{ display:inline-flex; }
   @media (min-width:1024px){
     /* form ẩn thì khung Mistakes chiếm CẢ CỘT PHẢI (2 hàng) cho danh sách dài dễ đọc */
     #appScreen.pb-mode #errListCard{ grid-row:1 / span 2; }
@@ -358,7 +362,10 @@ tailwind.config = {
              Màn thấp hơn nữa vẫn an toàn nhờ van <main lg:overflow-y-auto> của chặng 30. -->
         <div id="errListCard" class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:col-start-2 lg:row-start-2 lg:min-h-[12rem] lg:flex lg:flex-col">
           <div class="flex items-center justify-between mb-3 lg:shrink-0">
-            <h2 class="font-extrabold flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-indigo-600"></i> Mistakes found</h2>
+            <h2 id="errListTitle" class="font-extrabold flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-indigo-600"></i> Mistakes found</h2>
+            <!-- (Đợt lọc ALL/MINE) màn phản biện: thay hẳn tiêu đề trên bằng nút bấm đổi ALL/MINE
+                 (ẩn/hiện qua CSS .pb-mode bên dưới, không cần đụng JS mỗi lần đổi màn) -->
+            <button id="btnPbLoc" class="hidden font-extrabold text-xs rounded-full px-3 py-1.5 border-2 transition">ALL</button>
             <!-- (Đợt B) nút DISAGREEMENT: số câu có phản đối CHƯA xử lý; bấm = dồn lên đầu + hào quang -->
             <button id="btnDisagree" class="hidden"></button>
             <!-- (Đợt phản biện 2) badge cố định: số lỗi CỦA CHÍNH EM chưa AGREE/DISAGREE (màn phản biện) -->
@@ -584,6 +591,6 @@ tailwind.config = {
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=27"></script>
-<script src="js/app.js?v=32"></script>
+<script src="js/app.js?v=33"></script>
 </body>
 </html>

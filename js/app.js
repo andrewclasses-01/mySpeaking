@@ -189,6 +189,7 @@
     daNopLanNao: false,
     nhanXanh: 'UPDATED',   // (Đợt SUBMIT/UPDATE) chữ hiện khi nút XANH LÁ — 'SUBMITTED' chỉ đúng
                             // MỘT LẦN ngay sau lượt gửi ĐẦU TIÊN, các lượt sau luôn 'UPDATED'.
+    locMine: false,   // (Đợt ALL/MINE, màn phản biện) false = hiện mọi lỗi cả đội · true = chỉ lỗi của em
   };
 
   // Bỏ dấu tiếng Việt + về chữ-số-thường — dùng cho tên file avatar + khớp tên
@@ -1535,8 +1536,10 @@
   // ─── (Đợt B) BẢNG PHẢN BIỆN ───
   function renderErrorsPb() {
     const list = $('errList');
-    const song = m2.dsCham.filter((x) => x.err.trangThai === 'song');
-    const go = m2.dsCham.filter((x) => x.err.trangThai === 'go');
+    // (Đợt lọc ALL/MINE) locMine=true → chỉ còn lỗi CỦA CHÍNH EM (who === tên em)
+    const nguon = m2.locMine ? m2.dsCham.filter((x) => x.err.who === state.student) : m2.dsCham;
+    const song = nguon.filter((x) => x.err.trangThai === 'song');
+    const go = nguon.filter((x) => x.err.trangThai === 'go');
     const thuTu = song.concat(go);   // câu đã gỡ chìm xuống cuối (thầy chốt)
     list.innerHTML = thuTu.map((x, pos) => {
       const e = x.err;
@@ -1554,9 +1557,14 @@
       // (Đợt viền dày hơn) "border" 1px cũ + "ring-2" chỉ 2px NGOÀI viền — nhìn mờ, khó nhận ra.
       // Đổi hẳn ĐỘ DÀY viền theo từng trường hợp (không cộng "border" nền + "border-4" chồng lên,
       // 2 lớp cùng đặt border-width dễ ăn nhau lung tung tuỳ thứ tự nạp CSS của Tailwind CDN).
+      // (Đợt viền theo trạng thái) VÀNG chỉ dành riêng cho "chưa vote" (đang cần chú ý); ĐÃ vote
+      // rồi vẫn giữ khung DÀY để còn phân biệt "lỗi của mình" giữa danh sách, nhưng đổi màu trung
+      // tính (indigo) — không còn ý "cần làm gì" nữa nên không nên tiếp tục màu vàng cảnh báo.
       return '<div class="slidein rounded-2xl p-3.5 transition ' +
         (daGo ? 'border border-slate-200 err-go' :
-          (canVoteBatBuoc ? 'border-4 border-amber-400 bg-amber-100/70' : 'border border-slate-200 hover:border-indigo-300')) +
+          canVoteBatBuoc ? 'border-4 border-amber-400 bg-amber-100/70' :
+          laCuaMinh ? 'border-4 border-indigo-300' :
+          'border border-slate-200 hover:border-indigo-300') +
         '" data-pbrow="' + escapeHtml(e.id) + '">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
         '<span class="shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center">' + (pos + 1) + '</span>' +
@@ -1602,7 +1610,22 @@
         TYPE_STYLE[t].badge + '">' + TYPE_STYLE[t].short + ': ' + counts[t] + '</span>').join('');
     $('btnDelAll').classList.add('hidden');
     capNhatBadgeThieuPb();
+    veNutLocPb();
     refreshIcons();
+  }
+
+  // (Đợt lọc ALL/MINE) nút thay hẳn tiêu đề "Mistakes found" ở màn phản biện — bấm đổi
+  // ALL ↔ MINE, chữ trên nút LUÔN là trạng thái ĐANG hiện (không phải trạng thái sẽ đổi tới).
+  function veNutLocPb() {
+    const b = $('btnPbLoc');
+    if (!b) return;
+    b.textContent = m2.locMine ? 'MINE' : 'ALL';
+    b.classList.toggle('bg-indigo-600', m2.locMine);
+    b.classList.toggle('border-indigo-600', m2.locMine);
+    b.classList.toggle('text-white', m2.locMine);
+    b.classList.toggle('bg-white', !m2.locMine);
+    b.classList.toggle('border-slate-300', !m2.locMine);
+    b.classList.toggle('text-slate-600', !m2.locMine);
   }
 
   // Danh sách lỗi CỦA CHÍNH EM (who === tên em) chưa AGREE/DISAGREE — dùng chung cho badge cố định
@@ -2385,6 +2408,12 @@
       m2.disOn = !m2.disOn;
       renderErrors();
       if (!m2.disOn) guiNgamKetLuan();
+    });
+
+    // (Đợt lọc ALL/MINE, màn phản biện) bấm đổi qua lại — chữ trên nút = trạng thái ĐANG hiện
+    $('btnPbLoc').addEventListener('click', () => {
+      m2.locMine = !m2.locMine;
+      renderErrorsPb();
     });
 
     // Pop-up xác nhận Keep/Agree
