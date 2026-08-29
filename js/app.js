@@ -1533,6 +1533,44 @@
   }
   function phieuCuaLoi(errId) { return m2.phanHoi.filter((p) => p.errId === errId); }
 
+  // Hoạt cảnh chữ "bay" từ ô nhập lên đầu danh sách phản biện (cùng khuôn Web Animations API
+  // với flyLight() — bong bóng rời rạc, tự xoá sau khi chạy, không đụng DOM thật của danh sách).
+  function flyPhanBien(fromEl, toEl, text) {
+    const r0 = fromEl.getBoundingClientRect(), r1 = toEl.getBoundingClientRect();
+    const ghost = document.createElement('div');
+    ghost.textContent = text;
+    ghost.style.cssText = 'position:fixed;z-index:9999;pointer-events:none;font:700 11px/1.4 inherit;' +
+      'color:#B45309;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:6px 10px;' +
+      'left:' + r0.left + 'px;top:' + r0.top + 'px;width:' + Math.min(r0.width, 260) + 'px;box-shadow:0 6px 16px rgba(0,0,0,.18)';
+    document.body.appendChild(ghost);
+    const dx = r1.left - r0.left, dy = r1.top - r0.top;
+    const anim = ghost.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: 'translate(' + (dx * .6) + 'px,' + (dy * .6 - 30) + 'px) scale(.95)', opacity: 1, offset: .6 },
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(.85)', opacity: 0 }
+    ], { duration: 550, easing: 'cubic-bezier(.3,0,.2,1)' });
+    anim.onfinish = () => ghost.remove();
+  }
+  // Bấm icon gửi cạnh ô nhập lý do phản đối: chốt lại m2.votes[errId].lyDo, bay lên danh sách,
+  // rồi vẽ lại (danh sách + ô nhập rỗng lại) — thầy chốt: nội dung KHÔNG hiện thường trực trong ô,
+  // chỉ hiện trong danh sách phía trên sau khi đã bấm gửi. Sửa lại = bấm bút → gõ lại → gửi lại,
+  // dòng cũ trong danh sách tự bị THAY (cùng 1 khoá errId, không đẻ dòng thứ hai).
+  function guiPhanBienMotCau(errId) {
+    const el = document.querySelector('[data-pblydo="' + errId + '"]');
+    if (!el) return;
+    const text = el.value.trim();
+    if (!text) {
+      toast('Please write WHY you disagree — every disagree needs a reason!', 'err');
+      el.classList.add('ring-2', 'ring-rose-400'); el.focus();
+      return;
+    }
+    m2.votes[errId] = { y: 'phanDoi', lyDo: text };
+    const dich = document.querySelector('[data-pbrebut="' + errId + '"]') || el.closest('[data-pbrow]');
+    if (dich) flyPhanBien(el, dich, text);
+    capNhatNutSubmit();
+    renderErrorsPb();
+  }
+
   // ─── (Đợt B) BẢNG PHẢN BIỆN ───
   function renderErrorsPb() {
     const list = $('errList');
@@ -1578,11 +1616,22 @@
         (e.sentence ? '<div class="mt-1.5 text-sm font-bold italic text-slate-900">“' + escapeHtml(e.sentence) + '”</div>' : '') +
         '<div class="mt-0.5 text-sm font-bold text-rose-600">' + escapeHtml(e.detail) + '</div>' +
         (e.explain ? '<div class="mt-0.5 text-sm font-bold text-emerald-600">' + escapeHtml(e.explain) + '</div>' : '') +
-        // (Đợt khung vàng) hiện đủ TỪNG DÒNG "TÊN: lý do" của mọi người khác đã phản đối
-        (phieuKhacPhanDoi.length ? '<div class="mt-2 space-y-1">' +
-          phieuKhacPhanDoi.map((p) => '<div class="text-xs font-bold text-amber-700"><b>' +
-            escapeHtml(p.voter) + '</b>: ' + escapeHtml(p.lyDo || '(no reason given)') + '</div>').join('') +
-          '</div>' : '') +
+        // (Đợt danh sách phản biện) CHÍNH CHỦ (phiếu của chính em, đã GỬI thật) luôn đứng đầu,
+        // tên tô vàng; người khác xếp sau, tên trung tính. Chỉ hiện khi đã có lý do THẬT (không
+        // hiện phiếu 'phanDoi' rỗng — nghĩa là mới bấm DISAGREE nhưng chưa gõ/gửi gì).
+        (function(){
+          const minh = (v && v.y === 'phanDoi' && String(v.lyDo || '').trim())
+            ? [{ voter: state.student, lyDo: v.lyDo, minh: true }] : [];
+          const ds = minh.concat(phieuKhacPhanDoi.map((p) => ({ voter: p.voter, lyDo: p.lyDo, minh: false })));
+          if (!ds.length) return '';
+          return '<div class="mt-2 space-y-1" data-pbrebut="' + escapeHtml(e.id) + '">' +
+            ds.map((d) => '<div class="flex items-start gap-1.5 text-xs">' +
+              '<b class="font-extrabold shrink-0 ' + (d.minh ? 'text-amber-600' : 'text-slate-700') + '">' + escapeHtml(d.voter) + '</b>' +
+              '<span class="font-bold text-amber-700 flex-1">: ' + escapeHtml(d.lyDo) + '</span>' +
+              (d.minh ? '<button data-pbedit="' + escapeHtml(e.id) + '" title="Edit" class="shrink-0 text-slate-400 hover:text-indigo-600 p-0.5"><i data-lucide="pencil" class="w-3 h-3 pointer-events-none"></i></button>' : '') +
+              '</div>').join('') +
+            '</div>';
+        })() +
         '<div class="mt-2 pt-2 border-t border-slate-100 flex items-center gap-2 flex-wrap">' +
         '<span class="text-[11px] font-bold text-slate-400">Checked by ' + escapeHtml(x.chuLoi) + '</span>' +
         (daGo ? '' :
@@ -1594,10 +1643,15 @@
           (chonN ? 'border-rose-500 bg-rose-500 text-white' : 'border-rose-300 text-rose-600 hover:bg-rose-50') + '">✗ DISAGREE</button>' +
           '</span>') +
         '</div>' +
+        // (Đợt ô gửi riêng) ô nhập KHÔNG bao giờ tự điền lại nội dung đã gửi (chỉ trống hoặc đang
+        // sửa qua nút bút) — gõ xong bấm icon gửi mới đẩy lên danh sách phía trên (xem guiPhanBienMotCau).
         (chonN && !daGo ?
-          '<textarea data-pblydo="' + escapeHtml(e.id) + '" rows="2" maxlength="300" placeholder="Why do you disagree? (required)"' +
-          ' class="autogrow mt-2 w-full rounded-xl border border-rose-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-rose-400">' +
-          escapeHtml(v.lyDo || '') + '</textarea>' : '') +
+          '<div class="mt-2 flex items-end gap-1.5">' +
+          '<textarea data-pblydo="' + escapeHtml(e.id) + '" rows="1" maxlength="300" placeholder="Why do you disagree? (required)"' +
+          ' class="autogrow flex-1 rounded-xl border border-rose-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-rose-400"></textarea>' +
+          '<button data-pbsend="' + escapeHtml(e.id) + '" title="Send" class="shrink-0 w-9 h-9 rounded-xl bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center transition">' +
+          '<i data-lucide="send" class="w-4 h-4 pointer-events-none"></i></button>' +
+          '</div>' : '') +
         '</div>';
     }).join('');
     $('errEmpty').style.display = thuTu.length ? 'none' : '';
@@ -1633,15 +1687,22 @@
     return m2.dsCham.filter((x) => x.err.trangThai !== 'go' &&
       x.err.who && state.student && x.err.who === state.student && !m2.votes[x.err.id]);
   }
-  // Badge cố định luôn hiện trên đầu khung "Mistakes found" ở màn phản biện — đếm số lỗi của
-  // chính em còn chưa xác nhận (thầy chốt: KHÔNG chặn Submit, chỉ nhắc thường trực).
+  // (Đợt badge theo ALL/MINE) đếm lỗi CHƯA CHỐT của CẢ ĐỘI — mỗi lỗi tính theo đúng chủ nhân
+  // (e.who), tra trên KHO đã đồng bộ (m2.phanHoi, có phiếu của MỌI thành viên chứ không riêng
+  // em) vì em không biết bạn khác đang gõ dở gì trên máy họ — chỉ tính được cái đã GỬI THẬT.
+  function demChuaChotCaDoi() {
+    return m2.dsCham.filter((x) => x.err.trangThai !== 'go' && x.err.who &&
+      !m2.phanHoi.some((p) => p.errId === x.err.id && p.voter === x.err.who)).length;
+  }
+  // Badge cố định luôn hiện trên đầu khung "Mistakes found" ở màn phản biện — bấm ALL thì đếm
+  // CẢ ĐỘI, bấm MINE thì chỉ đếm của chính em (thầy chốt: KHÔNG chặn Submit, chỉ nhắc thường trực).
   function capNhatBadgeThieuPb() {
     const b = $('btnPbThieu');
     if (!b) return;
     const hien = state.moHinh === 2 && state.cheDo === 'phanbien';
     b.classList.toggle('hidden', !hien);
     if (!hien) return;
-    const n = layThieuBatBuocPb().length;
+    const n = m2.locMine ? layThieuBatBuocPb().length : demChuaChotCaDoi();
     b.textContent = n ? ('UNCONFIRMED: ' + n) : 'ALL CONFIRMED ✓';
     b.className = 'mx-2 rounded-full px-3 py-1 text-xs font-extrabold transition ' +
       (n ? 'bg-amber-500 text-white' : 'bg-emerald-100 text-emerald-700');
@@ -2254,6 +2315,18 @@
         }
         return;
       }
+      // (Đợt ô gửi riêng) icon gửi cạnh ô lý do phản đối — chốt lại + bay lên danh sách
+      const pbSend = ev.target.closest('[data-pbsend]');
+      if (pbSend) { guiPhanBienMotCau(pbSend.dataset.pbsend); return; }
+      // (Đợt ô gửi riêng) icon bút trên dòng phản biện CỦA CHÍNH EM — nạp lại vào ô nhập để sửa
+      const pbEdit = ev.target.closest('[data-pbedit]');
+      if (pbEdit) {
+        const id = pbEdit.dataset.pbedit;
+        const cur = m2.votes[id];
+        const o = document.querySelector('[data-pblydo="' + id + '"]');
+        if (o) { o.value = cur ? cur.lyDo : ''; autoGrow(o); o.focus(); }
+        return;
+      }
       const edit = ev.target.closest('[data-edit]');
       const del = ev.target.closest('[data-del]');
       if (edit) {
@@ -2388,16 +2461,21 @@
     $('btnPbThieuOk').addEventListener('click', () => { closePbThieu(); submitPbThatSu(); });
 
     // ── (Đợt B) các sự kiện còn lại của mô hình 2 ──
-    // Ô lý do phản đối (màn phản biện) — gõ tới đâu nhớ tới đó, đổi là nút Submit VÀNG
+    // (Đợt ô gửi riêng) Ô lý do phản đối (màn phản biện) — CHỈ tự giãn cao + bỏ viền đỏ báo lỗi
+    // lúc gõ; KHÔNG còn ghi thẳng vào m2.votes mỗi phím gõ nữa — phải bấm icon gửi mới chốt
+    // (guiPhanBienMotCau), nội dung không hiện thường trực trong ô (thầy chốt).
     $('errList').addEventListener('input', (ev) => {
       const o = ev.target.closest('[data-pblydo]');
       if (!o) return;
-      const id = o.dataset.pblydo;
-      if (!m2.votes[id]) m2.votes[id] = { y: 'phanDoi', lyDo: '' };
-      m2.votes[id].lyDo = o.value;
       o.classList.remove('ring-2', 'ring-rose-400');
       autoGrow(o);
-      capNhatNutSubmit();
+    });
+    // Enter (không giữ Shift) trong ô lý do = gửi luôn, khỏi phải với chuột sang icon gửi
+    $('errList').addEventListener('keydown', (ev) => {
+      const o = ev.target.closest('[data-pblydo]');
+      if (!o || ev.key !== 'Enter' || ev.shiftKey) return;
+      ev.preventDefault();
+      guiPhanBienMotCau(o.dataset.pblydo);
     });
 
     // Nút DISAGREEMENT: bật = sáng + nhấp nháy hào quang + dồn câu tranh chấp lên đầu;
