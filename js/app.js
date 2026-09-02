@@ -9,7 +9,9 @@
   const $ = (id) => document.getElementById(id);
 
   // ─── Danh sách lớp — mô hình 1 LINK CHUNG + đăng nhập theo lớp ───
-  // Nguồn: đọc LIVE từ "bộ não" (Apps Script ?config=1); dự phòng data/classes.json.
+  // Nguồn: kho Firestore `spBuoi` (ưu tiên) rồi "bộ não" Apps Script ?config=1.
+  // (02/09/2026 — bảo mật A5) File tĩnh data/classes.json ĐÃ BỎ khỏi kho PUBLIC: nó chứa mã
+  // lớp + tên học sinh + link video, ai cũng tải được. Đừng thêm lại.
   // Cấu trúc: { classes: [ { id, name, classCode, code, lesson, topic, teams:[{team, video, members[]}], pairs:[{checker, checked}] } ] }
   let CLASSES = { classes: [] };
   const session = { class: null };   // lớp đang chọn sau khi đăng nhập
@@ -1282,7 +1284,8 @@
   // Bộ não Apps Script cũ vẫn được hỏi NGẦM PHÍA SAU (8-40 giây) rồi GHÉP THÊM những lớp chưa
   // có buổi Firestore — buổi cũ trong Google Sheets vẫn đăng nhập được, chỉ hiện muộn hơn.
   // Lớp ĐÃ có buổi Firestore thì buổi Sheets cùng lớp bị che (kho mới thắng, tránh nộp lệch kho).
-  // DỰ PHÒNG CUỐI: file tĩnh data/classes.json khi cả hai kho đều hỏng.
+  // Cả hai kho hỏng thì CLASSES giữ nguyên `{classes: []}` — màn đăng nhập báo chưa có lớp.
+  // (02/09/2026) Không còn dự phòng file tĩnh data/classes.json (đã bỏ khỏi kho PUBLIC).
   async function loadClasses() {
     let coFs = false;
     try {
@@ -1308,11 +1311,7 @@
 
     if (coFs) { hoiGas(); return; }     // kho mới có bài → vào ngay, kho cũ ghép thêm sau
     if (await hoiGas()) return;
-    try {
-      const r = await fetch('data/classes.json?_=' + Date.now(), { cache: 'no-store' });
-      if (r.ok) CLASSES = await r.json();
-    } catch (e) { CLASSES = { classes: [] }; }
-    fixClassNames();
+    CLASSES = { classes: [] };
   }
   // (CHẶNG 32) UI là 100% tiếng Anh nhưng cột NAME trong sheet CẤU HÌNH đang là "Lớp B2B"…
   // → chuẩn hoá NGAY KHI NẠP: "Lớp X" thành "CLASS X" (sheet giữ nguyên, chỉ đổi hiển thị).
@@ -1325,7 +1324,7 @@
   // Màn 1 — đăng nhập lớp: HS TỰ GÕ mã lớp (classCode) + mã (code)
   function initLoginScreen() {
     if (!(CLASSES.classes || []).length) {
-      toast('Chưa có lớp nào trong danh sách. Thầy cần thêm lớp vào data/classes.json.', 'err');
+      toast('Chưa có buổi speaking nào đang mở. Thầy cần mở buổi trong app mySpeaking.', 'err');
     }
   }
 

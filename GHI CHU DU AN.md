@@ -1849,3 +1849,19 @@ CDN quen thuộc YT/XLSX/lucide). **CHƯA ai bấm tay bằng chuột trên máy
 phiên này đều do script bấm hộ. Cần thầy thử: bấm Keep/Accept bằng tay trên điện thoại (hai nút
 mỗi cái gần nửa chiều ngang, ngón tay có bấm nhầm nhau không), và **bấm UPDATE gửi thật** một lần
 để chắc kết luận Keep/Accept lên tới kho (phiên này cố ý KHÔNG gửi để không đụng dữ liệu thật).
+
+## CHẶNG — 02/09/2026 tối: BẢO MẬT GÓI A5 — BỎ `data/classes.json` KHỎI KHO (`?v=42`)
+
+**Vì sao**: kho `mySpeaking` là PUBLIC. File `data/classes.json` là bản "đông cứng" từ 19/07 chứa
+mã lớp B1AH-GERMS + tên 12 em + link video Drive "ai có link" — ai cũng tải được. Web đã đọc
+lớp từ Firestore `spBuoi` (ưu tiên) rồi Apps Script `?config=1`; file tĩnh chỉ là **dự phòng
+cuối** khi cả hai kho hỏng, mà khi đó bài nộp cũng không đi đâu được. Rà soát toàn cụm ở
+`E:\LAP TRINH APP\DU LIEU TONG HOP\BAO MAT CUM APP — KHAO SAT 02-09-2026 (TOI).md`.
+
+**Đã làm**: `git rm data/classes.json` · `js/app.js loadClasses()` bỏ nhánh fetch file tĩnh
+(cả hai kho hỏng thì `CLASSES` giữ `{classes: []}` như khai báo) · thông báo "chưa có lớp" nay
+chỉ thầy mở buổi trong app mySpeaking, không còn trỏ vào file đã bỏ · `index.html` bump
+`js/app.js?v=42` · `CLAUDE.md` sửa 2 dòng nhắc file.
+
+⚠️ File cũ vẫn nằm trong **lịch sử git** của kho PUBLIC — thầy chốt hoãn xoá lịch sử tới đợt D
+(đổi mã học sinh) rồi làm một lần cho cả `myLesson` lẫn `mySpeaking`.

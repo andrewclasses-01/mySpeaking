@@ -83,7 +83,7 @@ App web tĩnh (GitHub Pages) cho học sinh xem video thuyết trình speaking c
 ## Kiến trúc
 ```
 index.html        — app học sinh: MÀN 1 đăng nhập lớp → MÀN 2 chọn tên → app chính 2 cột: video | nhập liệu
-data/classes.json — DANH SÁCH LỚP (nội dung mỗi lớp) — nguồn cho luồng đăng nhập
+data/classes.json — ⛔ ĐÃ BỎ 02/09/2026 (bảo mật A5: kho PUBLIC, file lộ mã lớp + tên HS). Lớp nay đọc từ Firestore `spBuoi` rồi Apps Script ?config=1
 config.js         — SCRIPT_URL của Apps Script (thầy điền 1 lần)
 js/app.js         — toàn bộ logic (IIFE, không framework)
 apps-script/Code.gs — code Google Apps Script nhận bài nộp, ghi vào Google Sheet
@@ -95,7 +95,7 @@ teacher.html      — [CŨ, không còn dùng trong mô hình mới] trang tạo
   - **MÀN 2 chọn tên (chặng 16)**: **2 ô select cạnh nhau** — Your Team (`#selTeam`) + Your Name (`#selName`, KHÓA đến khi chọn Team). Chọn Team → nạp tên đội đó + mở khóa (`onTeamChange`); chọn Name → sang xác nhận ngay.
   - **MÀN 3 xác nhận**: ảnh HS (tạm: chữ cái đầu; ảnh thật sau qua `cls.photos[name]`) + "You are in Team X · You will check Team Y" + **bảng cam kết** tiêu đề động **"{Tên HS}, Andrew has something for you."** (`#identNoteTitle`) + **ô tích BẮT BUỘC** "I understand and respect our journey, teacher Andrew ❤️" → chưa tích thì nút Start bị khoá.
   - App tự tính đội mình (checker) + đội phải chấm (checked, theo `pairs`) → tự nạp video + members đội bạn.
-  - Dữ liệu lớp đọc từ `data/classes.json` (fetch no-store). Cấu trúc: `{classes:[{id,name,classCode,code,topic,teams:[{team,video,members[]}],pairs:[{checker,checked}], photos?:{TÊN:url}}]}`. Chặng sau app máy tính sẽ TỰ SINH file này.
+  - Dữ liệu lớp đọc từ Firestore `spBuoi` → Apps Script `?config=1` (file tĩnh `data/classes.json` đã bỏ 02/09/2026). Cấu trúc: `{classes:[{id,name,classCode,code,topic,teams:[{team,video,members[]}],pairs:[{checker,checked}], photos?:{TÊN:url}}]}`. Chặng sau app máy tính sẽ TỰ SINH file này.
 - **Video 3 chế độ** (tự nhận diện từ link):
   1. `youtube` — YouTube IFrame API, `getCurrentTime()` chính xác. KHUYÊN DÙNG (video để "Không công khai").
   2. `html5` — Drive phát trực tiếp: ưu tiên Drive API `googleapis.com/drive/v3/files/ID?alt=media&key=<DRIVE_API_KEY>` (chính thống, chạy được file lớn), rồi mới thử `drive.usercontent.google.com/download?...&confirm=t` và `uc?export=download` (chỉ chạy với file ≤100MB); lấy `video.currentTime`.
