@@ -216,9 +216,121 @@
   //    phải ra CÙNG một thư mục `b2b`. Script xuất ảnh (myLesson app tools/xuat-avatar.py)
   //    dùng Y HỆT luật này — đổi một bên là đổi CẢ HAI.
   const AVATAR_GOC = 'https://andrewclasses.com/assets/avatar/';
+  function avLopSlug() {
+    return khongDauTen(tenLopNgan(state.className) || state.classCode).replace(/[^a-z0-9]/g, '');
+  }
   function avatarUrl(ten) {
-    const lop = khongDauTen(tenLopNgan(state.className) || state.classCode).replace(/[^a-z0-9]/g, '');
-    return AVATAR_GOC + lop + '/' + slugAvatar(ten) + '.jpg';
+    return AVATAR_GOC + avLopSlug() + '/' + slugAvatar(ten) + '.jpg';
+  }
+
+  /* ══ ⭐ 03/09/2026 — ẢNH ĐẠI DIỆN LẤY TỪ KHO, KHÔNG CÒN NEO VÀO TÊN ══════════════
+     Sự cố 02/09: myStudent đổi tên 64 em từ tên gọi ngắn sang tên đầy đủ
+     ("THƯ" → "MINH THƯ"); ảnh trên web đặt tên FILE THEO TÊN nên 48 em mất ảnh,
+     câm lặng. Màn này còn dễ dính hơn myLesson: buổi speaking giữ TÊN TẠI LÚC TẠO
+     BUỔI, nên buổi cũ mãi mang tên ngắn kể cả sau khi danh sách đã đổi tên.
+
+     Cách chữa — hai lớp, giống hệt myLesson (`myLesson/web/js/chung.js`):
+       ① LỚP NỀN: ảnh file `andrewclasses.com/assets/avatar/<lop>/<ten>.jpg` như cũ.
+       ② ĐÈ LÊN: kho `lessonAvatar/{lop-slug}` — MỘT tài liệu cho cả lớp, ảnh xếp
+          theo MÃ SỐ em (myLesson app đẩy lên sau mỗi lượt đồng bộ danh sách).
+     Ở đây KHÔNG có mã số em (gói `?goi=` chỉ mang tên), nên dò bằng `avTenKhop`:
+     bằng nhau HOẶC là ĐUÔI của nhau — chính luật đuôi này khớp được "THƯ" của buổi
+     cũ với "MINH THƯ" trên kho.
+     💸 1 lượt đọc cho CẢ LỚP + đệm 10 phút (LUẬT 8). ⛔ Đừng tách mỗi em một tài liệu.
+     ⛔ Luật này CHÉP Ở HAI NƠI với `myLesson/web/js/chung.js` — sửa một bên sửa cả hai. */
+  const AV_CACHE_GIAY = 600;
+  let AV_KHO = null;          // { "<id>": {t, a} } đã nạp cho lớp của buổi này
+  // ⛔⛔ CHỐT CHỐNG HỎI LẠI LIÊN TỤC (bắt được lúc chạy thử 03/09 bên myLesson).
+  // `batAvatarKho()` được gọi ở CẢ BA màn (`datAvatarDauTrang` gọi mỗi lần đổi màn).
+  // Kho 403 (luật chưa dán) hay mất mạng thì không có gì để đệm ⇒ mỗi lần đổi màn lại
+  // bắn thêm một lượt hỏi kho. Nhớ RIÊNG mốc hỏng và im 60 giây — vẫn không đệm nội
+  // dung rỗng, chỉ đệm cái sự "vừa hỏi hụt".
+  const AV_HONG = {};
+  const AV_HONG_GIAY = 60;
+
+  function avTenKhop(a, b) {
+    const x = khongDauTen(a).replace(/\s+/g, ' ').trim();
+    const y = khongDauTen(b).replace(/\s+/g, ' ').trim();
+    if (!x || !y) return false;
+    if (x === y) return true;
+    return x.length > y.length ? x.slice(-(y.length + 1)) === (' ' + y)
+                               : y.slice(-(x.length + 1)) === (' ' + x);
+  }
+
+  async function napAvatarKho() {
+    const slug = avLopSlug();
+    if (!FS_GOC || !slug) return {};
+    const khoa = 'sp_av1:' + slug;
+    try {
+      const o = JSON.parse(sessionStorage.getItem(khoa) || 'null');
+      if (o && (Date.now() - o.luc) < AV_CACHE_GIAY * 1000) return o.em;
+    } catch (e) {}
+    if (AV_HONG[slug] && (Date.now() - AV_HONG[slug]) < AV_HONG_GIAY * 1000) return {};
+    try {
+      const r = await fetch(FS_GOC + '/lessonAvatar/' + encodeURIComponent(slug) + fsKey(),
+        { cache: 'no-store' });
+      // 404 = lớp chưa từng được đẩy ảnh lên kho. KHÔNG phải lỗi — lớp nền lo tiếp.
+      if (!r.ok && r.status !== 404) { AV_HONG[slug] = Date.now(); return {}; }
+      delete AV_HONG[slug];
+      const j = r.status === 404 ? { fields: {} } : await r.json();
+      const f = (j.fields && j.fields.em && j.fields.em.mapValue
+                 && j.fields.em.mapValue.fields) || {};
+      const em = {};
+      Object.keys(f).forEach((id) => {
+        const g = (f[id].mapValue && f[id].mapValue.fields) || {};
+        const a = g.a && g.a.stringValue;
+        if (a) em[id] = { t: (g.t && g.t.stringValue) || '', a };
+      });
+      // ⛔ CHỈ đệm khi đọc được thật — đệm cả lượt hỏng là đóng băng bảng rỗng 10 phút.
+      try { sessionStorage.setItem(khoa, JSON.stringify({ luc: Date.now(), em })); } catch (e) {}
+      return em;
+    } catch (e) { AV_HONG[slug] = Date.now(); return {}; }
+  }
+
+  // Đè ảnh kho lên mọi ô đã vẽ. Ô nào cũng mang `data-av-em`.
+  // ⛔ Dấu đặt trên Ô, KHÔNG trên <img>: `onerror="this.remove()"` gỡ hẳn thẻ ảnh khi
+  //    thiếu, đánh dấu lên đó là mất manh mối của đúng những em đang cần cứu nhất.
+  function deAvatarKho() {
+    if (!AV_KHO) return 0;
+    const ids = Object.keys(AV_KHO);
+    if (!ids.length) return 0;
+    const o = document.querySelectorAll('[data-av-em]');
+    let de = 0;
+    for (let i = 0; i < o.length; i++) {
+      const el = o[i], ten = el.getAttribute('data-av-em');
+      let id = null;
+      for (let k = 0; k < ids.length; k++) {
+        if (avTenKhop(AV_KHO[ids[k]].t, ten)) { id = ids[k]; break; }
+      }
+      if (!id) continue;
+      let img = el.tagName === 'IMG' ? el : el.querySelector('img');
+      if (!img) {
+        img = document.createElement('img');
+        img.alt = '';
+        img.className = 'absolute inset-0 w-full h-full object-cover';
+        el.insertBefore(img, el.firstChild);
+      }
+      const moi = 'data:image/jpeg;base64,' + AV_KHO[id].a;
+      if (img.getAttribute('src') !== moi) { img.setAttribute('src', moi); de++; }
+    }
+    return de;
+  }
+
+  // Bật một lần cho cả trang: nạp kho rồi đè, và đè lại mỗi khi màn vẽ thêm ô mới.
+  // ⛔ CHỈ theo dõi `childList`, TUYỆT ĐỐI KHÔNG theo dõi `attributes`: chính hàm đè
+  //    đổi `src`, theo dõi attributes là nó tự gọi lại mình vô tận.
+  let avTai = null, avHen = null;
+  async function batAvatarKho() {
+    AV_KHO = await napAvatarKho();
+    deAvatarKho();
+    if (avTai) return;
+    try {
+      avTai = new MutationObserver(() => {
+        if (avHen) return;
+        avHen = setTimeout(() => { avHen = null; deAvatarKho(); }, 250);
+      });
+      avTai.observe(document.body, { childList: true, subtree: true });
+    } catch (e) { /* trình duyệt cổ: vẫn có lượt đè đầu tiên ở trên */ }
   }
 
   // ⭐ (02/09/2026 — thầy chốt) Ảnh tròn góc trái thanh tím = AVATAR CỦA CHÍNH EM đang đăng
@@ -235,6 +347,12 @@
     img.onerror = function () { img.remove(); };
     img.src = avatarUrl(state.student);
     img.alt = state.student;
+    // ⭐ 03/09/2026 — dấu để `deAvatarKho()` đè ảnh mới nhất từ kho. Đặt trên Ô BAO
+    // (thẻ cha), không trên <img>: `onerror` ngay trên kia gỡ hẳn thẻ ảnh khi thiếu.
+    if (img.parentNode && img.parentNode.setAttribute) {
+      img.parentNode.setAttribute('data-av-em', state.student);
+    }
+    batAvatarKho();
   }
 
   // Mã lỗi ổn định — phiếu phản biện bám theo mã này kể cả khi em chấm sửa chữ trong câu
@@ -1658,7 +1776,8 @@
   // Vòng tròn avatar (ảnh thật từ kho web; hỏng ảnh → chữ tắt). kind: 'dongY' xanh · 'phanDoi' đỏ
   function avatarVong(ten, kind, errId) {
     const nen = kind === 'phanDoi' ? 'bg-rose-500 ring-rose-300' : 'bg-emerald-500 ring-emerald-300';
-    return '<button data-pv="' + escapeHtml(errId) + '__' + escapeHtml(ten) + '" title="' + escapeHtml(ten) + '"' +
+    return '<button data-pv="' + escapeHtml(errId) + '__' + escapeHtml(ten) + '"' +
+      ' data-av-em="' + escapeHtml(ten) + '" title="' + escapeHtml(ten) + '"' +
       ' class="pv-av relative w-7 h-7 rounded-full ring-2 ' + nen + ' text-white text-[9px] font-extrabold' +
       ' flex items-center justify-center overflow-hidden shrink-0 -ml-1.5 first:ml-0">' +
       '<img src="' + escapeHtml(avatarUrl(ten)) + '" alt="" class="absolute inset-0 w-full h-full object-cover"' +
@@ -2109,7 +2228,7 @@
     const laPhanDoi = p.y === 'phanDoi';
     pop.innerHTML =
       '<div class="flex items-center gap-2 mb-1.5">' +
-      '<span class="w-6 h-6 rounded-full ' + (laPhanDoi ? 'bg-rose-500' : 'bg-emerald-500') + ' text-white text-[9px] font-extrabold flex items-center justify-center overflow-hidden relative">' +
+      '<span data-av-em="' + escapeHtml(voter) + '" class="w-6 h-6 rounded-full ' + (laPhanDoi ? 'bg-rose-500' : 'bg-emerald-500') + ' text-white text-[9px] font-extrabold flex items-center justify-center overflow-hidden relative">' +
       '<img src="' + escapeHtml(avatarUrl(voter)) + '" alt="" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()">' +
       '<span>' + escapeHtml(initialsOf(voter)) + '</span></span>' +
       '<b class="text-xs">' + escapeHtml(voter) + '</b>' +
