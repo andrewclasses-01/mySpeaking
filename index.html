@@ -76,7 +76,7 @@ tailwind.config = {
   }
   /* CHẶNG 29 — chế độ XEM LẠI bài đã nộp: khoá form + ẩn nút sửa/xoá từng lỗi (mở khoá qua nút Edit) */
   #appScreen.review-locked #errFormCard{ opacity:.45; pointer-events:none; }
-  #appScreen.review-locked #errList [data-edit], #appScreen.review-locked #errList [data-del]{ display:none; }
+  #appScreen.review-locked #errList [data-edit], #appScreen.review-locked #errList [data-ka]{ display:none; }
 
   /* ══ (Đợt B 27/08/2026) MÔ HÌNH 2 — bản tổng lỗi + màn phản biện ══ */
   /* Màn PHẢN BIỆN: ẩn form thêm lỗi + nút Export — chỉ còn video + danh sách câu bị chấm */
@@ -89,19 +89,33 @@ tailwind.config = {
     /* form ẩn thì khung Mistakes chiếm CẢ CỘT PHẢI (2 hàng) cho danh sách dài dễ đọc */
     #appScreen.pb-mode #errListCard{ grid-row:1 / span 2; }
   }
-  /* Câu đã GỠ (được Agree) / vết: mờ + gạch ngang, chìm cuối bảng (thầy chốt) */
+  /* Câu đã GỠ (Accept Appeal): mờ + gạch ngang.
+     ⛔ (Đợt Keep/Accept 02/09/2026) KHÔNG còn chìm xuống cuối bảng — thầy chốt cho em ĐỔI Ý
+     thoải mái kể cả sau khi đã gửi, mà chìm xuống đáy thì em không tìm lại nổi để bấm lại. */
   .err-go{ opacity:.55; }
   .err-go .text-rose-600, .err-go .text-emerald-600, .err-go .italic{ text-decoration:line-through; }
-  /* Nút SUBMIT VÀNG khi có sửa chưa gửi: nhấp nháy TO-NHỎ nhắc "submit lại đi đừng quên" */
-  @keyframes nutVangNhay{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.12); } }
-  .nut-vang-nhay{ animation:nutVangNhay 1.1s ease-in-out infinite; }
+  /* Nút SUBMIT VÀNG khi có sửa chưa gửi.
+     (Đợt Keep/Accept 02/09/2026 — thầy chốt) BỎ hẳn kiểu nảy to-nhỏ cũ (`transform:scale`):
+     nút phình ra rồi thu lại làm cả thanh đầu trang giật theo. Nay nút ĐỨNG YÊN đúng kích
+     thước, chỉ có HÀO QUANG VÀNG toả ra rồi thu lại — cùng khuôn với `.dis-halo` bên dưới,
+     đổi màu sang amber. Giữ NGUYÊN tên class `nut-vang-nhay` vì `capNhatNutSubmit()` đang gọi. */
+  @keyframes nutVangHao{
+    0%,100%{ box-shadow:0 0 0 3px rgba(245,158,11,.40), 0 0 14px 4px rgba(245,158,11,.55); }
+    50%{ box-shadow:0 0 0 7px rgba(245,158,11,.15), 0 0 28px 10px rgba(245,158,11,.85); }
+  }
+  .nut-vang-nhay{ animation:nutVangHao 1.1s ease-in-out infinite; }
   /* Nút DISAGREEMENT đang bật: hào quang nhấp nháy quanh nút */
   @keyframes disHalo{
     0%,100%{ box-shadow:0 0 0 3px rgba(225,29,72,.35), 0 0 14px 4px rgba(225,29,72,.55); }
     50%{ box-shadow:0 0 0 6px rgba(225,29,72,.15), 0 0 26px 9px rgba(225,29,72,.85); }
   }
   .dis-halo{ animation:disHalo 1s ease-in-out infinite; }
-  /* Pop-up nhỏ cạnh avatar: nội dung phản biện + Keep/Agree */
+  /* (Đợt Keep/Accept 02/09/2026) Hai nút Keep Issue / Accept Appeal nằm TRONG ô lỗi, hàng cuối.
+     Nút KHÔNG được chọn thì nhạt hẳn đi (thầy chốt "cái kia nhạt đi và khó nhìn") — dùng
+     opacity chứ không đổi màu, để em vẫn đọc được chữ mà bấm lại khi muốn đổi ý. */
+  .ka-mo{ opacity:.35; }
+  .ka-mo:hover{ opacity:.7; }
+  /* Pop-up nhỏ cạnh avatar: chỉ còn NỘI DUNG phản biện (2 nút Keep/Agree đã dời vào ô lỗi) */
   #pbPop{ position:fixed; z-index:70; width:290px; background:#fff; border:1px solid #e2e8f0;
     border-radius:1rem; box-shadow:0 18px 40px rgba(15,23,42,.22); padding:.8rem; }
 </style>
@@ -218,7 +232,15 @@ tailwind.config = {
            chép từ myLesson/web/assets) — hai hệ nhìn là một nhà; màn đăng nhập +
            favicon vẫn giữ ảnh chibi cũ. -->
       <button id="btnHome" title="Watch all team videos" class="flex items-center gap-2 sm:gap-2.5 mr-auto min-w-0 text-left hover:opacity-90 active:scale-[.98] transition">
-        <img src="img/avatar-tron.jpg" alt="Speaking in Andrew Classes" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full ring-2 ring-white/50 shadow shrink-0">
+        <!-- (Đợt Keep/Accept 02/09/2026 — thầy chốt) Ảnh tròn này là AVATAR CỦA CHÍNH EM đang
+             đăng nhập, không còn là ảnh thầy. `datAvatarDauTrang()` đổi src sau khi biết tên em
+             (kho ảnh chung andrewclasses.com, cùng hàm `avatarUrl` với avatar phiếu phản biện);
+             thiếu ảnh thì rơi về vòng tròn chữ tắt tên em. Việc BẤM giữ nguyên: mở pop-up xem
+             video cả lớp. ⛔ Màn ĐĂNG NHẬP vẫn giữ ảnh chibi (img/logo-site.png) — đừng đổi. -->
+        <span class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full ring-2 ring-white/50 shadow shrink-0 overflow-hidden bg-white/20 flex items-center justify-center">
+          <span id="hdAvatarChu" class="text-xs font-extrabold text-white"></span>
+          <img id="hdAvatar" src="img/avatar-tron.jpg" alt="" class="absolute inset-0 w-full h-full object-cover">
+        </span>
         <div class="min-w-0">
           <div class="font-extrabold leading-tight text-sm sm:text-base truncate">
             <span class="sm:hidden">SP in Andrew Classes</span>
@@ -365,8 +387,12 @@ tailwind.config = {
             <h2 id="errListTitle" class="font-extrabold flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-indigo-600"></i> Mistakes found</h2>
             <!-- (Đợt lọc ALL/MINE) màn phản biện: thay hẳn tiêu đề trên bằng nút DÀI CHIA ĐÔI —
                  bên đang hiện thì sáng, bên kia xám mờ (ẩn/hiện qua CSS .pb-mode bên dưới) -->
+            <!-- (Đợt CHÍNH CHỦ QUYẾT 02/09/2026) chèn thêm ô GIỮA "TEAM CONFLICT: n" — những câu
+                 mà CHÍNH CHỦ đã Agree nhưng đồng đội lại Disagree. Rất hiếm, nên ô này chỉ hiện
+                 khi n ≥ 1 (veNutLocPb tự bật/tắt bằng class .hidden). -->
             <div id="btnPbLoc" class="hidden items-center rounded-full border-2 border-slate-300 overflow-hidden text-xs font-extrabold">
               <button data-loc="all" class="px-3.5 py-1.5 transition">ALL</button>
+              <button data-loc="conflict" class="hidden px-3.5 py-1.5 transition border-x-2 border-slate-300">TEAM CONFLICT</button>
               <button data-loc="mine" class="px-3.5 py-1.5 transition">MINE</button>
             </div>
             <!-- (Đợt B) nút DISAGREEMENT: số câu có phản đối CHƯA xử lý; bấm = dồn lên đầu + hào quang -->
@@ -382,11 +408,10 @@ tailwind.config = {
               No mistakes yet. Watch closely and get started! 🔍
             </div>
           </div>
-          <!-- CHẶNG 33: Delete all — ĐẶT NGOÀI vùng cuộn (lg:shrink-0) nên luôn thấy ở đáy khung.
-               Tự ẩn khi chưa có lỗi nào hoặc đang ở chế độ xem lại bài đã nộp. -->
-          <button id="btnDelAll" class="hidden mt-2.5 lg:shrink-0 w-full rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 active:scale-[.98] transition py-1.5 text-sm font-bold flex items-center justify-center gap-1.5">
-            <i data-lucide="trash-2" class="w-4 h-4"></i> Delete all
-          </button>
+          <!-- ⛔ (Đợt Keep/Accept 02/09/2026 — thầy chốt) NÚT "DELETE ALL" ĐÃ BỎ HẲN, đừng dựng lại.
+               Lý do: xoá sạch một phát là mất cả buổi làm việc của em, mà không có đường lùi.
+               Muốn xoá thì phải xoá TỪNG câu qua nút bút chì (xoá trắng cả 3 ô SENTENCE/MISTAKE/
+               EXPLANATION → nút đỏ đổi thành "Delete this mistake"). Xem `addOrUpdateError()`. -->
         </div>
       </div>
 
@@ -473,35 +498,10 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- (CHẶNG 33) xác nhận XOÁ MỘT lỗi -->
-<div id="delOneModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop text-center">
-    <div class="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-3">
-      <i data-lucide="trash-2" class="w-6 h-6 text-rose-500"></i>
-    </div>
-    <p class="text-slate-700 font-semibold mb-1 leading-relaxed">Delete mistake <b id="delOneNo">#1</b>?</p>
-    <p id="delOneWhat" class="text-xs text-slate-500 mb-4 leading-relaxed"></p>
-    <div class="flex gap-2">
-      <button id="btnDelOneCancel" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">Keep it</button>
-      <button id="btnDelOneOk" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-2.5 font-bold text-sm">Yes, delete</button>
-    </div>
-  </div>
-</div>
-
-<!-- (CHẶNG 33) xác nhận XOÁ HẾT -->
-<div id="delAllModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop text-center">
-    <div class="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-3">
-      <i data-lucide="alert-triangle" class="w-6 h-6 text-rose-500"></i>
-    </div>
-    <p class="text-slate-700 font-semibold mb-1 leading-relaxed">Delete <b id="delAllCount">0</b> mistakes — all of them?</p>
-    <p class="text-xs text-slate-500 mb-4 leading-relaxed">This clears your whole list on this device. You cannot undo it.</p>
-    <div class="flex gap-2">
-      <button id="btnDelAllCancel" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">Keep them</button>
-      <button id="btnDelAllOk" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-2.5 font-bold text-sm">Yes, delete all</button>
-    </div>
-  </div>
-</div>
+<!-- ⛔ (Đợt Keep/Accept 02/09/2026) HAI POP-UP XOÁ CŨ (#delOneModal + #delAllModal) ĐÃ BỎ HẲN.
+     Xoá một lỗi nay đi qua chính ô nhập: bấm bút chì → xoá trắng cả 3 ô SENTENCE/MISTAKE/
+     EXPLANATION → nút đỏ tự đổi thành "Delete this mistake". Việc xoá trắng 3 ô CHÍNH LÀ lời
+     xác nhận, nên không hỏi thêm một lần nữa; muốn huỷ thì bấm Cancel, lỗi còn nguyên. -->
 
 <!-- (CHẶNG 32) cảnh báo NỘP ÍT HƠN lần trước (em có thể đang làm ở máy khác, form trống) -->
 <div id="fewerModal" class="fixed inset-0 z-[55] bg-black/50 hidden items-center justify-center p-4">
@@ -594,6 +594,6 @@ tailwind.config = {
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=27"></script>
-<script src="js/app.js?v=40"></script>
+<script src="js/app.js?v=41"></script>
 </body>
 </html>

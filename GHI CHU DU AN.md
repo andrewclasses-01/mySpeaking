@@ -1727,3 +1727,125 @@ mở một buổi mô hình 2 đang có tranh chấp thật, thử đủ luồng
 thấy dòng mình nhảy lên đầu danh sách + STT chuyển xanh sau khi bấm SUBMIT lớn; bấm bút sửa lại
 một câu đã gửi; gõ dở rồi tải lại trang xem nháp còn không; bấm badge UNCONFIRMED xem có cuộn
 đúng chỗ; đổi ALL/MINE xem số + cuộn tự động có đúng không.
+
+---
+
+## CHẶNG — 02/09/2026: KEEP/ACCEPT TRONG Ô LỖI + LUẬT "CHÍNH CHỦ QUYẾT" (`?v=41`)
+
+Thầy giao 6 việc cho màn CHẤM của học sinh, hỏi lại trước khi build; trong lúc trả lời thầy sinh
+thêm **việc 7 — luật CHÍNH CHỦ QUYẾT** và **việc 8 — đổi kiểu nháy của nút UPDATE**. Không đụng
+bộ não Apps Script, KHÔNG đổi một trường dữ liệu nào trên kho.
+
+### 1. Số thứ tự KHÔNG nhảy nữa khi bật nút dồn câu
+`renderErrors()` trước in `pos + 1` = vị trí **sau khi đã dồn** ⇒ bật REQUIREMENT một cái là cả
+bảng đổi số, thầy và học sinh không đối chiếu "câu số mấy" với nhau được. Nay chốt bảng
+`sttChuan` NGAY SAU khi xếp theo mốc giờ, TRƯỚC mọi lần dồn; số bám theo câu, dồn kiểu gì cũng
+đứng yên. Câu đã Accept cũng **thôi không chìm xuống cuối** (thầy chốt: phải đổi ý được, chìm
+xuống đáy thì em không tìm lại nổi).
+
+### 2. Hai nút "Keep Issue" / "Accept Appeal" nằm TRONG ô lỗi
+Trước nằm trong pop-up nhỏ cạnh avatar — phải bấm avatar mới thấy. Nay là hàng cuối của chính ô,
+mỗi nút gần nửa chiều ngang: Keep chọn → **vàng đậm** (amber-500 chữ trắng, phải đậm mới nổi trên
+nền vàng của ô tranh chấp), Accept chọn → **xanh dương** (blue-600), nút còn lại nhạt đi
+(`.ka-mo`, opacity .35 — dùng opacity chứ không đổi màu, để em vẫn đọc được mà bấm lại).
+
+- **Keep bấm ăn ngay**, **Accept vẫn hỏi lại một nhịp** (thầy chốt) — em đang tự bỏ một lỗi mình
+  bắt được, tức tự trừ điểm đội mình.
+- **Đổi ý thoải mái, kể cả sau khi đã gửi.** `datKetLuan()` mới tách hẳn khỏi phần hỏi-chốt; đổi
+  từ `agree` về `keep` phải **trả `trangThai` từ `go` về `song`** — quên chỗ này là câu sống lại
+  mà vẫn gạch ngang mờ. Bấm lại đúng nút đang chọn = không làm gì.
+- Chỉ hiện ở ô còn **tranh chấp THẬT** (xem luật ở mục 5).
+- Pop-up cạnh avatar nay CHỈ để đọc lý do — hai chỗ cùng làm một việc là sớm muộn lệch nhau.
+
+### 3. Xoá lỗi: bỏ nút thùng rác, đi qua nút bút chì
+Nút thùng rác trong mỗi ô + pop-up `#delOneModal` + nút **Delete all** + pop-up `#delAllModal`
+**bỏ hẳn** (thầy chốt: xoá sạch một phát là mất cả buổi làm việc, không có đường lùi). Đường xoá
+duy nhất còn lại: bấm bút chì → **xoá trắng cả 3 ô** SENTENCE + MISTAKE + EXPLANATION → nút đỏ tự
+đổi thành **"Delete this mistake"** (đỏ sẫm + icon thùng rác) → bấm là xoá. Xoá trắng 3 ô CHÍNH LÀ
+lời xác nhận nên không hỏi thêm; muốn huỷ thì Cancel, lỗi còn nguyên.
+
+- ⛔ Bẫy: phải chặn ở **đầu** `addOrUpdateError()`, trước mọi cửa kiểm tra — không thì 3 ô rỗng
+  bị báo "please write the SENTENCE…" và em không tài nào xoá được.
+- Xoá thiếu ô (còn 1-2 ô có chữ) vẫn báo lỗi như cũ — đó là sửa hỏng, không phải ý muốn xoá.
+- Luật **XOÁ MỀM** giữ nguyên: mô hình 2 đánh dấu `an`, kho giữ vết cho thầy phân tích.
+- Gỡ luôn `sortedPositionOf()` — chỉ pop-up xoá gọi, mà nó vốn **đếm sai** (xếp trên
+  `state.errors` nguyên vẹn, tính cả câu đã ẩn ⇒ số "#mấy" lệch với số trên màn).
+
+### 4. DISAGREEMENT → REQUIREMENT
+Chữ cũ tả cái ĐÃ XẢY RA, chữ mới tả VIỆC PHẢI LÀM. Xử xong một câu là số tụt một; hết việc thì
+đổi hẳn sang **"NO REQUIREMENT"** nền xanh lá rất nhạt (`bg-emerald-50 text-emerald-300`), cố ý
+khó nhìn. Nút vẫn ẩn hoàn toàn với buổi chưa ai phản đối câu nào.
+
+- Bắt được lúc chụp màn hình kiểm thử: hết việc rồi mà **hào quang đỏ vẫn nhấp nháy** quanh chữ
+  "NO REQUIREMENT" — tự mâu thuẫn. Đã cho hào quang chỉ chạy khi `n > 0`.
+
+### 5. LUẬT "CHÍNH CHỦ QUYẾT" (việc 7 — thầy nêu giữa chừng)
+
+> Lỗi ghi tên bạn A mà **chính bạn A đã bấm AGREE** thì CHỐT là lỗi thật. Phiếu DISAGREE của đồng
+> đội lúc đó chỉ còn giá trị **tham khảo**.
+
+Hệ quả: ô đó **không còn là tranh chấp** — không viền vàng, không hai nút, không tính vào
+REQUIREMENT. Lý do cãi hộ của đồng đội **vẫn hiện bình thường** (thầy chốt), chỉ hạ màu xám + thêm
+dòng *"X agreed — the notes above are for reference only."*
+
+- Bốn hàm mới cạnh `phieuCuaLoi`: `tenBang` / `chinhChuDaNhan` / `tranhChapThat` / `batDongTrongDoi`.
+- So tên bằng **trim + HOA**, không so `===` — kho đang có một bản ghi `who` hỏng font.
+- Chỉ có MỘT dạng bất đồng trong đội: `renderErrorsPb()` vốn chỉ vẽ nút AGREE cho chính chủ, đồng
+  đội chỉ có DISAGREE ⇒ không bao giờ có ca ngược lại, đừng phí công xử lý.
+- **Viền ô nay nói lên trạng thái**: tranh chấp thật = vàng dày + nền vàng · đã ngã ngũ (có Agree,
+  hết tranh chấp) = **xanh lá dày, nền trắng** · chưa ai đụng = xám mảnh.
+- Màn PHẢN BIỆN: nút lọc ALL/MINE thành **BA ô**, chèn giữa **"TEAM CONFLICT • n"** (chính chủ đã
+  nhận mà đồng đội vẫn cãi hộ). Chỉ hiện khi n ≥ 1 (rất hiếm); đang đứng ở đó mà n về 0 thì **tự
+  đưa về ALL**, không thì em kẹt trên danh sách rỗng không lối ra. Cờ `m2.locMine` (2 trạng thái)
+  đổi thành `m2.loc` (`'all' | 'conflict' | 'mine'`).
+- ⛔ **Luật này được chép sang `myLesson/web/sp-chitiet.html`** (web v1.40.0) — sửa một bên phải
+  sửa bên kia. Tab "Kết quả" app mySpeaking **CỐ Ý chưa theo** (thầy sẽ dựng lại tab đó sau), số
+  của nó lệch là **biết trước, không phải lỗi**.
+
+### 6. Avatar đầu trang = ảnh CHÍNH EM
+`img/avatar-tron.jpg` (ảnh thầy) đổi thành avatar em đang đăng nhập, dùng đúng `avatarUrl()` +
+kho ảnh chung `andrewclasses.com/assets/avatar/<lớp>/<slug>.jpg` của avatar phiếu phản biện —
+không đẻ đường ảnh mới. Thiếu ảnh thì `onerror` **gỡ hẳn thẻ `<img>`** để lộ vòng tròn chữ tắt
+phía sau (đừng dùng `display:none` — ảnh hỏng vẫn chiếm chỗ, che mất chữ). Việc **bấm giữ nguyên**
+(mở pop-up xem video cả lớp). Màn đăng nhập vẫn giữ ảnh chibi `logo-site.png`.
+
+### 7. Nút SUBMIT/UPDATE vàng: thôi nảy, chuyển sang hào quang
+`@keyframes nutVangNhay` dùng `transform:scale(1 → 1.12)` làm nút phình ra thu vào, kéo cả thanh
+đầu trang giật theo. Đổi thành `nutVangHao` — chỉ chạy `box-shadow` vàng toả ra/thu lại, nút đứng
+yên đúng kích thước. Giữ nguyên tên class `.nut-vang-nhay` vì `capNhatNutSubmit()` đang gọi.
+
+### Cách kiểm đợt này (KHÁC mọi đợt trước — lần đầu chạy trên DỮ LIỆU THẬT)
+Không dựng trang thử dữ liệu giả nữa mà **chạy thẳng app thật** qua server cục bộ `:8126`, đăng
+nhập bằng lớp thật **A2B / buổi BEAVERS AND DAMS** (Firestore thật: 410 câu chấm · 105 phiếu):
+
+- Vào bằng ÁNH (TEAM 1): 29 câu, `REQUIREMENT: 3`, đúng 3 ô có hai nút. Bật nút dồn câu → 3 câu
+  tranh chấp nhảy lên đầu **mang theo số 23/26/27** (bản cũ sẽ thành 1/2/3) — tập hợp số trước và
+  sau khi dồn giống hệt nhau.
+- Bấm Keep → không hỏi, `REQUIREMENT: 3 → 2`, nút góc phải sang **UPDATE vàng có hào quang** (đo
+  `backgroundColor` = `rgb(251,191,36)`, `box-shadow` amber, KHÔNG có transform).
+- Bấm Accept → hiện đúng hộp "Accept the rebuttal?" → OK → `2 → 1`, ô gạch mờ + **ở nguyên vị trí
+  26** (không chìm xuống cuối). Bấm Keep lên chính ô đó → gạch mờ biến mất, nhãn RELEASED biến
+  mất, Keep sáng vàng, Accept nhạt. Bấm lại nút đang chọn → không đổi gì.
+- Xử nốt câu cuối → **"NO REQUIREMENT"** `bg-emerald-50 / text-emerald-300`.
+- Xoá: bút chì → "Save changes"; xoá 1 ô → vẫn "Save changes"; xoá đủ 3 ô → **"Delete this
+  mistake"** + nền `bg-rose-700`; Cancel → về "Add this mistake", danh sách vẫn 29 ô; làm lại rồi
+  bấm xoá thật → 29 → 28 ô, form trống, STT lớn nhất 28.
+- Avatar đầu trang trả về đúng `…/a2b/anh.jpg` (ảnh ÁNH), không còn ảnh thầy.
+- Đối chiếu id: quét toàn bộ `$('…')` trong `app.js` với mọi `id=` trong `index.html` → không còn
+  id mồ côi nào sau khi gỡ 2 pop-up xoá.
+
+**Luật CHÍNH CHỦ QUYẾT không có ca thật để thử** (buổi A2B đếm được 0 ca) nên dựng trang thử
+`ZTEST-teamconflict.html`: chép nguyên `index.html`, chèn shim `window.fetch` TRƯỚC `app.js` để
+bơm THÊM một phiếu phản đối giả của đồng đội lên câu chính chủ đã nhận — **chỉ trong RAM tab,
+không ghi một byte nào lên kho**. Kết quả: màn phản biện hiện đúng **"TEAM CONFLICT • 1"**, bấm
+vào lọc còn đúng 1 câu; màn người chấm (HƯNG) thấy ô đó **viền xanh lá, không có hai nút**, lý do
+cãi hộ vẫn hiện kèm dòng *"THƯ agreed — the notes above are for reference only."* File thử đã xoá,
+`git status` sạch.
+
+### CHƯA kiểm
+`node --check` sạch; thêm một lượt **`tsc --allowJs --checkJs`** lọc TS2304/TS2552 để chắc không
+còn biến mồ côi sau khi gỡ `pendingDelIndex` / `sortedPositionOf` / `btnDelAll` (chỉ còn 3 tên
+CDN quen thuộc YT/XLSX/lucide). **CHƯA ai bấm tay bằng chuột trên máy thật** — mọi thao tác trong
+phiên này đều do script bấm hộ. Cần thầy thử: bấm Keep/Accept bằng tay trên điện thoại (hai nút
+mỗi cái gần nửa chiều ngang, ngón tay có bấm nhầm nhau không), và **bấm UPDATE gửi thật** một lần
+để chắc kết luận Keep/Accept lên tới kho (phiên này cố ý KHÔNG gửi để không đụng dữ liệu thật).

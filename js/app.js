@@ -35,7 +35,6 @@
   };
   let editingIndex = -1;
   let fType = '';
-  let pendingDelIndex = -1;   // CHẶNG 33: lỗi đang chờ xác nhận xoá (pop-up delOneModal)
   const IT_LOI = 15;          // CHẶNG 35: từ NGƯỠNG này trở xuống = "ít lỗi" → tô đỏ + hỏi lại lần nữa
 
   const SCRIPT_URL = CFG.SCRIPT_URL || '';
@@ -189,7 +188,11 @@
     daNopLanNao: false,
     nhanXanh: 'UPDATED',   // (Đợt SUBMIT/UPDATE) chữ hiện khi nút XANH LÁ — 'SUBMITTED' chỉ đúng
                             // MỘT LẦN ngay sau lượt gửi ĐẦU TIÊN, các lượt sau luôn 'UPDATED'.
-    locMine: false,   // (Đợt ALL/MINE, màn phản biện) false = hiện mọi lỗi cả đội · true = chỉ lỗi của em
+    // (Đợt ALL/MINE, màn phản biện) 'all' = mọi lỗi cả đội · 'mine' = chỉ lỗi ghi tên em ·
+    // 'conflict' = (02/09/2026) chỉ những câu CHÍNH CHỦ ĐÃ NHẬN mà đồng đội vẫn cãi hộ.
+    // ⛔ Trước đây là cờ `locMine` hai trạng thái — đổi sang chuỗi 3 trạng thái, đừng để sót
+    // chỗ nào còn so `m2.locMine` (đã rà: nguồn danh sách · dấu chưa-xác-nhận · badge · nút).
+    loc: 'all',
     vuaGuiPb: [],   // (Đợt STT xanh/xám) errId vừa gửi xong trong 1 giây gần nhất — hiện icon thay số
     draftPb: {},   // (Đợt lưu nháp) errId -> nội dung đang gõ dở CHƯA gửi, nạp/lưu vào localStorage
   };
@@ -214,6 +217,22 @@
   function avatarUrl(ten) {
     const lop = khongDauTen(tenLopNgan(state.className) || state.classCode).replace(/[^a-z0-9]/g, '');
     return AVATAR_GOC + lop + '/' + slugAvatar(ten) + '.jpg';
+  }
+
+  // ⭐ (02/09/2026 — thầy chốt) Ảnh tròn góc trái thanh tím = AVATAR CỦA CHÍNH EM đang đăng
+  // nhập (trước là ảnh thầy `img/avatar-tron.jpg`). Dùng đúng kho ảnh + đúng hàm `avatarUrl()`
+  // của avatar phiếu phản biện nên không đẻ thêm đường ảnh mới.
+  // ⛔ Thiếu ảnh thì `onerror` GỠ hẳn thẻ <img> để lộ vòng tròn chữ tắt phía sau — đừng đổi
+  // sang `display:none`, ảnh hỏng vẫn chiếm chỗ và che mất chữ.
+  // ⛔ Gọi hàm này SAU khi `state.student`/`state.className` đã có; gọi sớm thì `avatarUrl()`
+  // ghép ra đường lớp rỗng, ảnh 404 và em nào cũng ra chữ tắt.
+  function datAvatarDauTrang() {
+    const img = $('hdAvatar'), chu = $('hdAvatarChu');
+    if (!img || !state.student) return;
+    if (chu) chu.textContent = initialsOf(state.student);
+    img.onerror = function () { img.remove(); };
+    img.src = avatarUrl(state.student);
+    img.alt = state.student;
   }
 
   // Mã lỗi ổn định — phiếu phản biện bám theo mã này kể cả khi em chấm sửa chữ trong câu
@@ -766,9 +785,49 @@
     autoGrowAll();
     fType = ''; renderTypeBtns();
     editingIndex = -1;
-    $('btnAddErrLabel').textContent = 'Add this mistake';
     $('btnCancelEdit').classList.add('hidden');
+    capNhatNhanNutThem();
     xoaNhapTamCham();   // (Đợt lưu nháp) form trống lại thì dọn luôn ô nhớ nháp, khỏi vương lại
+  }
+
+  // ⭐ (02/09/2026 — thầy chốt) CHỮ TRÊN NÚT ĐỎ nói đúng việc nó sắp làm:
+  //   không sửa gì            → "Add this mistake"  (đỏ, thêm mới)
+  //   đang sửa, còn chữ       → "Save changes"      (đỏ, lưu lại)
+  //   đang sửa, TRỐNG cả 3 ô  → "Delete this mistake" (đỏ sẫm — đường xoá DUY NHẤT còn lại)
+  // Xoá trắng 3 ô chính là lời xác nhận, nên không hỏi thêm pop-up nào nữa; muốn huỷ thì bấm
+  // Cancel ngay bên cạnh, lỗi còn nguyên như cũ.
+  function dangDinhXoa() {
+    return editingIndex >= 0 && !$('fSentence').value.trim() &&
+      !$('fDetail').value.trim() && !$('fExplain').value.trim();
+  }
+  function capNhatNhanNutThem() {
+    const nhan = $('btnAddErrLabel');
+    const nut = $('btnAddErr');
+    if (!nhan || !nut) return;
+    const xoa = dangDinhXoa();
+    nhan.textContent = xoa ? 'Delete this mistake' : (editingIndex >= 0 ? 'Save changes' : 'Add this mistake');
+    nut.classList.toggle('bg-rose-700', xoa);
+    nut.classList.toggle('hover:bg-rose-800', xoa);
+    nut.classList.toggle('bg-rose-500', !xoa);
+    nut.classList.toggle('hover:bg-rose-600', !xoa);
+    const ic = nut.querySelector('[data-lucide]');
+    if (ic && ic.dataset.lucide !== (xoa ? 'trash-2' : 'plus-circle')) {
+      ic.dataset.lucide = xoa ? 'trash-2' : 'plus-circle';
+      refreshIcons();
+    }
+  }
+
+  // Xoá MỀM một lỗi (mô hình 2 giữ vết `an` cho thầy phân tích; buổi cũ thì cắt hẳn khỏi mảng)
+  function xoaLoiDangSua() {
+    const i = editingIndex;
+    if (i < 0 || i >= state.errors.length) return;
+    if (state.moHinh === 2) state.errors[i].trangThai = 'an';
+    else state.errors.splice(i, 1);
+    clearErrForm();
+    renderErrors();
+    if (state.moHinh === 2) capNhatNutSubmit();
+    autosave();
+    toast('Mistake deleted', 'info');
   }
 
   // (Đợt lưu nháp form CHẤM) đừng để HS gõ dở SENTENCE/MISTAKE/EXPLANATION mà lỡ thoát/tải lại
@@ -801,6 +860,11 @@
   const REWIND_SEC = 3;
   function addOrUpdateError() {
     if (reviewLocked) return;   // CHẶNG 29: đang XEM bài đã nộp — muốn sửa phải bấm "Edit & submit again"
+    // ⭐ (02/09/2026) ĐANG SỬA mà xoá trắng cả 3 ô chữ = em muốn XOÁ câu này. Phải chặn TRƯỚC
+    // mọi cửa kiểm tra bên dưới, nếu không 3 ô rỗng sẽ bị báo "please write the SENTENCE…"
+    // và em không tài nào xoá được. Xoá thiếu ô (còn 1-2 ô có chữ) thì rơi xuống nhánh kiểm
+    // tra như cũ — đó là sửa hỏng, không phải ý muốn xoá.
+    if (dangDinhXoa()) { xoaLoiDangSua(); return; }
     const sentence = $('fSentence').value.trim();
     const detail = $('fDetail').value.trim();
     const explain = $('fExplain').value.trim();
@@ -860,42 +924,54 @@
     if (state.cheDo === 'phanbien') { renderErrorsPb(); return; }
     const list = $('errList');
     const m2Mode = state.moHinh === 2;
-    // (Đợt B) mô hình 2: 'an' (em tự xoá) KHÔNG hiện; 'go' (được Agree) mờ+gạch, chìm xuống cuối;
-    // bật nút DISAGREEMENT thì câu tranh chấp CHƯA xử lý dồn lên đầu (thầy chốt).
+    // (Đợt B) mô hình 2: 'an' (em tự xoá) KHÔNG hiện.
     let ds = state.errors.map((e, i) => ({ e, i }));
     if (m2Mode) ds = ds.filter((x) => x.e.trangThai !== 'an');
     ds.sort((a, b) => (tSec(a.e) - tSec(b.e)));
-    if (m2Mode) {
-      const hang = (x) => {
-        if (x.e.trangThai === 'go') return 2;
-        if (m2.disOn && !x.e.ketLuan && phieuCuaLoi(x.e.id).some((p) => p.y === 'phanDoi')) return 0;
-        return 1;
-      };
+    // ⭐ (Đợt Keep/Accept 02/09/2026 — thầy chốt) SỐ THỨ TỰ CHUẨN: chốt SỐ ngay tại đây, trên
+    // danh sách xếp thuần theo mốc giờ, TRƯỚC khi dồn câu. Bản cũ in `pos + 1` = vị trí SAU KHI
+    // dồn ⇒ bật nút REQUIREMENT một cái là cả bảng nhảy số, thầy và học sinh không còn đối
+    // chiếu "câu số mấy" với nhau được. Nay số bám theo CÂU, dồn kiểu gì cũng đứng yên.
+    const sttChuan = {};
+    ds.forEach((x, k) => { sttChuan[x.e.id || ('#' + x.i)] = k + 1; });
+    // Bật nút REQUIREMENT thì câu còn tranh chấp THẬT + chưa xử lý dồn lên đầu (thầy chốt).
+    // ⛔ Câu đã Accept ('go') KHÔNG còn bị đẩy xuống cuối như bản cũ — thầy chốt cho em đổi ý
+    // thoải mái, mà chìm xuống đáy danh sách thì em không tìm lại nổi để bấm lại.
+    if (m2Mode && m2.disOn) {
+      const hang = (x) => (!x.e.ketLuan && tranhChapThat(x.e) ? 0 : 1);
       ds.sort((a, b) => hang(a) - hang(b) || (tSec(a.e) - tSec(b.e)));
     }
-    list.innerHTML = ds.map(({ e, i }, pos) => {
+    list.innerHTML = ds.map(({ e, i }) => {
       const st = TYPE_STYLE[e.type] || { badge: 'bg-slate-100 text-slate-600' };
       const daGo = m2Mode && e.trangThai === 'go';
       const phieu = m2Mode ? phieuCuaLoi(e.id) : [];
       // (Đợt khung vàng) MỌI lỗi có ≥1 phiếu phản đối → viền vàng — KHÔNG tự tắt dù đã KEEP/AGREE
       // (thầy chốt: giữ như dấu vết lịch sử, badge KEPT/RELEASED đã đánh dấu riêng phần đã quyết).
       const phieuPhanDoi = phieu.filter((p) => p.y === 'phanDoi');
-      const coTranhChap = phieuPhanDoi.length > 0;
+      // ⭐ (Đợt CHÍNH CHỦ QUYẾT) tranh chấp THẬT mới được viền vàng + 2 nút. Chính chủ đã tự
+      // nhận thì câu coi như chốt: lý do cãi hộ của đồng đội VẪN HIỆN bình thường (thầy chốt)
+      // nhưng chỉ còn là tham khảo, ô sang viền xanh lá như mọi câu đã ngã ngũ.
+      const conTranhChap = m2Mode && tranhChapThat(e);
+      // ⭐ (Đợt viền xanh lá — thầy chốt) câu đã có người AGREE mà không còn tranh chấp ⇒ viền
+      // XANH LÁ DÀY BẰNG viền vàng, nền để trắng (chỉ ô tranh chấp mới có nền vàng).
+      const daNgaNgu = m2Mode && !conTranhChap && phieu.some((p) => p.y === 'dongY');
       // Icon uploaded (chấm xanh trái ô): câu này ĐÃ nằm trên kho đúng y bản đang thấy
       const daLuu = m2Mode && m2LoiDaDongBo(e);
       // (Đợt viền dày hơn) đổi hẳn ĐỘ DÀY viền cho câu tranh chấp (border-4) thay vì chỉ đổi màu
       // trên viền 1px cũ — viền mỏng amber-400 quá mờ, khó nhận ra giữa các ô khác.
       return '<div class="slidein rounded-2xl p-3.5 transition group ' +
         (daGo ? 'err-go ' : '') +
-        (coTranhChap ? 'border-4 border-amber-400 bg-amber-100/60' :
-          'border border-slate-200' + (daGo ? '' : ' hover:border-indigo-300')) + '">' +
+        (conTranhChap ? 'border-4 border-amber-400 bg-amber-100/60' :
+          daNgaNgu ? 'border-4 border-emerald-400' :
+            'border border-slate-200' + (daGo ? '' : ' hover:border-indigo-300')) + '">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
         (m2Mode ? '<span class="shrink-0 w-4 h-4 rounded-full flex items-center justify-center ' +
           (daLuu ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400') + '" title="' +
           (daLuu ? 'Saved to server' : 'Not submitted yet') + '"><i data-lucide="' + (daLuu ? 'check' : 'arrow-up') + '" class="w-2.5 h-2.5 pointer-events-none"></i></span>' : '') +
-        // CHẶNG 33: STT đứng TRƯỚC mốc giờ. Đánh theo THỨ TỰ THỜI GIAN (danh sách đã sort)
-        // → khớp cách đánh số của file Excel bên app máy tính.
-        '<span class="shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center">' + (pos + 1) + '</span>' +
+        // CHẶNG 33: STT đứng TRƯỚC mốc giờ. Đánh theo THỨ TỰ THỜI GIAN → khớp cách đánh số của
+        // file Excel bên app máy tính. (02/09/2026) lấy từ bảng `sttChuan` chốt sẵn ở trên,
+        // KHÔNG dùng vị trí sau khi dồn — xem chú thích chỗ dựng bảng đó.
+        '<span class="shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center">' + (sttChuan[e.id || ('#' + i)] || '') + '</span>' +
         '<span class="font-mono font-bold text-sm bg-slate-900 text-white rounded-lg px-2 py-0.5">' + fmtTime(e) + '</span>' +
         (e.section ? '<span class="text-xs font-bold text-slate-500">Section ' + escapeHtml(e.section) + '</span>' : '') +
         '<span class="text-xs font-bold rounded-full px-2.5 py-1 ' + st.badge + '">' + typeLabel(e.type) + '</span>' +
@@ -905,11 +981,13 @@
         '<span class="ml-auto flex items-center gap-1">' +
         // (Đợt B) avatar người chấp nhận (nền xanh) / phản đối (nền đỏ) — bấm mở pop-up nội dung
         (phieu.length ? '<span class="flex items-center mr-1">' + phieu.map((p) => avatarVong(p.voter, p.y, e.id)).join('') + '</span>' : '') +
-        (daGo ? '' :
-          '<span class="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition">' +
-          '<button data-edit="' + i + '" class="p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-600"><i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i></button>' +
-          '<button data-del="' + i + '" class="p-1.5 rounded-lg hover:bg-rose-100 text-rose-500"><i data-lucide="trash-2" class="w-4 h-4 pointer-events-none"></i></button>' +
-          '</span>') +
+        // ⛔ (02/09/2026 — thầy chốt) NÚT THÙNG RÁC ĐÃ BỎ, đừng dựng lại. Xoá nay đi qua nút bút
+        // chì: xoá trắng cả 3 ô SENTENCE/MISTAKE/EXPLANATION thì nút đỏ tự thành "Delete this
+        // mistake" (xem `capNhatNhanNutThem()`), vừa chậm lại một nhịp vừa bắt em nhìn kỹ câu
+        // mình sắp bỏ. Nút bút chì vẫn LUÔN hiện kể cả câu đã Accept — em còn sửa chữ được.
+        '<span class="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition">' +
+        '<button data-edit="' + i + '" class="p-1.5 rounded-lg hover:bg-indigo-100 text-indigo-600"><i data-lucide="pencil" class="w-4 h-4 pointer-events-none"></i></button>' +
+        '</span>' +
         '</span></div>' +
         // CHẶNG 35 (thầy chốt): thứ tự SENTENCE → MISTAKE → EXPLANATION, mỗi dòng một kiểu chữ:
         // câu chứa lỗi = ĐEN đậm NGHIÊNG · lỗi = ĐỎ đậm thường · giải thích = XANH LÁ đậm thường.
@@ -917,9 +995,31 @@
         '<div class="mt-0.5 text-sm font-bold text-rose-600">' + escapeHtml(e.detail) + '</div>' +
         (e.explain ? '<div class="mt-0.5 text-sm font-bold text-emerald-600">' + escapeHtml(e.explain) + '</div>' : '') +
         // (Đợt khung vàng) hiện đủ TỪNG DÒNG "TÊN: lý do" của mọi người đã phản đối, không chỉ avatar
-        (phieuPhanDoi.length ? '<div class="mt-2 pt-2 border-t border-amber-200 space-y-1">' +
-          phieuPhanDoi.map((p) => '<div class="text-xs font-bold text-amber-700"><b>' +
+        (phieuPhanDoi.length ? '<div class="mt-2 pt-2 border-t ' +
+          (conTranhChap ? 'border-amber-200' : 'border-slate-200') + ' space-y-1">' +
+          phieuPhanDoi.map((p) => '<div class="text-xs font-bold ' +
+            (conTranhChap ? 'text-amber-700' : 'text-slate-400') + '"><b>' +
             escapeHtml(p.voter) + '</b>: ' + escapeHtml(p.lyDo || '(no reason given)') + '</div>').join('') +
+          // Chính chủ đã tự nhận ⇒ mấy dòng cãi hộ này chỉ còn là tham khảo (thầy chốt: VẪN
+          // HIỆN bình thường, chỉ hạ màu cho khỏi tưởng là còn việc phải xử).
+          (conTranhChap ? '' :
+            '<div class="text-[10px] font-bold text-slate-400 italic">' +
+            escapeHtml(e.who || '') + ' agreed — the notes above are for reference only.</div>') +
+          '</div>' : '') +
+        // ⭐ (02/09/2026 — thầy chốt) HAI NÚT quyết định, hàng CUỐI CÙNG trong ô, mỗi nút gần nửa
+        // chiều ngang. CHỈ hiện ở ô còn tranh chấp THẬT — ô không ai cãi thì chẳng có gì để giữ
+        // hay nhường. Bấm được cả sau khi đã gửi: đổi ý xong nút góc phải tự sang vàng UPDATE.
+        (conTranhChap ? '<div class="mt-2.5 flex gap-2">' +
+          '<button data-ka="keep" data-err="' + escapeHtml(e.id) + '"' +
+          ' class="flex-1 rounded-xl border-2 py-1.5 text-xs font-extrabold transition ' +
+          (e.ketLuan === 'keep' ? 'border-amber-500 bg-amber-500 text-white'
+            : 'border-amber-300 text-amber-700 hover:bg-amber-50' + (e.ketLuan === 'agree' ? ' ka-mo' : '')) +
+          '">Keep Issue</button>' +
+          '<button data-ka="agree" data-err="' + escapeHtml(e.id) + '"' +
+          ' class="flex-1 rounded-xl border-2 py-1.5 text-xs font-extrabold transition ' +
+          (e.ketLuan === 'agree' ? 'border-blue-600 bg-blue-600 text-white'
+            : 'border-blue-300 text-blue-700 hover:bg-blue-50' + (e.ketLuan === 'keep' ? ' ka-mo' : '')) +
+          '">Accept Appeal</button>' +
           '</div>' : '') +
         '</div>';
     }).join('');
@@ -938,18 +1038,14 @@
         TYPE_STYLE[t].badge + '">' + TYPE_STYLE[t].short + ': ' + counts[t] + '</span>').join('');
     if (m2Mode) { capNhatNutDis(); capNhatNutSubmit(); }
 
-    // CHẶNG 33: nút Delete all — chỉ hiện khi có lỗi VÀ không ở chế độ xem lại bài đã nộp
-    const da = $('btnDelAll');
-    if (da) da.classList.toggle('hidden', !ds.length || reviewLocked);
+    // ⛔ (02/09/2026) nút "Delete all" đã bỏ hẳn — xem chú thích trong index.html chỗ khung này.
     refreshIcons();
   }
   function tSec(e) { return (parseInt(e.min, 10) || 0) * 60 + (parseInt(e.sec, 10) || 0); }
-  // CHẶNG 33: STT hiện trên màn = vị trí trong danh sách ĐÃ SẮP THEO GIỜ, còn state.errors giữ
-  // thứ tự thêm vào → phải quy đổi khi muốn nói "đang xoá lỗi số mấy".
-  function sortedPositionOf(idx) {
-    const order = state.errors.map((e, i) => ({ e, i })).sort((a, b) => tSec(a.e) - tSec(b.e));
-    return order.findIndex((x) => x.i === idx) + 1;
-  }
+  // ⛔ (02/09/2026) `sortedPositionOf()` ĐÃ GỠ cùng pop-up hỏi xoá — nó là chỗ DUY NHẤT gọi.
+  // Nhân tiện nó vốn ĐẾM SAI: xếp trên `state.errors` NGUYÊN VẸN, tính cả câu đã ẩn ('an'),
+  // nên số "#mấy" trong pop-up lệch với số hiện trên màn. Số thứ tự nay chốt một chỗ duy nhất
+  // là bảng `sttChuan` trong `renderErrors()` — đừng dựng lại hàm đếm thứ hai.
   function fmtTime(e) {
     if (e.min === '' && e.sec === '') return '--:--';
     return String(e.min || 0).padStart(2, '0') + ':' + String(e.sec || 0).padStart(2, '0');
@@ -1420,6 +1516,7 @@
     // Nút người chấm: "HOANG · T1" (tên · đội của người chấm) — bỏ icon, cỡ = nút Export
     const myTeamNo = String(state.myTeam || '').replace(/[^0-9]/g, '');
     $('hdStudent').textContent = state.student + (myTeamNo ? ' · T' + myTeamNo : '');
+    datAvatarDauTrang();   // (02/09/2026) ảnh tròn góc trái = avatar CHÍNH EM, không phải ảnh thầy
     $('hdTopic').textContent = state.topic || 'Watch · spot mistakes · improve together';
     initTimers(savedTimers);      // timers TRƯỚC — buildStudentField vẽ ô thời gian từ timers
     buildStudentField();
@@ -1440,6 +1537,7 @@
   function dungManChinh() {
     const myTeamNo = String(state.myTeam || '').replace(/[^0-9]/g, '');
     $('hdStudent').textContent = state.student + (myTeamNo ? ' · T' + myTeamNo : '');
+    datAvatarDauTrang();   // (02/09/2026) ảnh tròn góc trái = avatar CHÍNH EM, không phải ảnh thầy
     $('hdTopic').textContent = (state.cheDo === 'phanbien' ? 'REBUTTAL · ' : '') +
       (state.topic || 'Watch · spot mistakes · improve together');
     $('appScreen').classList.toggle('pb-mode', state.cheDo === 'phanbien');
@@ -1570,6 +1668,36 @@
   }
   function phieuCuaLoi(errId) { return m2.phanHoi.filter((p) => p.errId === errId); }
 
+  // ═══ (Đợt CHÍNH CHỦ QUYẾT — 02/09/2026, thầy chốt) ═══════════════════════════════════════
+  // LUẬT: lỗi ghi tên bạn A mà CHÍNH BẠN A đã bấm AGREE ⇒ coi như CHỐT là lỗi thật. Phiếu
+  // DISAGREE của đồng đội lúc đó chỉ còn giá trị THAM KHẢO, KHÔNG làm câu đó thành tranh chấp
+  // nữa: không đòi người chấm bấm Keep/Accept, không tính vào REQUIREMENT, bên trang thầy
+  // (myLesson `sp-chitiet.html`) cũng không xếp vào "Cần thầy quyết".
+  //
+  // ⛔ Vì sao chỉ có MỘT dạng bất đồng trong đội: `renderErrorsPb()` chỉ vẽ nút AGREE cho CHÍNH
+  // CHỦ (`laCuaMinh`), đồng đội chỉ có nút DISAGREE. Nên không bao giờ có ca ngược lại
+  // (chính chủ cãi mà đồng đội nhận hộ) — đừng phí công xử lý ca đó.
+  //
+  // ⛔ ĐỔI LUẬT Ở ĐÂY LÀ PHẢI ĐỔI CẢ `myLesson/web/sp-chitiet.html` (hàm `chinhChuDaNhan`/
+  // `tranhChap` bên đó là bản sao của bộ này). Tab "Kết quả" app mySpeaking CỐ Ý chưa theo —
+  // thầy sẽ dựng lại tab đó sau, số của nó lệch là BIẾT TRƯỚC, không phải lỗi.
+  function tenBang(a, b) {
+    return !!a && !!b && String(a).trim().toUpperCase() === String(b).trim().toUpperCase();
+  }
+  // Chính chủ (người bị ghi tên trong e.who) đã tự nhận lỗi?
+  function chinhChuDaNhan(e) {
+    return !!e.who && phieuCuaLoi(e.id).some((p) => p.y === 'dongY' && tenBang(p.voter, e.who));
+  }
+  // Còn tranh chấp THẬT: có người phản đối VÀ chính chủ chưa tự nhận.
+  function tranhChapThat(e) {
+    return phieuCuaLoi(e.id).some((p) => p.y === 'phanDoi') && !chinhChuDaNhan(e);
+  }
+  // Bất đồng TRONG ĐỘI: chính chủ đã nhận nhưng đồng đội vẫn cãi hộ (rất hiếm).
+  function batDongTrongDoi(e) {
+    return chinhChuDaNhan(e) &&
+      phieuCuaLoi(e.id).some((p) => p.y === 'phanDoi' && !tenBang(p.voter, e.who));
+  }
+
   // Hoạt cảnh chữ "bay" từ ô nhập lên đầu danh sách phản biện (cùng khuôn Web Animations API
   // với flyLight() — bong bóng rời rạc, tự xoá sau khi chạy, không đụng DOM thật của danh sách).
   function flyPhanBien(fromEl, toEl, text) {
@@ -1630,8 +1758,11 @@
   // ─── (Đợt B) BẢNG PHẢN BIỆN ───
   function renderErrorsPb() {
     const list = $('errList');
-    // (Đợt lọc ALL/MINE) locMine=true → chỉ còn lỗi CỦA CHÍNH EM (who === tên em)
-    const nguon = m2.locMine ? m2.dsCham.filter((x) => x.err.who === state.student) : m2.dsCham;
+    // (Đợt lọc ALL/MINE) 'mine' → chỉ lỗi CỦA CHÍNH EM (who === tên em)
+    // (02/09/2026) 'conflict' → chỉ câu chính chủ đã nhận mà đồng đội vẫn cãi hộ
+    const nguon = m2.loc === 'mine' ? m2.dsCham.filter((x) => x.err.who === state.student)
+      : m2.loc === 'conflict' ? m2.dsCham.filter((x) => batDongTrongDoi(x.err))
+        : m2.dsCham;
     const song = nguon.filter((x) => x.err.trangThai === 'song');
     const go = nguon.filter((x) => x.err.trangThai === 'go');
     const thuTu = song.concat(go);   // câu đã gỡ chìm xuống cuối (thầy chốt)
@@ -1652,7 +1783,7 @@
       // MINE = chưa vote (canVoteBatBuoc, luôn = lỗi của chính mình vì danh sách đã lọc sẵn) ·
       // ALL = chủ nhân lỗi (e.who, có thể là bạn khác) CHƯA có phiếu nào trên kho.
       const chuaXacNhan = !daGo && e.who &&
-        (m2.locMine ? canVoteBatBuoc : !m2.phanHoi.some((p) => p.errId === e.id && p.voter === e.who));
+        (m2.loc === 'mine' ? canVoteBatBuoc : !m2.phanHoi.some((p) => p.errId === e.id && p.voter === e.who));
       // (Đợt viền dày hơn) "border" 1px cũ + "ring-2" chỉ 2px NGOÀI viền — nhìn mờ, khó nhận ra.
       // Đổi hẳn ĐỘ DÀY viền theo từng trường hợp (không cộng "border" nền + "border-4" chồng lên,
       // 2 lớp cùng đặt border-width dễ ăn nhau lung tung tuỳ thứ tự nạp CSS của Tailwind CDN).
@@ -1752,7 +1883,6 @@
     $('errStats').innerHTML = Object.keys(TYPE_STYLE).filter((t) => counts[t])
       .map((t) => '<span title="' + typeLabel(t) + '" class="rounded-full px-2 py-1 font-extrabold whitespace-nowrap ' +
         TYPE_STYLE[t].badge + '">' + TYPE_STYLE[t].short + ': ' + counts[t] + '</span>').join('');
-    $('btnDelAll').classList.add('hidden');
     capNhatBadgeThieuPb();
     veNutLocPb();
     // (Đợt lưu nháp) ô nào vừa nạp lại nháp nhiều dòng thì giãn cao luôn, khỏi cụt còn 1 dòng
@@ -1769,14 +1899,27 @@
     if (!wrap) return;
     const btAll = wrap.querySelector('[data-loc="all"]');
     const btMine = wrap.querySelector('[data-loc="mine"]');
+    const btCf = wrap.querySelector('[data-loc="conflict"]');
     const sang = 'bg-indigo-600 text-white';
     const mo = 'bg-white text-slate-300';
     const nAll = m2.dsCham.length;
     const nMine = m2.dsCham.filter((x) => x.err.who === state.student).length;
-    btAll.className = 'px-3.5 py-1.5 transition ' + (m2.locMine ? mo : sang);
-    btMine.className = 'px-3.5 py-1.5 transition ' + (m2.locMine ? sang : mo);
+    btAll.className = 'px-3.5 py-1.5 transition ' + (m2.loc === 'all' ? sang : mo);
+    btMine.className = 'px-3.5 py-1.5 transition ' + (m2.loc === 'mine' ? sang : mo);
     btAll.innerHTML = 'ALL <span class="text-red-500">• ' + nAll + '</span>';
     btMine.innerHTML = 'MINE <span class="text-red-500">• ' + nMine + '</span>';
+    // ⭐ (02/09/2026 — thầy chốt) ô GIỮA chỉ hiện khi thật sự có bất đồng trong đội (rất hiếm).
+    // Số 0 thì ẩn hẳn — và nếu đang đứng ở chế độ đó mà bất đồng vừa hết (bạn kia rút phiếu
+    // phản đối) thì phải TỰ ĐƯA VỀ 'all', không thì em kẹt trên một danh sách rỗng không lối ra.
+    if (btCf) {
+      const nCf = m2.dsCham.filter((x) => batDongTrongDoi(x.err)).length;
+      btCf.classList.toggle('hidden', !nCf);
+      if (!nCf && m2.loc === 'conflict') { m2.loc = 'all'; renderErrorsPb(); return; }
+      btCf.className = 'px-3.5 py-1.5 transition border-x-2 border-slate-300 ' +
+        (m2.loc === 'conflict' ? 'bg-amber-500 text-white' : 'bg-white text-slate-300') +
+        (nCf ? '' : ' hidden');
+      btCf.innerHTML = 'TEAM CONFLICT <span class="text-red-500">• ' + nCf + '</span>';
+    }
   }
 
   // Danh sách lỗi CỦA CHÍNH EM (who === tên em) chưa AGREE/DISAGREE — dùng chung cho badge cố định
@@ -1809,7 +1952,9 @@
     const hien = state.moHinh === 2 && state.cheDo === 'phanbien';
     b.classList.toggle('hidden', !hien);
     if (!hien) return;
-    const n = m2.locMine ? layThieuBatBuocPb().length : demChuaChotCaDoi();
+    // 'mine' đếm phần bắt buộc của chính em; 'all' và 'conflict' đều đếm cả đội (ô TEAM
+    // CONFLICT chỉ là một lát cắt để nhìn, không đổi nghĩa "còn ai chưa xác nhận").
+    const n = m2.loc === 'mine' ? layThieuBatBuocPb().length : demChuaChotCaDoi();
     b.textContent = n ? ('UNCONFIRMED: ' + n) : 'ALL CONFIRMED ✓';
     b.className = 'mx-2 rounded-full px-3 py-1 text-xs font-extrabold transition ' +
       (n ? 'bg-amber-500 text-white hover:bg-amber-600 cursor-pointer' : 'bg-emerald-100 text-emerald-700');
@@ -1929,23 +2074,30 @@
     } catch (e) { toast('Could not save (' + e.message + ') — press Submit to retry.', 'err'); }
   }
 
-  // ─── (Đợt B) NÚT DISAGREEMENT — đếm câu có phản đối CHƯA xử lý (thầy chốt) ───
+  // ─── (Đợt B) NÚT REQUIREMENT — đếm câu CÒN VIỆC PHẢI XỬ (thầy chốt) ───
+  // (02/09/2026) Đổi tên hiển thị DISAGREEMENT → REQUIREMENT: chữ cũ tả CÁI ĐÃ XẢY RA (bị cãi),
+  // chữ mới tả VIỆC EM PHẢI LÀM — đúng bản chất nút này hơn. Bấm Keep/Accept một câu là số tụt
+  // một; hết việc thì đổi hẳn sang "NO REQUIREMENT" xanh lá nhạt, cố ý mờ cho khỏi hút mắt.
+  // ⭐ Đếm theo `tranhChapThat` — chính chủ đã tự nhận thì KHÔNG còn là việc của người chấm.
   function demTranhChap() {
-    return state.errors.filter((e) => e.trangThai === 'song' && !e.ketLuan &&
-      phieuCuaLoi(e.id).some((p) => p.y === 'phanDoi')).length;
+    return state.errors.filter((e) => e.trangThai === 'song' && !e.ketLuan && tranhChapThat(e)).length;
   }
   function capNhatNutDis() {
     const b = $('btnDisagree');
     if (!b) return;
+    // Buổi chưa từng có ai phản đối câu nào thì ẩn hẳn nút (không hiện "NO REQUIREMENT" cho
+    // mọi em) — chỉ ai từng bị cãi mới thấy dòng báo đã xử xong.
     const hien = state.moHinh === 2 && state.cheDo === 'cham' &&
       state.errors.some((e) => phieuCuaLoi(e.id).some((p) => p.y === 'phanDoi'));
     b.classList.toggle('hidden', !hien);
     if (!hien) { m2.disOn = false; return; }
     const n = demTranhChap();
-    b.textContent = 'DISAGREEMENT: ' + n;
-    b.className = 'mx-2 rounded-full px-3 py-1 text-xs font-extrabold text-white transition ' +
-      (n > 0 ? 'bg-rose-600 hover:bg-rose-500' : 'bg-slate-400 hover:bg-slate-300') +
-      (m2.disOn ? ' dis-halo' : '');
+    b.textContent = n > 0 ? ('REQUIREMENT: ' + n) : 'NO REQUIREMENT';
+    // Hào quang đỏ chỉ đi cùng lúc CÒN VIỆC. Hết việc mà vẫn nhấp nháy đỏ quanh chữ
+    // "NO REQUIREMENT" thì đúng là tự mâu thuẫn — bắt được lúc chụp màn hình kiểm thử.
+    b.className = 'mx-2 rounded-full px-3 py-1 text-xs font-extrabold transition ' +
+      (n > 0 ? 'text-white bg-rose-600 hover:bg-rose-500' : 'bg-emerald-50 text-emerald-300 hover:text-emerald-500') +
+      (m2.disOn && n > 0 ? ' dis-halo' : '');
   }
 
   // ─── (Đợt B) POP-UP NHỎ CẠNH AVATAR — nội dung phản biện + Keep/Agree ───
@@ -1965,25 +2117,41 @@
       '<span class="text-[10px] font-extrabold ' + (laPhanDoi ? 'text-rose-600' : 'text-emerald-600') + '">' +
       (laPhanDoi ? 'DISAGREES' : 'AGREES') + '</span>' +
       '<button id="pbPopX" class="ml-auto text-slate-400 hover:text-slate-600 font-bold px-1">✕</button></div>' +
-      (laPhanDoi ? '<div class="text-xs text-slate-700 whitespace-pre-wrap">' + escapeHtml(p.lyDo || '') + '</div>' : '') +
-      (laPhanDoi && e && e.trangThai === 'song' ?
-        '<div class="flex gap-2 mt-2.5">' +
-        '<button id="pbPopKeep" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white rounded-xl py-1.5 text-xs font-extrabold' + (e.ketLuan === 'keep' ? ' ring-2 ring-rose-300' : '') + '">KEEP' + (e.ketLuan === 'keep' ? ' ✓' : '') + '</button>' +
-        '<button id="pbPopAgree" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-1.5 text-xs font-extrabold">AGREE</button>' +
-        '</div>' : '');
+      // ⛔ (02/09/2026 — thầy chốt) HAI NÚT KEEP/AGREE ĐÃ DỜI RA HÀNG CUỐI CỦA CHÍNH Ô LỖI
+      // ("Keep Issue" / "Accept Appeal", xem renderErrors). Pop-up này nay CHỈ để đọc lý do —
+      // đừng dựng lại nút ở đây, hai chỗ cùng làm một việc là sớm muộn lệch nhau.
+      (laPhanDoi ? '<div class="text-xs text-slate-700 whitespace-pre-wrap">' + escapeHtml(p.lyDo || '') + '</div>' : '');
     pop.classList.remove('hidden');
     const r = nut.getBoundingClientRect();
     const w = 290;
     pop.style.left = Math.max(8, Math.min(r.left - w + r.width + 8, window.innerWidth - w - 8)) + 'px';
     pop.style.top = Math.min(r.bottom + 8, window.innerHeight - 180) + 'px';
     $('pbPopX').onclick = dongPopPhanHoi;
-    const keep = $('pbPopKeep'), agree = $('pbPopAgree');
-    if (keep) keep.onclick = () => hoiKetLuan(errId, 'keep');
-    if (agree) agree.onclick = () => hoiKetLuan(errId, 'agree');
   }
   function dongPopPhanHoi() { $('pbPop').classList.add('hidden'); }
 
-  // Mỗi thao tác Keep/Agree đều HỎI CHỐT (thầy chốt)
+  // ⭐ (02/09/2026 — thầy chốt) GHI KẾT LUẬN. Tách hẳn khỏi phần hỏi-chốt vì nay hai nút xử
+  // khác nhau: "Keep Issue" bấm là ăn ngay (giữ nguyên hiện trạng, không mất gì), "Accept
+  // Appeal" vẫn hỏi lại một nhịp (em đang tự bỏ một lỗi mình bắt được = tự trừ điểm đội mình).
+  //
+  // ĐỔI Ý: bấm nút kia lúc nào cũng được, kể cả sau khi đã gửi. Đổi từ 'agree' về 'keep' thì
+  // phải trả `trangThai` từ 'go' về 'song' — quên chỗ này là câu sống lại mà vẫn gạch ngang mờ.
+  // Bấm lại đúng nút đang chọn = không làm gì (tránh nhấp nháy vô nghĩa).
+  function datKetLuan(errId, hanhDong) {
+    const e = state.errors.find((x) => x.id === errId);
+    if (!e || e.ketLuan === hanhDong) return;
+    e.ketLuan = hanhDong;
+    e.trangThai = hanhDong === 'agree' ? 'go' : 'song';
+    renderErrors();
+    capNhatNutDis();
+    capNhatNutSubmit();
+    autosave();
+    toast(hanhDong === 'agree'
+      ? 'Mistake released — remember to press UPDATE!'
+      : 'Kept — your teacher will decide. Remember to press UPDATE!', 'info');
+  }
+
+  // Chỉ còn "Accept Appeal" đi qua cửa hỏi-chốt này (thầy chốt 02/09/2026)
   function hoiKetLuan(errId, hanhDong) {
     dongPopPhanHoi();
     kaDangXu = { errId, hanhDong };
@@ -2002,17 +2170,9 @@
   function dongKaModal() { $('kaModal').classList.add('hidden'); $('kaModal').classList.remove('flex'); kaDangXu = null; }
   function chotKetLuan() {
     if (!kaDangXu) return;
-    const e = state.errors.find((x) => x.id === kaDangXu.errId);
-    if (e) {
-      e.ketLuan = kaDangXu.hanhDong;
-      if (kaDangXu.hanhDong === 'agree') e.trangThai = 'go';
-    }
+    const xu = kaDangXu;
     dongKaModal();
-    renderErrors();
-    capNhatNutDis();
-    capNhatNutSubmit();
-    autosave();
-    toast(e && e.ketLuan === 'agree' ? 'Mistake released — remember to Submit!' : 'Kept — your teacher will decide. Remember to Submit!', 'info');
+    datKetLuan(xu.errId, xu.hanhDong);
   }
 
   // ═══════════════ CHẶNG 32→35 — BÀI ĐÃ NỘP: HỎI TRƯỚC, KHÔNG TỰ MỞ ═══════════════
@@ -2164,6 +2324,7 @@
     // dựng UI y hệt start() nhưng từ dữ liệu đã lưu — video YouTube phát bình thường, không cần server
     const myTeamNo = String(state.myTeam || '').replace(/[^0-9]/g, '');
     $('hdStudent').textContent = state.student + (myTeamNo ? ' · T' + myTeamNo : '');
+    datAvatarDauTrang();   // (02/09/2026) ảnh tròn góc trái = avatar CHÍNH EM, không phải ảnh thầy
     $('hdTopic').textContent = state.topic || '';
     initTimers(saved.timers);
     buildStudentField();
@@ -2182,9 +2343,9 @@
     $('appScreen').classList.toggle('review-locked', on);
     $('reviewBanner').classList.toggle('hidden', !on);
     $('btnSubmit').classList.toggle('hidden', on);
-    // CHẶNG 33: Delete all cũng phải theo khoá. ⚠️ setReviewLock hay được gọi SAU renderErrors
-    // (openReview, maybeRestoreFromServer) nên phải tự cập nhật ở đây, không ỷ vào renderErrors.
-    $('btnDelAll').classList.toggle('hidden', on || !state.errors.length);
+    // ⛔ (02/09/2026) dòng khoá nút "Delete all" đã gỡ cùng lúc với nút đó. Hai nút Keep Issue /
+    // Accept Appeal trong ô lỗi bị khoá bằng CSS `#appScreen.review-locked #errList [data-ka]`
+    // (index.html), không cần đụng JS ở đây.
   }
   function hideEditAgainModal() { $('editAgainModal').classList.add('hidden'); $('editAgainModal').classList.remove('flex'); }
 
@@ -2409,6 +2570,14 @@
         ev.stopPropagation();
         return;
       }
+      // ⭐ (02/09/2026) Hai nút Keep Issue / Accept Appeal ngay trong ô lỗi (màn NGƯỜI CHẤM).
+      // Keep ăn ngay; Accept qua một nhịp hỏi lại. Bấm được cả sau khi đã gửi — đổi ý thoải mái.
+      const ka = ev.target.closest('[data-ka]');
+      if (ka) {
+        if (ka.dataset.ka === 'agree') hoiKetLuan(ka.dataset.err, 'agree');
+        else datKetLuan(ka.dataset.err, 'keep');
+        return;
+      }
       // (phản biện) bấm mốc giờ → video nhảy đúng đoạn bị chấm
       const seek = ev.target.closest('[data-pbseek]');
       if (seek) { seekVideoTo(+seek.dataset.pbseek || 0); return; }
@@ -2442,7 +2611,6 @@
         return;
       }
       const edit = ev.target.closest('[data-edit]');
-      const del = ev.target.closest('[data-del]');
       if (edit) {
         const i = +edit.dataset.edit;
         const e = state.errors[i];
@@ -2451,21 +2619,12 @@
         $('fSentence').value = e.sentence || ''; $('fDetail').value = e.detail; $('fExplain').value = e.explain;
         autoGrowAll();
         editingIndex = i;
-        $('btnAddErrLabel').textContent = 'Save changes';
         $('btnCancelEdit').classList.remove('hidden');
+        capNhatNhanNutThem();   // (02/09/2026) tự chọn chữ "Save changes" / "Delete this mistake"
         $('fSentence').focus();
       }
-      // CHẶNG 33: XOÁ PHẢI HỎI TRƯỚC (thầy chốt) — nút xoá chỉ mở pop-up, xoá thật ở btnDelOneOk
-      if (del) {
-        pendingDelIndex = +del.dataset.del;
-        const e = state.errors[pendingDelIndex];
-        const pos = sortedPositionOf(pendingDelIndex);
-        $('delOneNo').textContent = '#' + pos;
-        $('delOneWhat').textContent = e ? (fmtTime(e) + ' · ' + (e.type || '') + (e.detail ? ' — ' + e.detail : '')) : '';
-        $('delOneModal').classList.remove('hidden');
-        $('delOneModal').classList.add('flex');
-        refreshIcons();
-      }
+      // ⛔ (02/09/2026) tay bắt [data-del] đã gỡ cùng nút thùng rác — xoá nay nằm trong
+      // addOrUpdateError() (xoá trắng cả 3 ô khi đang sửa). Đừng dựng lại đường xoá thứ hai.
     });
 
     // Ô thời gian nói dưới nút tên (delegation cùng chỗ với whoBtn)
@@ -2486,49 +2645,15 @@
     // (CHẶNG 32) đóng pop-up "nộp ít hơn lần trước"
     $('btnFewerOk').addEventListener('click', () => { $('fewerModal').classList.add('hidden'); $('fewerModal').classList.remove('flex'); });
 
-    // (CHẶNG 33) XÁC NHẬN XOÁ — xoá 1 lỗi
-    const closeDelOne = () => {
-      $('delOneModal').classList.add('hidden'); $('delOneModal').classList.remove('flex');
-      pendingDelIndex = -1;
-    };
-    $('btnDelOneCancel').addEventListener('click', closeDelOne);
-    $('btnDelOneOk').addEventListener('click', () => {
-      const i = pendingDelIndex;
-      closeDelOne();
-      if (i < 0 || i >= state.errors.length) return;
-      if (state.moHinh === 2) {
-        // (Đợt B) XOÁ MỀM: ẩn khỏi danh sách nhưng kho GIỮ VẾT (thầy phân tích trên lớp thấy đủ)
-        state.errors[i].trangThai = 'an';
-        if (editingIndex === i) clearErrForm();
-      } else {
-        state.errors.splice(i, 1);
-        if (editingIndex === i) clearErrForm();
-        else if (editingIndex > i) editingIndex--;   // các lỗi phía sau tụt 1 bậc
-      }
-      renderErrors(); autosave();
-      toast('Mistake deleted', 'info');
-    });
+    // ⛔ (02/09/2026 — thầy chốt) HAI CỤM TAY BẮT XOÁ CŨ ĐÃ GỠ HẲN cùng với #delOneModal,
+    // #delAllModal và nút "Delete all". Xoá một lỗi nay nằm gọn trong `addOrUpdateError()`:
+    // đang sửa + xoá trắng cả 3 ô SENTENCE/MISTAKE/EXPLANATION → nút đỏ thành "Delete this
+    // mistake". Luật XOÁ MỀM (mô hình 2 đánh dấu `an`, kho giữ vết) chép nguyên sang bên đó.
 
-    // (CHẶNG 33) XÁC NHẬN XOÁ — xoá HẾT
-    const closeDelAll = () => { $('delAllModal').classList.add('hidden'); $('delAllModal').classList.remove('flex'); };
-    $('btnDelAll').addEventListener('click', () => {
-      if (!state.errors.length || reviewLocked) return;
-      $('delAllCount').textContent = state.errors.length;
-      $('delAllModal').classList.remove('hidden'); $('delAllModal').classList.add('flex');
-      refreshIcons();
-    });
-    $('btnDelAllCancel').addEventListener('click', closeDelAll);
-    $('btnDelAllOk').addEventListener('click', () => {
-      closeDelAll();
-      const n = state.errors.length;
-      if (state.moHinh === 2) {
-        state.errors.forEach((e) => { e.trangThai = 'an'; });   // (Đợt B) xoá mềm cả loạt — giữ vết
-      } else {
-        state.errors = [];
-      }
-      clearErrForm();
-      renderErrors(); autosave();
-      toast('Deleted all ' + n + ' mistakes', 'info');
+    // ⭐ (02/09/2026) 3 ô chữ đổi là phải soi lại chữ trên nút đỏ — xoá trắng đủ 3 ô thì nút
+    // chuyển sang "Delete this mistake", gõ lại một chữ là quay về "Save changes" ngay.
+    ['fSentence', 'fDetail', 'fExplain'].forEach((id) => {
+      $(id).addEventListener('input', capNhatNhanNutThem);
     });
 
     // (CHẶNG 35) pop-up hỏi bài đã nộp: chọn 1 bản để XEM, hoặc bỏ qua để làm bài mới tinh
@@ -2601,11 +2726,11 @@
       if (!m2.disOn) guiNgamKetLuan();
     });
 
-    // (Đợt lọc ALL/MINE, màn phản biện) nút dài chia đôi — bấm đúng nửa nào thì chuyển sang nửa đó
+    // (Đợt lọc ALL/MINE, màn phản biện) nút dài chia ba — bấm ô nào thì chuyển sang ô đó
     $('btnPbLoc').addEventListener('click', (ev) => {
       const nut = ev.target.closest('[data-loc]');
       if (!nut) return;
-      m2.locMine = nut.dataset.loc === 'mine';
+      m2.loc = nut.dataset.loc;
       renderErrorsPb();
       // (Đợt cuộn tới câu chưa xác nhận) đổi ALL/MINE: hiện bình thường 1 giây rồi mới tự cuộn
       setTimeout(cuonToiCauChuaXacNhan, 1000);

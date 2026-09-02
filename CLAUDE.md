@@ -1,5 +1,28 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> ⭐⭐⭐⭐⭐ **CẬP NHẬT 02/09/2026 (`?v=41`) — MÀN CHẤM: KEEP/ACCEPT VÀO TRONG Ô LỖI + LUẬT
+> "CHÍNH CHỦ QUYẾT".** Tám việc thầy giao trong một phiên. Gọn nhất:
+>
+> - **Hai nút "Keep Issue" / "Accept Appeal"** nay ở hàng cuối của chính ô lỗi (trước nằm trong
+>   pop-up cạnh avatar). Keep bấm ăn ngay · Accept hỏi lại một nhịp · **đổi ý thoải mái kể cả sau
+>   khi đã gửi** (đổi xong nhớ bấm UPDATE). Chỉ hiện ở ô còn tranh chấp THẬT.
+> - ⭐ **LUẬT CHÍNH CHỦ QUYẾT**: lỗi ghi tên bạn A mà chính A đã AGREE thì CHỐT là lỗi thật —
+>   phiếu DISAGREE của đồng đội chỉ còn là tham khảo (vẫn hiện, chỉ hạ màu). Ô đó sang **viền
+>   xanh lá**, hết hai nút, không tính vào REQUIREMENT. Màn phản biện thêm ô lọc thứ ba
+>   **"TEAM CONFLICT"** cho đúng nhóm này. ⛔ Luật này **chép sang `myLesson/web/sp-chitiet.html`
+>   (web v1.40.0)** — sửa một bên phải sửa bên kia; tab "Kết quả" app mySpeaking **cố ý chưa
+>   theo** (thầy sẽ dựng lại tab đó), số của nó lệch là biết trước, không phải lỗi.
+> - **"DISAGREEMENT: n" → "REQUIREMENT: n"**, hết việc thì "NO REQUIREMENT" xanh lá nhạt.
+> - **Bỏ hẳn nút thùng rác + nút "Delete all"**: xoá nay phải bấm bút chì rồi **xoá trắng cả 3 ô**
+>   SENTENCE/MISTAKE/EXPLANATION, nút đỏ tự đổi thành "Delete this mistake". ⛔ Đừng dựng lại.
+> - **Số thứ tự câu đứng yên** khi bật nút dồn (trước nhảy loạn); câu đã Accept **không chìm
+>   xuống cuối** nữa. **Avatar đầu trang = ảnh chính em**, không còn ảnh thầy. Nút UPDATE vàng
+>   **thôi nảy to-nhỏ**, đổi sang hào quang vàng.
+>
+> Nhật ký đầy đủ + cách kiểm: `GHI CHU DU AN.md` mục cuối **CHẶNG 02/09/2026**. ⚠️ Đợt này kiểm
+> trên **dữ liệu Firestore THẬT** (lớp A2B, buổi BEAVERS AND DAMS) chứ không phải dữ liệu giả,
+> nhưng **chưa ai bấm tay bằng chuột/ngón tay** và **cố ý chưa bấm UPDATE gửi thật**.
+>
 > ⭐⭐⭐⭐ **CẬP NHẬT 29/08/2026 (`?v=40`, LIVE, đã so mã băm khớp) — LÀM LẠI TOÀN BỘ MÀN PHẢN
 > BIỆN theo 6 đợt phản hồi liên tiếp của thầy trong cùng một phiên.** Đọc mục **"Màn PHẢN BIỆN —
 > trạng thái hiện tại"** bên dưới để biết NGUYÊN VĂN hành vi đang chạy (nút SUBMIT/UPDATE 4 trạng
