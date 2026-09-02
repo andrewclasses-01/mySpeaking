@@ -12,7 +12,10 @@ window.MYSPEAKING_CONFIG = {
   // (lấy mốc thời gian chính xác thay vì dùng đồng hồ dự phòng).
   // Không có key: video Drive lớn tự chuyển sang chế độ iframe + đồng hồ.
   // Cách tạo key: xem HUONG DAN TRIEN KHAI.md. Nên giới hạn key theo referrer github.io.
-  DRIVE_API_KEY: "AIzaSyD7LSc95xVC98ALO0bvX7LRTWIEdcRP2Hk",
+  // (02/09/2026 — bao mat A3) DRIVE_API_KEY DA GO: mySpeaking chi con dung YouTube, thay chot
+  // KHONG BAO GIO dung video Drive nua; khoa da xoa tren Google Cloud (project myspeaking-502901).
+  // Khong co khoa thi app.js tu bo duong Drive API (initDriveDirect), YouTube khong anh huong.
+  DRIVE_API_KEY: "",
 
   // Tên hiển thị trên app
   APP_TITLE: "SPEAKING TEAM CHECK",

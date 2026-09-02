@@ -1865,3 +1865,12 @@ chỉ thầy mở buổi trong app mySpeaking, không còn trỏ vào file đã 
 
 ⚠️ File cũ vẫn nằm trong **lịch sử git** của kho PUBLIC — thầy chốt hoãn xoá lịch sử tới đợt D
 (đổi mã học sinh) rồi làm một lần cho cả `myLesson` lẫn `mySpeaking`.
+
+## CHẶNG — 02/09/2026 tối: BẢO MẬT GÓI A3 — GỠ HẲN KHOÁ DRIVE (`config.js?v=28`)
+
+Thầy chốt: mySpeaking **chỉ dùng YouTube**, không bao giờ dùng video Drive nữa ⇒ khoá
+`DRIVE_API_KEY` (project Google Cloud `myspeaking-502901`, tạo CHẶNG 9) không còn việc gì mà vẫn
+nằm công khai trong `config.js` — ai chép cũng dùng chùa hạn mức được. Cách vá an toàn nhất là
+**không có khoá**: `config.js` để `DRIVE_API_KEY: ""` (app.js `initDriveDirect` tự bỏ đường Drive
+API, chỉ còn 2 đường tải trực tiếp + iframe cho video Drive cũ nếu có), và **xoá "API key 1"**
+trên Cloud Console (khôi phục được 30 ngày qua *Restore deleted credentials*). Bump `config.js?v=28`.
