@@ -23,6 +23,16 @@
 > trên **dữ liệu Firestore THẬT** (lớp A2B, buổi BEAVERS AND DAMS) chứ không phải dữ liệu giả,
 > nhưng **chưa ai bấm tay bằng chuột/ngón tay** và **cố ý chưa bấm UPDATE gửi thật**.
 >
+> 🔑 **CÁCH VÀO APP THẬT ĐỂ THỬ** (rất hay phải dùng lại): đăng nhập bằng **mã lớp thật**, còn ô
+> **"Class code" ĐỂ TRỐNG** — `spBuoi.code` trong kho đang là chuỗi rỗng. Muốn vào thẳng **màn
+> PHẢN BIỆN** thì tự dựng link `?goi=<base64url>` với `{v:1, ten, team, cham, members, video,
+> lesson, classCode, tenLop, kho:'fs', mh:2, pb:1}`. Ca hiếm không có trong dữ liệu thật thì chép
+> `index.html` ra `ZTEST-*.html` + chèn **shim `window.fetch` TRƯỚC thẻ `<script>` của app** để
+> bơm bản ghi giả **chỉ trong RAM tab** (không ghi một byte nào lên kho), xong xoá file.
+>
+> 🔗 **Bàn giao phía myLesson của cùng đợt này**: `myLesson/app/BAN GIAO.md` mục **`0👤`** — ở đó
+> có trang chi tiết SP CHECK dựng lại, avatar trên thanh, và 7 cái bẫy chung.
+>
 > ⭐⭐⭐⭐ **CẬP NHẬT 29/08/2026 (`?v=40`, LIVE, đã so mã băm khớp) — LÀM LẠI TOÀN BỘ MÀN PHẢN
 > BIỆN theo 6 đợt phản hồi liên tiếp của thầy trong cùng một phiên.** Đọc mục **"Màn PHẢN BIỆN —
 > trạng thái hiện tại"** bên dưới để biết NGUYÊN VĂN hành vi đang chạy (nút SUBMIT/UPDATE 4 trạng
