@@ -2002,3 +2002,27 @@ này** ở khối CSS "Bố cục GHIM" — vậy mà vẫn vấp lại. Đã ch
 `#ktWrap:not(.hidden){display:grid}`.
 👉 **Luật rút ra: phần tử nào có thể mang `.hidden` thì TUYỆT ĐỐI không gắn class `lg:*` đổi
 `display` cho nó.**
+
+### Bổ sung 03/09/2026 (thầy duyệt lần 3) — `?v=46`: sửa cụm ĐÃ LƯU + hai cột khớp hẳn
+
+**1. Hai khung MISTAKES / GROUPS lệch nhau — hoá ra là BUG CSS, không phải chuyện thẩm mỹ.**
+`align-items:stretch` đã làm hai cột cao bằng nhau, nhưng cột phải vẫn bị đẩy xuống **đúng
+12px**: dòng `#ktPhai{margin-top:.75rem}` khai NGOÀI media query lại nằm SAU dòng đặt lại `0`
+bên trong media query ⇒ cùng độ đặc hiệu, cái sau thắng. Nay `margin-top` chỉ áp cho màn hẹp
+(`@media (max-width:1023px)`). Đo lại: **lệch mép trên 0px · lệch chiều cao 0px** (11535 ↔ 11535).
+👉 Luật: đặt lại một thuộc tính bên trong media query thì dòng "mặc định" phải nằm TRƯỚC nó.
+
+**2. Cụm ĐÃ LƯU vẫn sửa lại được (thầy chốt).** Nút **bút tròn nổi màu xanh lá** ở góc dưới bên
+phải mỗi cụm đã lưu; bấm là khung đổi **viền cam** và hiện lại các nút ✕ y như lúc chưa lưu.
+Xoá dòng nào thì dòng đó **nhảy về khung MISTAKES**; còn dưới 2 dòng thì **cụm tự giải tán** và
+cả hai dòng cùng về.
+⛔ **Xoá một dòng là cụm TỰ QUAY VỀ TRẠNG THÁI CHƯA LƯU** (`daGui = false`). Nếu cứ giữ `daGui`
+thì đội chấm vẫn đang bỏ phiếu trên cụm CŨ — họ vote một đằng, cụm một nẻo, mà không có gì báo.
+Em sửa xong bấm SAVE là gửi lại bản mới.
+⛔ `tr.moKhoa` chỉ nằm trong máy em, KHÔNG ghi kho: đó mới là ý định sửa, chưa phải thay đổi thật.
+
+**3. Nút SEND → SAVE / SAVED** (SAVED khi mọi cụm đã lưu). Toast đổi theo.
+
+**Đã kiểm trên bàn thử với dữ liệu A2B thật**: mở khoá (viền cam + 2 nút ✕) · xoá 1 dòng của cụm
+2 dòng ⇒ cụm giải tán, **cả hai dòng 5 và 7 quay lại MISTAKES**, dải số 2 cụm → 1 cụm, 133 →
+135 lỗi chưa gộp. Đã xoá sạch file ZTEST.

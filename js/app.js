@@ -2912,6 +2912,8 @@
     tich: {},        // {errId:1} — các ô đang tích ở cột trái (chỉ trong máy em)
     goiY: {},        // {errId:true} — thầy Andrew gợi ý là trùng
     nhomGoiY: {},    // {errId: số nhóm} — để kẻ vạch ngăn hai nhóm gợi ý nằm liền nhau
+    moKhoa: {},      // {cumId:1} — cụm ĐÃ GỬI mà em vừa bấm bút để sửa lại. CHỈ trong máy em,
+                     // không ghi kho: đây là ý định sửa, chưa phải thay đổi thật.
     doi: '',         // 'TEAM n' — đội đang xét (bị chấm)
     cot: 'trai',     // màn hẹp đang xem cột nào
     xoa: null,       // [cumId, errId] đang chờ xác nhận bỏ khỏi cụm
@@ -3091,6 +3093,8 @@
   }
   const TR_IC_UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="9.3"/><path d="M12 16.5V8"/><path d="M8.4 11.4L12 7.8l3.6 3.6"/></svg>';
   const TR_IC_TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const TR_IC_BUT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>';
+  const TR_IC_KHOA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
   function trVe() {
     if (state.cheDo === 'kiemtratrung') { trVeKt(); } else { trVeXn(); }
@@ -3137,6 +3141,9 @@
     $('ktSoTich').textContent = nTich;
     const chuaGui = tr.cum.filter((c) => !c.daGui).length;
     $('btnTrGui').classList.toggle('opacity-40', chuaGui === 0);
+    /* SAVE khi còn cụm chưa gửi · SAVED khi mọi cụm đã gửi (thầy chốt đổi từ SEND). */
+    const chuNut = $('trGuiChu');
+    if (chuNut) chuNut.textContent = chuaGui ? 'SAVE' : 'SAVED';
     /* Dải số nằm NGAY TRONG khung MISTAKES, dưới tiêu đề — không còn dòng chữ "TEAM x bị bắt"
        (thầy chốt bỏ mọi chữ hướng dẫn, chỉ giữ con số bắt buộc phải biết). */
     trDaiSo('ktTrai',
@@ -3151,16 +3158,17 @@
       const A = trLoi(a), B = trLoi(b);
       return ((A && A.stt) || 0) - ((B && B.stt) || 0);
     });
-    let vo = c.daGui ? 'daGui' : '', dau = '';
+    const moKhoa = !voteMode && !!tr.moKhoa[c._id];
+    let vo = (c.daGui ? 'daGui' : '') + (moKhoa ? ' moKhoa' : ''), dau = '';
     if (voteMode) {
       const ok = trPhieuCua(c._id, 'gop'), no = trPhieuCua(c._id, 'khong');
       vo = ok.length > no.length ? 'chot' : no.length > ok.length ? 'khong' : (ok.length ? 'hoa' : '');
       dau = vo === 'chot' ? 'SỐ ĐÔNG GỘP' : vo === 'khong' ? 'SỐ ĐÔNG KHÔNG GỘP'
         : vo === 'hoa' ? 'HOÀ PHIẾU · ĐANG TREO' : escapeHtml(tr.doi) + ' xin gộp · ' + ids.length + ' dòng';
     } else {
-      dau = '<span class="tr-up' + (c.daGui ? ' xanh' : '') + '" title="' +
-        (c.daGui ? 'Đã gửi đề nghị sang đội chấm' : 'Chưa gửi') + '">' + TR_IC_UP + '</span>' +
-        ids.length + ' dòng = 1 lỗi';
+      dau = '<span class="tr-up' + (c.daGui && !moKhoa ? ' xanh' : '') + '" title="' +
+        (moKhoa ? 'Đang sửa — bấm SAVE để gửi lại' : c.daGui ? 'Đã gửi cho đội chấm' : 'Chưa gửi') +
+        '">' + TR_IC_UP + '</span>' + ids.length + ' dòng = 1 lỗi';
     }
     return '<div class="tr-cum ' + vo + '">' +
       '<div class="tr-cum-dau"><span class="trai">' + dau + '</span>' +
@@ -3176,11 +3184,18 @@
             ' <span class="font-bold">' + escapeHtml(x.cham) + '</span> chấm' +
             (x.cham === state.student ? ' <span class="text-amber-600 font-extrabold">· của em</span>' : '') + '</div>' +
             trChi(x) + '</div>' +
-          (voteMode || c.daGui ? '' : '<button class="bo" data-trbo="' + escapeHtml(c._id) + '|' + escapeHtml(id) + '" title="Bỏ khỏi cụm">' +
+          (voteMode || (c.daGui && !moKhoa) ? '' : '<button class="bo" data-trbo="' + escapeHtml(c._id) + '|' + escapeHtml(id) + '" title="Bỏ khỏi cụm">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="w-3 h-3"><path d="M6 6l12 12M18 6L6 18"/></svg></button>') +
         '</div>';
       }).join('') +
       (voteMode ? trHaiNutPhieu(c) : '') +
+      /* ⭐ 03/09 (thầy chốt lần 2) — cụm ĐÃ GỬI vẫn sửa lại được: nút bút tròn nổi ở góc dưới
+         bên phải, bấm là hiện lại các nút ✕ y như lúc chưa gửi. */
+      (!voteMode && c.daGui
+        ? '<button class="tr-but" data-trmokhoa="' + escapeHtml(c._id) + '" title="' +
+          (moKhoa ? 'Xong, khoá lại' : 'Sửa lại cụm này') + '">' +
+          (moKhoa ? TR_IC_KHOA : TR_IC_BUT) + '</button>'
+        : '') +
     '</div>';
   }
 
@@ -3307,9 +3322,14 @@
 
   async function trBoKhoiCum(cumId, errId) {
     const c = tr.cum.filter((x) => x._id === cumId)[0];
-    if (!c || c.daGui) return;
+    if (!c) return;
+    if (c.daGui && !tr.moKhoa[cumId]) return;   // chưa mở khoá thì không cho đụng
     c.ids = (c.ids || []).filter((i) => i !== errId);
     trThemToi(c);
+    /* ⛔ Nội dung cụm ĐÃ ĐỔI ⇒ trả cụm về trạng thái CHƯA GỬI. Nếu cứ để `daGui` thì đội chấm
+       vẫn đang bỏ phiếu trên cái cụm cũ — họ vote một đằng, cụm một nẻo, mà không ai biết.
+       Em sửa xong bấm SAVE là gửi lại, đội kia thấy bản mới. */
+    if (c.daGui) { c.daGui = false; delete tr.moKhoa[cumId]; }
     /* Còn dưới 2 dòng thì cụm tự giải tán — ghi `ids` RỖNG chứ KHÔNG xoá tài liệu
        (luật kho cấm xoá; cùng nếp `lessonNghi` bên myLesson). */
     if (c.ids.length < 2) c.ids = [];
@@ -3318,11 +3338,16 @@
 
   async function trGuiDeNghi() {
     const ds = tr.cum.filter((c) => !c.daGui);
-    if (!ds.length) { toast('Không có cụm nào đang chờ gửi.', 'info'); return; }
-    loadingHien('Sending…');
+    if (!ds.length) { toast('Không có cụm nào đang chờ lưu.', 'info'); return; }
+    loadingHien('Saving…');
     try {
-      for (let i = 0; i < ds.length; i++) { ds[i].daGui = true; trThemToi(ds[i]); await trGhiCum(ds[i]); }
-      toast('Đã gửi ' + ds.length + ' cụm cho đội chấm ✓', 'ok');
+      for (let i = 0; i < ds.length; i++) {
+        ds[i].daGui = true;
+        delete tr.moKhoa[ds[i]._id];   // lưu xong thì khoá lại, khỏi lỡ tay sửa tiếp
+        trThemToi(ds[i]);
+        await trGhiCum(ds[i]);
+      }
+      toast('Đã lưu ' + ds.length + ' cụm, đội chấm xem được rồi ✓', 'ok');
     } catch (e) { toast(trChuLoi(e), 'err'); }
     loadingAn();
   }
@@ -3445,6 +3470,13 @@
     $('ktCum').addEventListener('click', (ev) => {
       const nutGio = ev.target.closest('[data-trseek]');
       if (nutGio) { trToiGiay(+nutGio.dataset.trseek); return; }
+      const mo = ev.target.closest('[data-trmokhoa]');
+      if (mo) {
+        const id = mo.dataset.trmokhoa;
+        if (tr.moKhoa[id]) delete tr.moKhoa[id]; else tr.moKhoa[id] = 1;
+        trVe();
+        return;
+      }
       const bo = ev.target.closest('[data-trbo]');
       if (!bo) return;
       tr.xoa = bo.dataset.trbo.split('|');
