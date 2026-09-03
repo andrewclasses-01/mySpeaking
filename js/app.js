@@ -1604,10 +1604,22 @@
     // (Đợt B) gói mang cờ mô hình + chế độ: mh=2 là buổi bản-tổng-lỗi; pb=1 là màn PHẢN BIỆN
     // (myLesson khi đó gửi video/members của CHÍNH ĐỘI EM, không phải đội bị chấm).
     state.moHinh = state.khoFs && g.mh === 2 ? 2 : 1;
-    state.cheDo = (g.pb === 1 && state.moHinh === 2) ? 'phanbien' : 'cham';
+    // ⭐ 03/09/2026 — hai chế độ MỚI, cùng đi qua `?goi=` như hai cái cũ:
+    //   kt:1 = KIỂM TRA TRÙNG (đội BỊ CHẤM gộp lỗi trùng) — myLesson gửi video ĐỘI EM
+    //   xn:1 = XÁC NHẬN TRÙNG (đội CHẤM bỏ phiếu)         — myLesson gửi video ĐỘI BỊ CHẤM
+    // ⛔ Chỉ nhận khi mô hình 2 + có buổi Firestore: buổi cũ (Google Sheets) không có kho
+    //    `cum` nào để đọc, vào là màn trắng trơn.
+    state.cheDo = state.moHinh !== 2 ? 'cham'
+      : g.kt === 1 ? 'kiemtratrung'
+        : g.xn === 1 ? 'xacnhantrung'
+          : g.pb === 1 ? 'phanbien' : 'cham';
     // (Đợt 3) gói mang video mọi đội; gói cũ không có thì pop-up tự hỏi kho Firestore
     state.clips = Array.isArray(g.clips) ? g.clips : [];
+    // ⭐ 03/09 — `cb` = đội ĐANG CHẤM đội em (khác `cham` = đội EM đi chấm). Chỉ màn
+    // KIỂM TRA TRÙNG cần, để ghi "cụm này TEAM mấy sẽ bỏ phiếu"; thiếu thì bỏ dòng đó.
+    state.chamBoi = g.cb ? 'TEAM ' + g.cb : '';
     saveKey = makeSaveKey(state.student, state.videoUrl) + (state.cheDo === 'phanbien' ? '_pb' : '');
+    if (state.cheDo === 'kiemtratrung' || state.cheDo === 'xacnhantrung') { startTrung(); return; }
     if (state.cheDo === 'phanbien') { startPb(); return; }
     start();
   }
@@ -2872,4 +2884,566 @@
       if (state.moHinh === 2 && m2CoSuaChuaGui()) { ev.preventDefault(); ev.returnValue = ''; }
     });
   }
+
+  /* ══════════════════════════════════════════════════════════════════════════════════════
+     ⭐⭐⭐ 03/09/2026 — GỘP LỖI TRÙNG: hai màn KIỂM TRA TRÙNG + XÁC NHẬN TRÙNG
+     ══════════════════════════════════════════════════════════════════════════════════════
+     VÌ SAO CÓ: 4 em cùng soi một video nên MỘT lỗi hay bị 3-4 em cùng bắt. Đo thật 03/09:
+     A2B 464 dòng → 341 · B2A 626 → 421 sau khi gộp phần chắc chắn trùng. Hệ quả cũ: đội bị
+     chấm phải Agree/Disagree từng dòng trùng, còn điểm đội chấm phồng theo số người soi kỹ.
+
+     LUẬT THẦY CHỐT (03/09, sau 6 vòng duyệt bản mẫu):
+       · Thầy Andrew chỉ GỢI Ý trên TỪNG DÒNG RỜI — không bao giờ tự gom sẵn thành cụm.
+       · Đội bị chấm tự gộp, tự bấm GỬI ĐỀ NGHỊ; gửi rồi thì cụm khoá lại (đội kia đang vote).
+       · Đội chấm bỏ phiếu ĐỘC LẬP TỪNG CỤM; bên nhiều phiếu hơn thắng, KHÔNG cần đủ đội.
+       · HOÀ thì TREO — máy không phá hoà, hai bên tự bàn rồi ai đó đổi phiếu.
+       · Số thứ tự lỗi là SỐ ĐỊNH DANH, đặt một lần theo thời gian, không đánh lại khi gộp.
+       · Màn chấm bài cá nhân + phản biện cá nhân GIỮ NGUYÊN 100%, không đụng một dòng nào.
+
+     ⛔ HỌC SINH KHÔNG BAO GIỜ THẤY CHỮ "MÁY"/"AI" — mọi nhãn là "THẦY ANDREW GỢI Ý".
+     ⛔ Hai kho `cum` + `cumPhieu` phải DÁN LUẬT trước (myLesson-data\tai-lieu\LUAT FIRESTORE
+        CAN DAN (03-09 THEM CUM LOI TRUNG).md). Chưa dán thì màn báo lỗi tử tế, không vỡ.
+     ══════════════════════════════════════════════════════════════════════════════════════ */
+
+  const tr = {
+    ds: [],          // mọi lỗi liên quan, ĐÃ đánh số định danh `stt`, xếp theo thời gian
+    cum: [],         // [{_id, doiBiCham, ids[], ten, ai[], daGui, luc}]
+    phieu: [],       // [{_id, cumId, voter, voterTeam, y, luc}]
+    tich: {},        // {errId:1} — các ô đang tích ở cột trái (chỉ trong máy em)
+    goiY: {},        // {errId:true} — thầy Andrew gợi ý là trùng
+    doi: '',         // 'TEAM n' — đội đang xét (bị chấm)
+    cot: 'trai',     // màn hẹp đang xem cột nào
+    xoa: null,       // [cumId, errId] đang chờ xác nhận bỏ khỏi cụm
+    nghe: [],        // các hàm huỷ onSnapshot
+    videoSan: false,
+  };
+
+  const cumGhi = (buoiId, id, d) => fsPatch('/spBuoi/' + encodeURIComponent(buoiId) + '/cum/' + encodeURIComponent(id), d);
+  const cumPhieuGhi = (buoiId, id, d) => fsPatch('/spBuoi/' + encodeURIComponent(buoiId) + '/cumPhieu/' + encodeURIComponent(id), d);
+  function taoCumId() {
+    return 'c' + Date.now().toString(36) + '-' + Math.floor(Math.random() * 1296).toString(36);
+  }
+
+  /* Vào màn. Hai chế độ khác nhau ở CHỖ ĐỨNG NHÌN, còn dữ liệu là một:
+       kiemtratrung → đội em BỊ chấm ⇒ tr.doi = đội em
+       xacnhantrung → em đi chấm     ⇒ tr.doi = đội em chấm */
+  async function startTrung() {
+    const kt = state.cheDo === 'kiemtratrung';
+    tr.doi = kt ? state.myTeam : state.checkedTeam;
+    $('loginScreen').classList.add('hidden');
+    $('identifyScreen').classList.add('hidden');
+    $('appScreen').classList.add('hidden');
+    $('trungScreen').classList.remove('hidden');
+    $('trTitle').textContent = kt ? 'KIỂM TRA TRÙNG · lỗi của ' + tr.doi
+      : 'XÁC NHẬN TRÙNG · ' + tr.doi + ' đề nghị';
+    $('trSub').textContent = (state.topic || state.lesson || '') + (kt
+      ? ' · gộp những lỗi các đội khác bắt trùng nhau' : ' · ' + state.myTeam + ' bỏ phiếu');
+    const soDoi = String(state.myTeam || '').replace(/[^0-9]/g, '');
+    $('trWho').textContent = state.student + (soDoi ? ' · T' + soDoi : '');
+    $('trMembers').textContent = (state.members || []).join(' · ');
+    datAvatarTrung();
+    $('ktWrap').classList.toggle('hidden', !kt);
+    $('xnWrap').classList.toggle('hidden', kt);
+    $('trTab').classList.toggle('hidden', !kt);
+    $('btnTrGui').classList.toggle('hidden', !kt);
+    if (kt) $('btnTrGui').classList.add('flex');
+    $('trSong').innerHTML = new Array(14).fill('<i></i>').join('');
+    trVideo();
+    batAvatarKho();
+    refreshIcons();
+
+    loadingHien(kt ? 'Loading the mistakes on your team…' : 'Loading the groups to vote on…');
+    try {
+      await trNapLoi();
+      await trNoiKho();
+    } catch (e) {
+      loadingAn();
+      trBaoLoi(e);
+      return;
+    }
+    loadingAn();
+    trVe();
+    /* Gợi ý chạy SAU khi đã vẽ xong (thầy chốt nếp "đẩy sẵn + đổ sau"): em thấy danh sách
+       ngay, nhãn gợi ý nhảy vào sau vài giây. Chỉ màn KIỂM TRA TRÙNG mới cần gợi ý. */
+    if (kt) trChayGoiY();
+  }
+
+  function trBaoLoi(e) {
+    const chu = String((e && e.message) || e || '');
+    const khoaChua = /_40[13]/.test(chu);   // 401/403 = luật chưa dán
+    $('xnWrap').classList.remove('hidden');
+    $('ktWrap').classList.add('hidden');
+    $('xnWrap').innerHTML = '<div class="bg-white rounded-3xl border border-slate-200 p-6 text-center">' +
+      '<div class="font-extrabold text-slate-900 mb-1">' +
+      (khoaChua ? 'Phần này chưa mở' : 'Chưa đọc được dữ liệu') + '</div>' +
+      '<div class="text-sm text-slate-600">' + (khoaChua
+        ? 'Em báo thầy Andrew mở khoá phần gộp lỗi trùng giúp nhé.'
+        : 'Em thử tải lại trang; nếu vẫn vậy thì báo thầy Andrew (' + escapeHtml(chu) + ').') +
+      '</div></div>';
+  }
+
+  /* ── Đọc lỗi ────────────────────────────────────────────────────────────────────────
+     Mọi bản chấm SOI VÀO đội `tr.doi` (`tongLoi.checkedTeam == tr.doi`) — cùng câu hỏi
+     mà màn phản biện đang dùng, nên kho đã có sẵn chỉ mục, không phải tạo thêm.
+     Câu 'an' (em chấm tự xoá) bỏ hẳn; câu 'go' (đã được Accept) GIỮ nhưng không cho gộp
+     — nó không còn tính điểm nữa, gộp vào chỉ làm rối. */
+  async function trNapLoi() {
+    const docs = await fsQuery(state.buoiId, 'tongLoi', 'checkedTeam', tr.doi, 200);
+    const ds = [];
+    docs.forEach((d) => {
+      (d.errors || []).map(chuanLoi).forEach((er) => {
+        if (er.trangThai === 'an' || er.trangThai === 'go') return;
+        ds.push({
+          id: er.id, cham: String(d.student || d._id || ''), who: er.who, type: er.type,
+          t: tSec(er), cau: er.sentence, loi: er.detail, gt: er.explain,
+        });
+      });
+    });
+    ds.sort((a, b) => a.t - b.t || String(a.id).localeCompare(String(b.id)));
+    ds.forEach((x, i) => { x.stt = i + 1; });   // SỐ ĐỊNH DANH — xem luật ở đầu khối
+    tr.ds = ds;
+  }
+
+  /* ── Nghe kho, đổi là thấy ngay ─────────────────────────────────────────────────────
+     Cả đội làm cùng lúc: A kéo câu sang cụm thì B phải thấy câu đó biến khỏi danh sách
+     NGAY, không phải tải lại trang (thầy chốt). Dùng onSnapshot của SDK; ghi thì vẫn đi
+     REST `fsPatch` như mọi chỗ khác — ghi xong onSnapshot tự bắn về, một chiều dữ liệu.
+     ⛔ HAI phép nghe này CHỈ chạy trong hai màn này, tuyệt đối không đưa vào đường mở
+        trang (LUẬT 8: Firestore tính tiền theo SỐ TÀI LIỆU, cả cụm 3 app xài chung hạn mức). */
+  async function trNoiKho() {
+    const SDK = 'https://www.gstatic.com/firebasejs/12.9.0';
+    const appMod = await import(SDK + '/firebase-app.js');
+    const fsMod = await import(SDK + '/firebase-firestore.js');
+    let app;
+    try { app = appMod.getApp(); } catch (e) {
+      app = appMod.initializeApp({
+        apiKey: (CFG.FIREBASE || {}).apiKey, projectId: (CFG.FIREBASE || {}).projectId,
+        authDomain: ((CFG.FIREBASE || {}).projectId || '') + '.firebaseapp.com',
+      });
+    }
+    const db = fsMod.getFirestore(app);
+    const goc = fsMod.collection(db, 'spBuoi', state.buoiId, 'cum');
+    const q = fsMod.query(goc, fsMod.where('doiBiCham', '==', tr.doi));
+    await new Promise((ok, hong) => {
+      let lanDau = true;
+      tr.nghe.push(fsMod.onSnapshot(q, (snap) => {
+        tr.cum = [];
+        snap.forEach((d) => { const o = d.data() || {}; o._id = d.id; tr.cum.push(o); });
+        /* Cụm giải tán = `ids` rỗng (luật kho cấm xoá tài liệu) — lọc ở đây một lần cho
+           mọi chỗ vẽ khỏi phải nhớ. */
+        tr.cum = tr.cum.filter((c) => (c.ids || []).length > 1)
+          .sort((a, b) => (a.luc || 0) - (b.luc || 0));
+        if (lanDau) { lanDau = false; ok(); } else trVe();
+      }, (e) => { if (lanDau) { lanDau = false; hong(e); } }));
+    });
+    const qp = fsMod.query(fsMod.collection(db, 'spBuoi', state.buoiId, 'cumPhieu'));
+    tr.nghe.push(fsMod.onSnapshot(qp, (snap) => {
+      tr.phieu = [];
+      snap.forEach((d) => { const o = d.data() || {}; o._id = d.id; tr.phieu.push(o); });
+      trVe();
+    }, () => { /* phiếu đọc hỏng thì coi như chưa ai bỏ — không chặn cả màn */ }));
+  }
+
+  /* ── Gợi ý của thầy Andrew ──────────────────────────────────────────────────────────
+     Chỉ chạy trên những lỗi CHƯA vào cụm nào (gộp rồi thì gợi ý là thừa). */
+  async function trChayGoiY() {
+    if (!window.SPTrung) return;
+    const daVao = {};
+    tr.cum.forEach((c) => (c.ids || []).forEach((i) => { daVao[i] = 1; }));
+    const conLai = tr.ds.filter((x) => !daVao[x.id]);
+    if (conLai.length < 2) return;
+    $('ktLoad').classList.remove('hidden'); $('ktLoad').classList.add('flex');
+    try {
+      const kq = await window.SPTrung.goiY(conLai, {});
+      tr.goiY = kq.danhDau || {};
+    } catch (e) { tr.goiY = {}; }
+    $('ktLoad').classList.add('hidden'); $('ktLoad').classList.remove('flex');
+    trVe();
+  }
+
+  /* ── Vẽ ─────────────────────────────────────────────────────────────────────────── */
+  function trLoi(id) { return tr.ds.filter((x) => x.id === id)[0]; }
+  function trCumCua(id) { return tr.cum.filter((c) => (c.ids || []).indexOf(id) >= 0)[0] || null; }
+  function trAv(ten) {
+    return '<span class="tr-av ' + trMauAv(ten) + '" data-av-em="' + escapeHtml(ten) + '" title="' + escapeHtml(ten) + '">' +
+      '<img src="' + escapeHtml(avatarUrl(ten)) + '" alt="" onerror="this.remove()">' +
+      '<span class="pointer-events-none">' + escapeHtml(initialsOf(ten)) + '</span></span>';
+  }
+  const TR_MAU = ['bg-emerald-500', 'bg-blue-500', 'bg-orange-500', 'bg-rose-500'];
+  function trMauAv(ten) {
+    let h = 0; const s = String(ten || '');
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return TR_MAU[h % TR_MAU.length];
+  }
+  /* Ba mục một dòng, phân biệt bằng MÀU. `gon` = bỏ phần giải thích (pop-up chọn cụm). */
+  function trChi(x, gon) {
+    return '<div class="tr-chi">' +
+      (x.cau ? '<i>“' + escapeHtml(x.cau) + '”</i>' : '') +
+      '<b>' + escapeHtml(x.loi) + '</b>' +
+      (!gon && x.gt ? '<u>' + escapeHtml(x.gt) + '</u>' : '') + '</div>';
+  }
+  function trNhanLoai(t) {
+    const st = TYPE_STYLE[t] || { badge: 'bg-slate-100 text-slate-600' };
+    return '<span class="text-[10.5px] font-bold rounded-full px-2 py-0.5 ' + st.badge + '">' + typeLabel(t) + '</span>';
+  }
+  const TR_IC_UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="9.3"/><path d="M12 16.5V8"/><path d="M8.4 11.4L12 7.8l3.6 3.6"/></svg>';
+  const TR_IC_TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function trVe() {
+    if (state.cheDo === 'kiemtratrung') { trVeKt(); } else { trVeXn(); }
+    refreshIcons();
+    /* Ảnh đại diện mới nhất từ kho `lessonAvatar` — `batAvatarKho` dựng MutationObserver
+       nên mọi ô `[data-av-em]` vẽ thêm sau đều tự được đè, không phải gọi lại mỗi lần vẽ. */
+  }
+
+  function trVeKt() {
+    const daVao = {};
+    tr.cum.forEach((c) => (c.ids || []).forEach((i) => { daVao[i] = 1; }));
+    const conLai = tr.ds.filter((x) => !daVao[x.id]);
+    /* ⭐ Lỗi ĐÃ VÀO CỤM thì BIẾN MẤT khỏi danh sách (thầy chốt): mỗi lỗi chỉ nằm MỘT nơi,
+       không thì nhìn tưởng hai lỗi khác nhau. */
+    $('ktDs').innerHTML = conLai.map((x) => {
+      const goiy = tr.goiY[x.id], tich = !!tr.tich[x.id];
+      return '<div class="tr-o ' + (goiy ? 'goiy' : 'mo') + (tich ? ' tich' : '') + '" data-trloi="' + escapeHtml(x.id) + '">' +
+        '<div class="flex items-center gap-2 flex-wrap">' +
+          '<span class="tr-tick">' + TR_IC_TICK + '</span>' +
+          '<span class="tr-stt">' + x.stt + '</span>' +
+          '<button data-trseek="' + x.t + '" class="font-mono text-xs font-bold bg-slate-900 hover:bg-indigo-700 transition text-white rounded-md px-1.5 py-0.5">' + fmtClock(x.t) + '</button>' +
+          trNhanLoai(x.type) +
+          (goiy ? '<span class="text-[10px] font-extrabold text-blue-700 bg-blue-100 rounded-full px-2 py-0.5">THẦY ANDREW GỢI Ý</span>' : '') +
+          '<span class="ml-auto text-[10.5px] font-bold text-slate-400">' + escapeHtml(x.cham) + '</span>' +
+        '</div>' + trChi(x) + '</div>';
+    }).join('') || '<div class="text-sm text-slate-400 px-2 py-6 text-center">Mọi lỗi đều đã được xếp vào cụm.</div>';
+
+    $('ktCum').innerHTML = tr.cum.map((c) => trKhungCum(c, false)).join('') ||
+      '<div class="text-sm text-slate-400 px-2">Chưa có cụm nào. Tích 2 lỗi trở lên ở cột bên rồi bấm NEW GROUP.</div>';
+    $('ktPhaiNhan').textContent = 'Cụm đã gộp' + (state.chamBoi ? ' · ' + state.chamBoi + ' sẽ bỏ phiếu' : '');
+
+    const nTich = Object.keys(tr.tich).length;
+    $('ktViec').classList.toggle('hidden', nTich === 0);
+    $('ktViec').classList.toggle('flex', nTich > 0);
+    $('ktTao').style.display = nTich >= 2 ? '' : 'none';
+    $('ktThem').style.display = tr.cum.some((c) => !c.daGui) ? '' : 'none';
+    $('ktSoTich').textContent = nTich;
+    const chuaGui = tr.cum.filter((c) => !c.daGui).length;
+    $('btnTrGui').classList.toggle('opacity-40', chuaGui === 0);
+    $('trDai').innerHTML =
+      '<span class="text-[11px] font-extrabold tracking-wider text-slate-500 uppercase">' + escapeHtml(tr.doi) + ' bị bắt</span>' +
+      '<span class="bg-slate-900 text-white text-xs font-extrabold rounded-full px-2.5 py-1">' + tr.ds.length + ' dòng</span>' +
+      '<span class="bg-blue-600 text-white text-xs font-extrabold rounded-full px-2.5 py-1">' + tr.cum.length + ' cụm gộp</span>' +
+      '<span class="text-slate-400 text-xs font-bold">' + conLai.length + ' lỗi chưa gộp</span>';
+  }
+
+  /* Một khung cụm. `voteMode` = màn XÁC NHẬN TRÙNG (có hai nút phiếu, không có nút bỏ dòng). */
+  function trKhungCum(c, voteMode) {
+    const ids = (c.ids || []).slice().sort((a, b) => {
+      const A = trLoi(a), B = trLoi(b);
+      return ((A && A.stt) || 0) - ((B && B.stt) || 0);
+    });
+    let vo = c.daGui ? 'daGui' : '', dau = '';
+    if (voteMode) {
+      const ok = trPhieuCua(c._id, 'gop'), no = trPhieuCua(c._id, 'khong');
+      vo = ok.length > no.length ? 'chot' : no.length > ok.length ? 'khong' : (ok.length ? 'hoa' : '');
+      dau = vo === 'chot' ? 'SỐ ĐÔNG GỘP' : vo === 'khong' ? 'SỐ ĐÔNG KHÔNG GỘP'
+        : vo === 'hoa' ? 'HOÀ PHIẾU · ĐANG TREO' : escapeHtml(tr.doi) + ' xin gộp · ' + ids.length + ' dòng';
+    } else {
+      dau = '<span class="tr-up' + (c.daGui ? ' xanh' : '') + '" title="' +
+        (c.daGui ? 'Đã gửi đề nghị sang đội chấm' : 'Chưa gửi') + '">' + TR_IC_UP + '</span>' +
+        ids.length + ' dòng = 1 lỗi';
+    }
+    return '<div class="tr-cum ' + vo + '">' +
+      '<div class="tr-cum-dau"><span class="trai">' + dau + '</span>' +
+        '<span class="giua">' + (c.ai || []).map(trAv).join('') + '</span>' +
+        '<span class="phai">' + escapeHtml(c.ten || '') + '</span></div>' +
+      ids.map((id) => {
+        const x = trLoi(id);
+        if (!x) return '';
+        return '<div class="tr-cum-o">' +
+          '<span class="tr-stt mt-0.5">' + x.stt + '</span>' +
+          '<button data-trseek="' + x.t + '" class="font-mono text-[11px] font-bold bg-slate-900 hover:bg-indigo-700 transition text-white rounded-md px-1.5 py-0.5 mt-0.5 flex-none">' + fmtClock(x.t) + '</button>' +
+          '<div class="min-w-0"><div class="text-[10.5px] text-slate-500 leading-none">' + trNhanLoai(x.type) +
+            ' <span class="font-bold">' + escapeHtml(x.cham) + '</span> chấm' +
+            (x.cham === state.student ? ' <span class="text-amber-600 font-extrabold">· của em</span>' : '') + '</div>' +
+            trChi(x) + '</div>' +
+          (voteMode || c.daGui ? '' : '<button class="bo" data-trbo="' + escapeHtml(c._id) + '|' + escapeHtml(id) + '" title="Bỏ khỏi cụm">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="w-3 h-3"><path d="M6 6l12 12M18 6L6 18"/></svg></button>') +
+        '</div>';
+      }).join('') +
+      (voteMode ? trHaiNutPhieu(c) : '') +
+    '</div>';
+  }
+
+  function trPhieuCua(cumId, y) {
+    return tr.phieu.filter((p) => p.cumId === cumId && p.y === y).map((p) => p.voter);
+  }
+  function trPhieuToi(cumId) {
+    const p = tr.phieu.filter((x) => x.cumId === cumId && x.voter === state.student)[0];
+    return (p && p.y) || '';
+  }
+  /* Hai nút phiếu: SỐ TO trong nút + avatar người đã bỏ ở dưới.
+     ⛔ Không kèm dòng hướng dẫn nào (thầy chốt: các em tự bấm, tự thấy số đổi, tự hiểu). */
+  function trHaiNutPhieu(c) {
+    const ok = trPhieuCua(c._id, 'gop'), no = trPhieuCua(c._id, 'khong'), toi = trPhieuToi(c._id);
+    return '<div class="tr-phieu">' +
+      '<button class="ok' + (toi === 'gop' ? ' minh' : '') + '" data-trvote="gop" data-trcum="' + escapeHtml(c._id) + '">' +
+        '<span class="so">' + ok.length + '</span>ĐỒNG Ý GỘP<span class="avs">' + ok.map(trAv).join('') + '</span></button>' +
+      '<button class="no' + (toi === 'khong' ? ' minh' : '') + '" data-trvote="khong" data-trcum="' + escapeHtml(c._id) + '">' +
+        '<span class="so">' + no.length + '</span>KHÔNG GỘP<span class="avs">' + no.map(trAv).join('') + '</span></button>' +
+    '</div>';
+  }
+
+  function trVeXn() {
+    /* Đội chấm CHỈ thấy cụm đã GỬI — cụm đang soạn là việc riêng của đội kia. */
+    const ds = tr.cum.filter((c) => c.daGui);
+    $('xnWrap').innerHTML = ds.map((c) => trKhungCum(c, true)).join('') ||
+      '<div class="bg-white rounded-3xl border border-slate-200 p-6 text-center text-sm text-slate-500">' +
+      escapeHtml(tr.doi) + ' chưa gửi cụm nào để em xét.</div>';
+    const daBo = ds.filter((c) => trPhieuToi(c._id)).length;
+    $('trDai').innerHTML =
+      '<span class="bg-slate-900 text-white text-xs font-extrabold rounded-full px-2.5 py-1">' + ds.length + ' cụm ' + escapeHtml(tr.doi) + ' gửi</span>' +
+      '<span class="bg-emerald-100 text-emerald-700 text-xs font-extrabold rounded-full px-2.5 py-1">' + daBo + '/' + ds.length + ' cụm em đã bỏ phiếu</span>';
+  }
+
+  /* ── Thao tác ───────────────────────────────────────────────────────────────────── */
+  function trGhiCum(c) {
+    /* ⛔ LUẬT 9️⃣ — ghi ĐỦ MỌI TRƯỜNG. `fsPatch` không có updateMask nên nó ghi đè cả tài
+       liệu; thiếu một trường là trường đó bay mất, mà chẳng có gì báo. */
+    return cumGhi(state.buoiId, c._id, {
+      doiBiCham: tr.doi, ids: c.ids || [], ten: c.ten || '',
+      ai: c.ai || [], daGui: !!c.daGui, luc: c.luc || Date.now(),
+    });
+  }
+  function trThemToi(c) {
+    c.ai = c.ai || [];
+    if (c.ai.indexOf(state.student) < 0) c.ai.push(state.student);
+  }
+  /* Tên cụm = chỗ sai ngắn nhất trong cụm — đủ để nhận ra cụm nào là cụm nào. */
+  function trDatTen(ids) {
+    const chu = ids.map((i) => (trLoi(i) || {}).loi || '').filter(Boolean)
+      .sort((a, b) => a.length - b.length)[0] || '';
+    return chu.length > 60 ? chu.slice(0, 57) + '…' : chu;
+  }
+
+  /* ⛔⛔ LUẬT NGHIỆP VỤ 21/07/2026 — MỘT CỤM KHÔNG ĐƯỢC CHỨA HAI DÒNG CỦA CÙNG MỘT NGƯỜI
+     CHẤM. Một em không ghi lại cùng một lỗi hai lần; em ấy ghi hai dòng giống nhau ở hai
+     mốc giờ nghĩa là NGƯỜI NÓI SAI HAI LẦN, phải đếm 2. Bản gốc của luật nằm ở app máy
+     tính (`tools/danhgia.py cung_mot_loi_duoc`), nơi nó từng nuốt mất 13 dòng thật.
+     ⇒ Chặn NGAY LÚC GỘP, và nói rõ vì sao — chứ không im lặng bỏ qua. */
+  function trTrungNguoiCham(ids) {
+    const gap = {};
+    for (let i = 0; i < ids.length; i++) {
+      const x = trLoi(ids[i]);
+      if (!x) continue;
+      if (gap[x.cham]) return x.cham;
+      gap[x.cham] = 1;
+    }
+    return '';
+  }
+
+  async function trTaoCum() {
+    const ids = Object.keys(tr.tich);
+    if (ids.length < 2) return;
+    const trung = trTrungNguoiCham(ids);
+    if (trung) {
+      toast('Hai dòng này đều do ' + trung + ' ghi ⇒ là HAI lần nói sai, không gộp được.', 'err');
+      return;
+    }
+    const c = { _id: taoCumId(), ids, ten: trDatTen(ids), ai: [state.student], daGui: false, luc: Date.now() };
+    tr.tich = {};
+    try { await trGhiCum(c); } catch (e) { toast(trChuLoi(e), 'err'); return; }
+    toast('Đã gộp ' + ids.length + ' lỗi thành 1 cụm ✓', 'ok');
+  }
+
+  async function trThemVaoCum(cumId) {
+    const c = tr.cum.filter((x) => x._id === cumId)[0];
+    if (!c || c.daGui) return;
+    const ids = Object.keys(tr.tich);
+    /* Luật 21/07 xét trên CẢ NHÓM SAU KHI GỘP, không chỉ trên mấy dòng vừa tích —
+       union-find bên app máy tính từng gộp bắc cầu MAI ↔ DUNG ↔ MAI và mất một lỗi. */
+    const trung = trTrungNguoiCham((c.ids || []).concat(ids));
+    if (trung) {
+      toast('Cụm này đã có dòng của ' + trung + ' rồi ⇒ là HAI lần nói sai, không gộp chung được.', 'err');
+      return;
+    }
+    ids.forEach((i) => { if ((c.ids || []).indexOf(i) < 0) c.ids.push(i); });
+    trThemToi(c);
+    c.ten = c.ten || trDatTen(c.ids);
+    tr.tich = {};
+    $('trPopCum').classList.add('hidden'); $('trPopCum').classList.remove('flex');
+    try { await trGhiCum(c); } catch (e) { toast(trChuLoi(e), 'err'); }
+  }
+
+  async function trBoKhoiCum(cumId, errId) {
+    const c = tr.cum.filter((x) => x._id === cumId)[0];
+    if (!c || c.daGui) return;
+    c.ids = (c.ids || []).filter((i) => i !== errId);
+    trThemToi(c);
+    /* Còn dưới 2 dòng thì cụm tự giải tán — ghi `ids` RỖNG chứ KHÔNG xoá tài liệu
+       (luật kho cấm xoá; cùng nếp `lessonNghi` bên myLesson). */
+    if (c.ids.length < 2) c.ids = [];
+    try { await trGhiCum(c); } catch (e) { toast(trChuLoi(e), 'err'); }
+  }
+
+  async function trGuiDeNghi() {
+    const ds = tr.cum.filter((c) => !c.daGui);
+    if (!ds.length) { toast('Không có cụm nào đang chờ gửi.', 'info'); return; }
+    loadingHien('Sending…');
+    try {
+      for (let i = 0; i < ds.length; i++) { ds[i].daGui = true; trThemToi(ds[i]); await trGhiCum(ds[i]); }
+      toast('Đã gửi ' + ds.length + ' cụm cho đội chấm ✓', 'ok');
+    } catch (e) { toast(trChuLoi(e), 'err'); }
+    loadingAn();
+  }
+
+  async function trBoPhieu(cumId, y) {
+    const cu = trPhieuToi(cumId);
+    const moi = cu === y ? '' : y;      // bấm lại đúng nút đang chọn = rút phiếu
+    try {
+      await cumPhieuGhi(state.buoiId, cumId + '__' + slugHs(state.student), {
+        cumId, voter: state.student, voterTeam: state.myTeam, y: moi, luc: Date.now(),
+      });
+    } catch (e) { toast(trChuLoi(e), 'err'); }
+  }
+
+  function trChuLoi(e) {
+    const s = String((e && e.message) || e || '');
+    return /40[13]/.test(s) ? 'Phần này chưa được mở khoá — em báo thầy Andrew nhé.'
+      : 'Chưa gửi được, em thử lại (' + s + ')';
+  }
+
+  /* Pop-up chọn cụm — chỉ liệt kê cụm CHƯA GỬI (cụm đã gửi thì đội chấm đang bỏ phiếu
+     trên đúng nội dung đó, thêm dòng vào là họ vote hụt). */
+  function trMoPopCum() {
+    const ds = tr.cum.filter((c) => !c.daGui);
+    $('tpcSo').textContent = Object.keys(tr.tich).length;
+    $('tpcDs').innerHTML = ds.length ? ds.map((c) => {
+      const ids = (c.ids || []).slice().sort((a, b) => ((trLoi(a) || {}).stt || 0) - ((trLoi(b) || {}).stt || 0));
+      return '<div class="tpc-o"><div class="tpc-dau"><span>' + ids.length + ' dòng</span>' +
+        '<button class="tpc-them" data-trthem="' + escapeHtml(c._id) + '">THÊM VÀO ĐÂY</button>' +
+        '<span class="ten">' + escapeHtml(c.ten || '') + '</span></div>' +
+        ids.map((id) => {
+          const x = trLoi(id);
+          if (!x) return '';
+          return '<div class="tpc-dong"><span class="tr-stt">' + x.stt + '</span>' +
+            '<span class="font-mono text-[11px] font-bold bg-slate-900 text-white rounded-md px-1.5 py-0.5 mt-0.5 flex-none">' + fmtClock(x.t) + '</span>' +
+            '<div class="min-w-0">' + trChi(x, true) + '</div></div>';
+        }).join('') + '</div>';
+    }).join('') : '<div class="text-sm text-slate-400 text-center py-6">Chưa có cụm nào đang soạn. Tích 2 lỗi rồi bấm NEW GROUP.</div>';
+    $('trPopCum').classList.remove('hidden'); $('trPopCum').classList.add('flex');
+  }
+
+  /* ── Thanh tiếng (KHÔNG có hình) ─────────────────────────────────────────────────
+     Vẫn là chính video YouTube của buổi, chỉ giấu khung hình 1px. Link không phải
+     YouTube (buổi cũ dùng Drive) thì ẩn luôn thanh này — không có gì để nghe. */
+  function trVideo() {
+    const p = parseVideoUrl(state.videoUrl);
+    if (!p || p.type !== 'youtube') { $('trPlay').closest('div').classList.add('hidden'); return; }
+    $('trungVideo').innerHTML = '<div id="trYt"></div>';
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+    const dung = () => {
+      tr.yt = new YT.Player('trYt', {
+        videoId: p.id, playerVars: { rel: 0, playsinline: 1 },
+        events: { onReady: () => { tr.videoSan = true; trNhipVideo(); } },
+      });
+    };
+    if (window.YT && window.YT.Player) dung(); else window.onYouTubeIframeAPIReady = dung;
+  }
+  function trNhipVideo() {
+    setInterval(() => {
+      if (!tr.videoSan || !tr.yt) return;
+      try {
+        const cur = tr.yt.getCurrentTime() || 0, dur = tr.yt.getDuration() || 0;
+        const phat = tr.yt.getPlayerState() === 1;
+        $('trungScreen').classList.toggle('dang-phat', phat);
+        $('trPlay').innerHTML = '<i data-lucide="' + (phat ? 'pause' : 'play') + '" class="w-4 h-4 pointer-events-none"></i>';
+        if (!tr.keo && dur) $('trSeek').value = Math.round((cur / dur) * 1000);
+        $('trCur').textContent = fmtClock(cur);
+        $('trDur').textContent = fmtClock(dur);
+      } catch (e) {}
+    }, 400);
+  }
+  function trToiGiay(s) {
+    if (!tr.videoSan || !tr.yt) return;
+    try { tr.yt.seekTo(Math.max(0, s - 1), true); tr.yt.playVideo(); } catch (e) {}
+  }
+
+  function datAvatarTrung() {
+    $('trAvatarChu').textContent = initialsOf(state.student);
+    const img = $('trAvatar');
+    img.src = avatarUrl(state.student);
+    img.dataset.avEm = state.student;
+    img.onerror = () => { img.remove(); };
+  }
+
+  /* ── Bắt tay bấm ───────────────────────────────────────────────────────────────── */
+  function noiTayTrung() {
+    $('ktDs').addEventListener('click', (ev) => {
+      const nutGio = ev.target.closest('[data-trseek]');
+      if (nutGio) { ev.stopPropagation(); trToiGiay(+nutGio.dataset.trseek); return; }
+      const o = ev.target.closest('[data-trloi]');
+      if (!o) return;
+      const id = o.dataset.trloi;
+      if (tr.tich[id]) delete tr.tich[id]; else tr.tich[id] = 1;
+      trVeKt();
+    });
+    $('ktCum').addEventListener('click', (ev) => {
+      const nutGio = ev.target.closest('[data-trseek]');
+      if (nutGio) { trToiGiay(+nutGio.dataset.trseek); return; }
+      const bo = ev.target.closest('[data-trbo]');
+      if (!bo) return;
+      tr.xoa = bo.dataset.trbo.split('|');
+      $('trPopXoa').classList.remove('hidden'); $('trPopXoa').classList.add('flex');
+    });
+    $('xnWrap').addEventListener('click', (ev) => {
+      const nutGio = ev.target.closest('[data-trseek]');
+      if (nutGio) { trToiGiay(+nutGio.dataset.trseek); return; }
+      const v = ev.target.closest('[data-trvote]');
+      if (v) trBoPhieu(v.dataset.trcum, v.dataset.trvote);
+    });
+    $('ktTao').addEventListener('click', trTaoCum);
+    $('ktThem').addEventListener('click', trMoPopCum);
+    $('btnTrGui').addEventListener('click', trGuiDeNghi);
+    $('tpcDong').addEventListener('click', () => {
+      $('trPopCum').classList.add('hidden'); $('trPopCum').classList.remove('flex');
+    });
+    $('trPopCum').addEventListener('click', (ev) => {
+      if (ev.target === $('trPopCum')) {
+        $('trPopCum').classList.add('hidden'); $('trPopCum').classList.remove('flex'); return;
+      }
+      const b = ev.target.closest('[data-trthem]');
+      if (b) trThemVaoCum(b.dataset.trthem);
+    });
+    $('tpxKhong').addEventListener('click', () => {
+      $('trPopXoa').classList.add('hidden'); $('trPopXoa').classList.remove('flex');
+    });
+    $('tpxCo').addEventListener('click', () => {
+      $('trPopXoa').classList.add('hidden'); $('trPopXoa').classList.remove('flex');
+      if (tr.xoa) trBoKhoiCum(tr.xoa[0], tr.xoa[1]);
+      tr.xoa = null;
+    });
+    $('trPlay').addEventListener('click', () => {
+      if (!tr.videoSan || !tr.yt) return;
+      try { if (tr.yt.getPlayerState() === 1) tr.yt.pauseVideo(); else tr.yt.playVideo(); } catch (e) {}
+    });
+    $('trSeek').addEventListener('input', () => { tr.keo = true; });
+    $('trSeek').addEventListener('change', () => {
+      tr.keo = false;
+      if (!tr.videoSan || !tr.yt) return;
+      try { tr.yt.seekTo((+$('trSeek').value / 1000) * (tr.yt.getDuration() || 0), true); } catch (e) {}
+    });
+    $('trTab').addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-trcot]');
+      if (!b) return;
+      const trai = b.dataset.trcot === 'trai';
+      $('ktTrai').classList.toggle('hidden', !trai);
+      $('ktPhai').classList.toggle('hidden', trai);
+      Array.prototype.forEach.call($('trTab').children, (x) => {
+        const on = x === b;
+        x.className = 'px-3 py-1.5 ' + (on ? 'bg-slate-900 text-white' : 'bg-white text-slate-500');
+      });
+    });
+  }
+  noiTayTrung();
 })();

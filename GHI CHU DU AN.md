@@ -1874,3 +1874,71 @@ nằm công khai trong `config.js` — ai chép cũng dùng chùa hạn mức đ
 **không có khoá**: `config.js` để `DRIVE_API_KEY: ""` (app.js `initDriveDirect` tự bỏ đường Drive
 API, chỉ còn 2 đường tải trực tiếp + iframe cho video Drive cũ nếu có), và **xoá "API key 1"**
 trên Cloud Console (khôi phục được 30 ngày qua *Restore deleted credentials*). Bump `config.js?v=28`.
+
+---
+
+## CHẶNG 03/09/2026 — GỘP LỖI TRÙNG: HAI MÀN MỚI (`?v=44`)
+
+### Bối cảnh
+Thầy hỏi: nhiều em cùng bắt một lỗi của một đội thì tính sao — *"1 lỗi mà 4 người bắt thì bị oan"*.
+Đo trên dữ liệu Firestore thật: **A2B Beavers and dams 464 dòng lỗi → 341** sau khi gộp phần chắc
+chắn trùng; **B2A Moldy food 626 → 421** (bớt 27–33%). Em THƯ có 61 dòng chỉ trong một phút đầu.
+
+### Luật nghiệp vụ thầy chốt (⛔ đọc trước khi đụng hai màn này)
+1. **Thầy Andrew chỉ GỢI Ý trên từng dòng rời**, KHÔNG tự gom sẵn thành cụm. Học sinh tự gộp.
+2. Đội bị chấm gộp rồi bấm **GỬI ĐỀ NGHỊ**; gửi rồi cụm **khoá** (mất nút ✕, viền đổi xanh lá).
+3. Đội chấm bỏ phiếu **độc lập TỪNG CỤM**; **nhiều phiếu hơn thắng**, không cần đủ đội;
+   **hoà thì TREO** — không ai phá hoà hộ, hai bên tự bàn rồi đổi phiếu.
+4. **Số thứ tự lỗi = SỐ ĐỊNH DANH**, đặt một lần theo thời gian, KHÔNG đánh lại khi gộp.
+5. **Màn chấm bài + màn phản biện GIỮ NGUYÊN 100%** — đợt này không đụng một dòng nào của chúng.
+6. ⛔ **Học sinh không bao giờ thấy chữ "máy"/"AI"** — mọi nhãn là "THẦY ANDREW GỢI Ý".
+7. ⛔ Cả hai màn **KHÔNG CÓ HÌNH, chỉ có tiếng** (thầy chốt): ở đây các em đọc chữ là chính.
+   Vẫn là chính video YouTube đó, chỉ giấu khung `#trungVideo` 1px — không cần kho audio riêng.
+
+### Việc đã làm
+- **`js/trung.js` (MỚI)** — bộ gợi ý hai tầng, chạy hết trong trình duyệt học sinh:
+  - ① **so chữ thuần JS**: cùng người nói · cùng loại · lệch ≤ 10 giây · **khác người chấm** ·
+    có chung "từ đích". Từ đích lấy theo 3 tầng: chữ trong ngoặc kép → từ mô tả lỗi có mặt
+    trong câu trích → mọi từ có nghĩa của mô tả. Gốc từ bỏ đuôi s/es/ed/ing để "grow"~"grows".
+    Đo thật A2B: **219/464 dòng (47%)** được đánh dấu, 547 cặp còn mờ.
+  - ② **Gemini qua Firebase AI Logic** (`firebase-ai.js`, model `gemini-2.5-flash-lite`,
+    `temperature: 0`) chỉ hỏi những cặp mờ, chia lô 25 cặp hỏi song song. Câu hỏi giữ nguyên
+    tinh thần bản đã chạy cả năm ở app máy tính (`tools/danhgia.py nhac_hoi`), kể cả luật cuối
+    **"không chắc thì trả lời KHÁC"**. ⛔ Chưa bật / lỗi / mất mạng ⇒ **im lặng** dùng tầng ①.
+- **`index.html`** — màn `#trungScreen` (một màn, hai chế độ) + hai pop-up (chọn cụm · bỏ dòng
+  khỏi cụm) + khối CSS tiền tố `tr-`. Nạp thêm `js/trung.js`, bump `js/app.js?v=44`.
+- **`js/app.js`** — khối cuối file: `startTrung` · đọc lỗi · `onSnapshot` hai kho · gợi ý ·
+  vẽ hai màn · tạo/thêm/bỏ cụm · gửi đề nghị · bỏ phiếu · thanh tiếng riêng.
+  `docGoi/vaoThangTuGoi` nhận thêm cờ `kt` / `xn` / `cb`.
+
+### Kho mới (⬜ CHỜ THẦY DÁN LUẬT)
+`spBuoi/{id}/cum/{cumId}` = `{doiBiCham, ids[], ten, ai[], daGui, luc}` ·
+`spBuoi/{id}/cumPhieu/{cumId__slug-em}` = `{cumId, voter, voterTeam, y, luc}`.
+File luật: `myLesson-data\tai-lieu\LUAT FIRESTORE CAN DAN (03-09 THEM CUM LOI TRUNG).md`.
+⛔ **Cụm giải tán = ghi `ids` RỖNG**, rút phiếu = ghi `y` RỖNG — luật kho cấm xoá tài liệu
+(nếp `lessonNghi`/`tongLoi`/`phanHoi` đang chạy). Chưa dán luật thì hai màn báo "Phần này chưa
+mở" một cách tử tế, **mọi thứ cũ chạy y như trước**.
+
+### Bẫy đã trả giá / đã chặn
+- ⛔⛔ **LUẬT 21/07: một cụm KHÔNG chứa hai dòng của cùng một người chấm.** Một em không ghi lại
+  cùng một lỗi hai lần — hai dòng giống chữ ở hai mốc nghĩa là **người nói sai hai lần**, phải
+  đếm 2. Bản gốc luật ở `app/tools/danhgia.py cung_mot_loi_duoc`, nơi nó từng **nuốt 13 dòng
+  thật**. Nay chặn ở **cả ba chỗ**: tầng so chữ · tầng hỏi Gemini · lúc học sinh tự gộp — và
+  chỗ thứ ba xét trên **CẢ NHÓM SAU KHI GỘP**, không chỉ mấy dòng vừa tích (union-find bên app
+  từng gộp bắc cầu MAI ↔ DUNG ↔ MAI).
+- ⛔ **`fsPatch` ghi đè CẢ TÀI LIỆU** (không có updateMask) ⇒ `trGhiCum` gửi đủ 6 trường mỗi
+  lượt. Thiếu một trường là trường đó bay mất, không có gì báo (LUẬT 9️⃣ bên myLesson).
+- ⛔ **Hai phép `onSnapshot` CHỈ chạy trong hai màn này**, tuyệt đối không đưa vào đường mở
+  trang: Firestore tính tiền theo **số tài liệu**, cả cụm 3 app xài chung một hạn mức.
+- ⛔ **Bàn thử phải chép trang ra `ZTEST-*`**: kiểm bằng kho Firestore GIẢ trong RAM tab (module
+  ESM giả thay `firebase-firestore.js`) + shim `window.fetch`, chạy trên **dữ liệu A2B thật**.
+  Không một byte nào ra kho thật; xoá sạch file ZTEST sau khi kiểm.
+- ⛔ **Bash nuốt dấu `\`**: sinh file kho giả bằng `node -e` inline làm regex `\/` thành `//` ⇒
+  cả file thành comment, trang báo "Unexpected token 'const'". Phải **viết ra file** rồi chạy.
+
+### Đã kiểm (bàn thử, dữ liệu A2B thật — 102 dòng lỗi của TEAM 2)
+Danh sách lỗi + số định danh 1..N · nhãn THẦY ANDREW GỢI Ý · tích ô (nháy vàng) · NEW GROUP
+(cụm hiện bên phải, số định danh giữ nguyên 5 và 7, avatar người gộp ở giữa hàng đầu) ·
+GỬI ĐỀ NGHỊ (viền xanh lá, icon tròn xanh, mất nút ✕, toast) · màn XÁC NHẬN TRÙNG (hoà phiếu
+khung cam "ĐANG TREO" · "SỐ ĐÔNG GỘP" xanh lá) · bỏ phiếu **độc lập từng cụm** (1-1 → 2-1).
+⚠️ **CHƯA có ai bấm tay trên buổi Firestore thật** và **cố ý chưa ghi lên kho thật**.
