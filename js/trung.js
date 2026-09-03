@@ -172,7 +172,12 @@
       var ai = await import(SDK + '/firebase-ai.js');
       var dv = ai.getAI(app, { backend: new ai.GoogleAIBackend() });
       return ai.getGenerativeModel(dv, {
-        model: 'gemini-2.5-flash-lite',
+        /* ⭐ 03/09/2026 — đo thật trên `speaking.andrewclasses.com`: `gemini-2.5-flash-lite`,
+           `gemini-2.5-flash` và `gemini-2.0-flash` đều đã bị Google KHOÁ với người dùng mới
+           ("no longer available to new users"). Bản rẻ nhất còn sống là `gemini-3.5-flash-lite`.
+           ⛔ Đổi tên model thì phải THỬ THẬT trên tên miền thật, đừng tin danh sách trong đầu:
+              cả ba tên cũ đều "trông đúng" mà kho trả 404. */
+        model: 'gemini-3.5-flash-lite',
         generationConfig: { temperature: 0, responseMimeType: 'application/json' }
       });
     })();
