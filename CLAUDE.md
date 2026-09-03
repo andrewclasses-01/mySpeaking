@@ -1,5 +1,37 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> ⭐⭐⭐⭐⭐ **CẬP NHẬT 03/09/2026 (`?v=46`) — HAI MÀN MỚI: GỘP LỖI TRÙNG.**
+>
+> Thầy hỏi: nhiều em cùng bắt một lỗi thì tính sao — *"1 lỗi mà 4 người bắt thì bị oan"*.
+> Đo thật: buổi A2B **464 dòng lỗi** → **341** sau khi gộp phần chắc chắn trùng; em THƯ có
+> **61 dòng chỉ trong một phút đầu**.
+>
+> **Hai màn mới, cùng dùng `#trungScreen`, vào bằng cờ trong gói `?goi=`:**
+> - `kt:1` **KIỂM TRA TRÙNG** — đội BỊ chấm gộp các dòng cùng một lỗi thành CỤM rồi bấm SAVE.
+> - `xn:1` **XÁC NHẬN TRÙNG** — đội CHẤM bỏ phiếu GỘP / KHÔNG GỘP, **độc lập từng cụm**.
+>
+> **⛔ Bảy luật nghiệp vụ thầy chốt — đừng tự đổi:** thầy Andrew **chỉ gợi ý trên từng dòng
+> rời**, không tự gom cụm · cụm đã SAVE vẫn sửa được bằng **nút bút** (xoá dòng ⇒ cụm quay về
+> chưa lưu) · **nhiều phiếu hơn thắng**, hoà thì **TREO** · **số thứ tự lỗi là SỐ ĐỊNH DANH**,
+> không đánh lại khi gộp · **màn chấm bài + màn phản biện GIỮ NGUYÊN 100%** · học sinh **không
+> bao giờ thấy chữ "máy"/"AI"** · **bỏ hết chữ hướng dẫn**, chỉ hiện con số bắt buộc.
+>
+> ⛔⛔ **LUẬT 21/07 SỐNG CÒN**: một cụm KHÔNG chứa hai dòng của **cùng một người chấm** — đó là
+> người nói sai HAI LẦN. Bản gốc ở `app/tools/danhgia.py`, nơi nó từng nuốt 13 dòng thật; nay
+> chặn ở cả tầng gợi ý lẫn lúc học sinh tự gộp, xét trên **cả nhóm sau khi gộp**.
+>
+> ⛔⛔ **BẪY CASCADE**: class `lg:*` đổi `display` **ĐÈ LÊN `.hidden`** ở màn ≥1024px ⇒ khung
+> đang ẩn vẫn hiện ra ô trắng trống. Phần tử nào có thể mang `.hidden` thì **tuyệt đối không**
+> gắn `lg:*` đổi `display` cho nó.
+>
+> **Gợi ý lỗi trùng** (`js/trung.js`): chỉ còn **một tầng SO CHỮ**, tức thì và miễn phí — đo
+> thật **57%** và **51%** số dòng. ⛔ Tầng Gemini **đã dựng xong, đo rồi thầy chốt BỎ** (chỉ
+> thêm ~4% mà tốn 20–25 giây) — **đọc `DA THU VA BO — GEMINI.md` trước nếu định dựng lại**.
+>
+> Kho mới `cum` + `cumPhieu` (**luật đã dán + kiểm 03/09**, 7 phép thử ghi đúng cả 7).
+> Nhật ký đầy đủ: `GHI CHU DU AN.md` **4 mục cuối**. Hồ sơ bàn giao cả cụm:
+> `myLesson/app/BAN GIAO.md` mục **`0🧩`**.
+
 > ⭐⭐⭐⭐⭐ **CẬP NHẬT 02/09/2026 (`?v=41`) — MÀN CHẤM: KEEP/ACCEPT VÀO TRONG Ô LỖI + LUẬT
 > "CHÍNH CHỦ QUYẾT".** Tám việc thầy giao trong một phiên. Gọn nhất:
 >
