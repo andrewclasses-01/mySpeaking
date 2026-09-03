@@ -139,12 +139,36 @@
   var CAP_MOI_LO = 25;      // ⛔ cùng con số với app máy tính (tools/danhgia.py CAP_MOI_LO)
   var _mo = null;           // Promise của model, dựng một lần cho cả phiên
 
+  /* ⭐ 03/09/2026 — APP CHECK BẮT BUỘC. Google tự bật enforcement khi thầy bật Firebase AI
+     Logic; thiếu App Check thì mọi lời gọi trả **403 "Firebase AI Logic has been deactivated
+     in this project"** (đã đo thật trước khi gắn khoá này).
+     `SITE_KEY` là khoá reCAPTCHA Enterprise dạng **SITE KEY — công khai theo thiết kế**, vốn
+     phải nằm trong trang để trình duyệt gọi được; nó KHÔNG mở quyền gì (khoá bí mật nằm bên
+     Google). Khoá này khai đúng một tên miền: `speaking.andrewclasses.com`.
+     ⛔ Vì buộc theo tên miền nên chạy ở `localhost` sẽ KHÔNG qua được App Check — muốn thử
+     máy nhà thì thêm debug token trong Firebase Console (App Check → Apps → ⋮ → Manage debug
+     tokens), đừng gỡ App Check ra để "cho dễ test". */
+  var SITE_KEY = '6Ldrp6YtAAAAAPV9oT2yUeuJBWj1zTnz-YqPu4Vo';
+
   function layModel() {
     if (_mo) return _mo;
     _mo = (async function () {
       var appMod = await import(SDK + '/firebase-app.js');
       var app;
       try { app = appMod.getApp(); } catch (e) { app = appMod.initializeApp(CAU_HINH); }
+      /* App Check dựng một lần cho cả phiên. Bọc try: app.js có thể đã dựng rồi (gọi hai lần
+         là ném lỗi), và lỗi ở đây KHÔNG được làm chết tầng gợi ý — cùng nếp "hỏng thì im
+         lặng, chỉ mất tầng ②" của cả file này. */
+      try {
+        var ac = await import(SDK + '/firebase-app-check.js');
+        if (!app.__acDaDung) {
+          ac.initializeAppCheck(app, {
+            provider: new ac.ReCaptchaEnterpriseProvider(SITE_KEY),
+            isTokenAutoRefreshEnabled: true
+          });
+          app.__acDaDung = true;
+        }
+      } catch (e) { /* dựng rồi, hoặc mạng hỏng — cứ thử gọi, hỏng thì tầng ② tự tắt */ }
       var ai = await import(SDK + '/firebase-ai.js');
       var dv = ai.getAI(app, { backend: new ai.GoogleAIBackend() });
       return ai.getGenerativeModel(dv, {
