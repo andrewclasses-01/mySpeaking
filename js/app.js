@@ -3052,9 +3052,11 @@
     tr.cum.forEach((c) => (c.ids || []).forEach((i) => { daVao[i] = 1; }));
     const conLai = tr.ds.filter((x) => !daVao[x.id]);
     if (conLai.length < 2) return;
+    /* Pop-up "THẦY ANDREW ĐANG TÌM" chỉ chớp qua (so chữ xong trong vài mili giây) — vẫn giữ
+       để em biết máy vừa làm gì, và để chỗ này còn nguyên nếu sau này có tầng chạy lâu hơn. */
     $('ktLoad').classList.remove('hidden'); $('ktLoad').classList.add('flex');
     try {
-      const kq = await window.SPTrung.goiY(conLai, {});
+      const kq = await window.SPTrung.goiY(conLai);
       tr.goiY = kq.danhDau || {};
     } catch (e) { tr.goiY = {}; }
     $('ktLoad').classList.add('hidden'); $('ktLoad').classList.remove('flex');

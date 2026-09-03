@@ -1942,3 +1942,30 @@ Danh sách lỗi + số định danh 1..N · nhãn THẦY ANDREW GỢI Ý · tí
 GỬI ĐỀ NGHỊ (viền xanh lá, icon tròn xanh, mất nút ✕, toast) · màn XÁC NHẬN TRÙNG (hoà phiếu
 khung cam "ĐANG TREO" · "SỐ ĐÔNG GỘP" xanh lá) · bỏ phiếu **độc lập từng cụm** (1-1 → 2-1).
 ⚠️ **CHƯA có ai bấm tay trên buổi Firestore thật** và **cố ý chưa ghi lên kho thật**.
+
+### Bổ sung 03/09/2026 (cuối phiên) — ĐÃ GỠ TẦNG GỢI Ý ② (GEMINI), THẦY CHỐT
+
+Đã dựng xong, chạy được thật, đo trên buổi thật rồi mới bỏ. **Ghi chép đầy đủ ba bức tường và
+cách dựng lại: `DA THU VA BO — GEMINI.md`** (cùng thư mục) — đọc file đó trước khi nghĩ tới
+chuyện làm lại, kẻo đi lại đúng đường cũ.
+
+Gọn lại vì sao bỏ: Gemini chỉ thêm **+5 dòng/116** (TEAM 1) và **+4/137** (TEAM 2) so với tầng
+so chữ, mà tốn **20–25 giây** mỗi lần mở màn, cộng một tài khoản phải trông và một khoá phải giữ.
+
+Ba bức tường (đều đã vượt được về mặt kỹ thuật, chỉ là không đáng công):
+1. Firebase AI Logic **bắt buộc App Check** → 403 "has been deactivated in this project".
+2. Dựng App Check đủ (reCAPTCHA Enterprise, token thật 953 ký tự, hết 403) vẫn chặn ở lớp cuối:
+   **"Your prepayment credits are depleted"** — đường Firebase tính vào ví trả trước của
+   `aword-70dae` (project CÓ billing), không dùng bậc miễn phí.
+3. Gọi thẳng bằng khoá của project không billing thì **chạy đúng và miễn phí thật**, nhưng
+   **GitHub Push Protection chặn** (`GH013 — GCP API Key Bound to a Service Account`) vì khoá
+   dạng mới `AQ.…` gắn service account. Đã đo phạm vi khoá: chỉ mở Gemini (Firestore/Drive/
+   Resource Manager đều 401) — nhưng **không vượt qua cảnh báo của GitHub**.
+
+⛔ **Model phải THỬ THẬT nếu dựng lại**: `gemini-2.5-flash-lite` · `2.5-flash` · `2.0-flash` đều
+đã bị Google khoá với người dùng mới (404 "no longer available to new users"). Chạy được:
+`gemini-3.5-flash-lite`.
+
+**Để lại trên Console, vô hại**: site key reCAPTCHA · app trong App Check · reCAPTCHA Enterprise
+API · Firebase AI Logic. Không thứ nào đụng Firestore.
+⬜ **Nên xoá khoá Gemini** ở AI Studio (project mySpeaking) cho sạch — không còn dùng ở đâu.
