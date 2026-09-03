@@ -2911,6 +2911,7 @@
     phieu: [],       // [{_id, cumId, voter, voterTeam, y, luc}]
     tich: {},        // {errId:1} — các ô đang tích ở cột trái (chỉ trong máy em)
     goiY: {},        // {errId:true} — thầy Andrew gợi ý là trùng
+    nhomGoiY: {},    // {errId: số nhóm} — để kẻ vạch ngăn hai nhóm gợi ý nằm liền nhau
     doi: '',         // 'TEAM n' — đội đang xét (bị chấm)
     cot: 'trai',     // màn hẹp đang xem cột nào
     xoa: null,       // [cumId, errId] đang chờ xác nhận bỏ khỏi cụm
@@ -2936,18 +2937,17 @@
     $('trungScreen').classList.remove('hidden');
     $('trTitle').textContent = kt ? 'KIỂM TRA TRÙNG · lỗi của ' + tr.doi
       : 'XÁC NHẬN TRÙNG · ' + tr.doi + ' đề nghị';
-    $('trSub').textContent = (state.topic || state.lesson || '') + (kt
-      ? ' · gộp những lỗi các đội khác bắt trùng nhau' : ' · ' + state.myTeam + ' bỏ phiếu');
+    /* ⛔ 03/09 (thầy chốt) — DÒNG PHỤ CHỈ GHI TÊN BÀI. Mọi câu giảng giải kiểu "gộp những lỗi
+       các đội khác bắt trùng nhau" đã BỎ: màn càng sạch càng tốt, để các em tự khám phá. */
+    $('trSub').textContent = state.topic || state.lesson || '';
     const soDoi = String(state.myTeam || '').replace(/[^0-9]/g, '');
     $('trWho').textContent = state.student + (soDoi ? ' · T' + soDoi : '');
-    $('trMembers').textContent = (state.members || []).join(' · ');
     datAvatarTrung();
     $('ktWrap').classList.toggle('hidden', !kt);
     $('xnWrap').classList.toggle('hidden', kt);
     $('trTab').classList.toggle('hidden', !kt);
     $('btnTrGui').classList.toggle('hidden', !kt);
     if (kt) $('btnTrGui').classList.add('flex');
-    $('trSong').innerHTML = new Array(14).fill('<i></i>').join('');
     trVideo();
     batAvatarKho();
     refreshIcons();
@@ -3058,7 +3058,8 @@
     try {
       const kq = await window.SPTrung.goiY(conLai);
       tr.goiY = kq.danhDau || {};
-    } catch (e) { tr.goiY = {}; }
+      tr.nhomGoiY = kq.nhom || {};
+    } catch (e) { tr.goiY = {}; tr.nhomGoiY = {}; }
     $('ktLoad').classList.add('hidden'); $('ktLoad').classList.remove('flex');
     trVe();
   }
@@ -3104,9 +3105,17 @@
     const conLai = tr.ds.filter((x) => !daVao[x.id]);
     /* ⭐ Lỗi ĐÃ VÀO CỤM thì BIẾN MẤT khỏi danh sách (thầy chốt): mỗi lỗi chỉ nằm MỘT nơi,
        không thì nhìn tưởng hai lỗi khác nhau. */
+    /* ⭐ 03/09 (thầy chốt) — VẠCH NGĂN GIỮA HAI NHÓM GỢI Ý NẰM LIỀN NHAU.
+       `tr.nhomGoiY[errId]` do `SPTrung.goiY` trả về. Hai ô xanh cạnh nhau mà KHÁC số nhóm thì
+       chèn vạch: không có nó, bốn ô xanh liên tiếp trông y như một cụm và em tích nhầm cả bốn. */
+    let nhomTruoc = null;
     $('ktDs').innerHTML = conLai.map((x) => {
       const goiy = tr.goiY[x.id], tich = !!tr.tich[x.id];
-      return '<div class="tr-o ' + (goiy ? 'goiy' : 'mo') + (tich ? ' tich' : '') + '" data-trloi="' + escapeHtml(x.id) + '">' +
+      const nhom = goiy ? (tr.nhomGoiY[x.id] || null) : null;
+      const canNgan = nhom != null && nhomTruoc != null && nhom !== nhomTruoc;
+      nhomTruoc = nhom;
+      return (canNgan ? '<div class="tr-ngan"><span>nhóm khác</span></div>' : '') +
+        '<div class="tr-o ' + (goiy ? 'goiy' : 'mo') + (tich ? ' tich' : '') + '" data-trloi="' + escapeHtml(x.id) + '">' +
         '<div class="flex items-center gap-2 flex-wrap">' +
           '<span class="tr-tick">' + TR_IC_TICK + '</span>' +
           '<span class="tr-stt">' + x.stt + '</span>' +
@@ -3118,8 +3127,7 @@
     }).join('') || '<div class="text-sm text-slate-400 px-2 py-6 text-center">Mọi lỗi đều đã được xếp vào cụm.</div>';
 
     $('ktCum').innerHTML = tr.cum.map((c) => trKhungCum(c, false)).join('') ||
-      '<div class="text-sm text-slate-400 px-2">Chưa có cụm nào. Tích 2 lỗi trở lên ở cột bên rồi bấm NEW GROUP.</div>';
-    $('ktPhaiNhan').textContent = 'Cụm đã gộp' + (state.chamBoi ? ' · ' + state.chamBoi + ' sẽ bỏ phiếu' : '');
+      '<div class="text-sm text-slate-400 px-2 py-6 text-center">Chưa có cụm lỗi gộp nào.</div>';
 
     const nTich = Object.keys(tr.tich).length;
     $('ktViec').classList.toggle('hidden', nTich === 0);
@@ -3129,11 +3137,12 @@
     $('ktSoTich').textContent = nTich;
     const chuaGui = tr.cum.filter((c) => !c.daGui).length;
     $('btnTrGui').classList.toggle('opacity-40', chuaGui === 0);
-    $('trDai').innerHTML =
-      '<span class="text-[11px] font-extrabold tracking-wider text-slate-500 uppercase">' + escapeHtml(tr.doi) + ' bị bắt</span>' +
+    /* Dải số nằm NGAY TRONG khung MISTAKES, dưới tiêu đề — không còn dòng chữ "TEAM x bị bắt"
+       (thầy chốt bỏ mọi chữ hướng dẫn, chỉ giữ con số bắt buộc phải biết). */
+    trDaiSo('ktTrai',
       '<span class="bg-slate-900 text-white text-xs font-extrabold rounded-full px-2.5 py-1">' + tr.ds.length + ' dòng</span>' +
       '<span class="bg-blue-600 text-white text-xs font-extrabold rounded-full px-2.5 py-1">' + tr.cum.length + ' cụm gộp</span>' +
-      '<span class="text-slate-400 text-xs font-bold">' + conLai.length + ' lỗi chưa gộp</span>';
+      '<span class="text-slate-400 text-xs font-bold">' + conLai.length + ' lỗi chưa gộp</span>');
   }
 
   /* Một khung cụm. `voteMode` = màn XÁC NHẬN TRÙNG (có hai nút phiếu, không có nút bỏ dòng). */
@@ -3197,13 +3206,34 @@
   function trVeXn() {
     /* Đội chấm CHỈ thấy cụm đã GỬI — cụm đang soạn là việc riêng của đội kia. */
     const ds = tr.cum.filter((c) => c.daGui);
-    $('xnWrap').innerHTML = ds.map((c) => trKhungCum(c, true)).join('') ||
-      '<div class="bg-white rounded-3xl border border-slate-200 p-6 text-center text-sm text-slate-500">' +
-      escapeHtml(tr.doi) + ' chưa gửi cụm nào để em xét.</div>';
     const daBo = ds.filter((c) => trPhieuToi(c._id)).length;
-    $('trDai').innerHTML =
-      '<span class="bg-slate-900 text-white text-xs font-extrabold rounded-full px-2.5 py-1">' + ds.length + ' cụm ' + escapeHtml(tr.doi) + ' gửi</span>' +
-      '<span class="bg-emerald-100 text-emerald-700 text-xs font-extrabold rounded-full px-2.5 py-1">' + daBo + '/' + ds.length + ' cụm em đã bỏ phiếu</span>';
+    /* ⭐ 03/09 (thầy chốt) — dải số nằm **GIỮA cột nội dung**, ngay trên các cụm chờ bỏ phiếu,
+       chứ không dạt sang mép trái nữa. "gửi" đổi thành "yêu cầu xem xét" cho đúng việc. */
+    $('xnWrap').innerHTML =
+      '<div class="flex items-center justify-center gap-2 flex-wrap mb-3">' +
+        '<span class="bg-slate-900 text-white text-xs font-extrabold rounded-full px-2.5 py-1">' +
+          ds.length + ' cụm ' + escapeHtml(tr.doi) + ' yêu cầu xem xét</span>' +
+        '<span class="bg-emerald-100 text-emerald-700 text-xs font-extrabold rounded-full px-2.5 py-1">' +
+          daBo + '/' + ds.length + ' cụm em đã bỏ phiếu</span>' +
+      '</div>' +
+      '<div class="space-y-3">' + (ds.map((c) => trKhungCum(c, true)).join('') ||
+        '<div class="tr-khung text-center text-sm text-slate-400 py-6">Chưa có cụm nào chờ em.</div>') +
+      '</div>';
+  }
+
+  /* Dải số đặt NGAY TRONG khung (dưới tiêu đề MISTAKES), căn giữa. Dựng một lần rồi tái dùng
+     — vẽ lại liên tục nên phải tìm đúng ô cũ, đừng chèn thêm mỗi lượt. */
+  function trDaiSo(idKhung, html) {
+    const khung = $(idKhung);
+    if (!khung) return;
+    let o = khung.querySelector('.tr-dai');
+    if (!o) {
+      o = document.createElement('div');
+      o.className = 'tr-dai flex items-center justify-center gap-2 flex-wrap mb-3';
+      const tieu = khung.querySelector('.tr-tieu');
+      tieu.parentNode.insertBefore(o, tieu.nextSibling);
+    }
+    o.innerHTML = html;
   }
 
   /* ── Thao tác ───────────────────────────────────────────────────────────────────── */
@@ -3339,7 +3369,9 @@
      YouTube (buổi cũ dùng Drive) thì ẩn luôn thanh này — không có gì để nghe. */
   function trVideo() {
     const p = parseVideoUrl(state.videoUrl);
-    if (!p || p.type !== 'youtube') { $('trPlay').closest('div').classList.add('hidden'); return; }
+    /* Không phải YouTube (buổi cũ dùng Drive) ⇒ ẩn CẢ dải thanh tiếng.
+       ⛔ Phải trèo 2 cấp: khung trong `max-w-7xl` nằm trong dải trắng `sticky` bọc ngoài. */
+    if (!p || p.type !== 'youtube') { $('trPlay').closest('div').parentNode.classList.add('hidden'); return; }
     $('trungVideo').innerHTML = '<div id="trYt"></div>';
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
@@ -3352,14 +3384,25 @@
     };
     if (window.YT && window.YT.Player) dung(); else window.onYouTubeIframeAPIReady = dung;
   }
+  /* ⛔ 03/09 — VẼ ICON BẰNG SVG THẬT, KHÔNG dùng `<i data-lucide>` ở đây.
+     Nhịp này chạy 400ms/lần và gán `innerHTML`; thẻ `data-lucide` chỉ thành hình khi có ai gọi
+     `lucide.createIcons()`, mà gọi lại mỗi 400ms thì phí. Bản trước để `data-lucide` nên nút
+     hiện ra là một vòng tròn TRỐNG TRƠN — thầy chụp lại được. Vẽ thẳng SVG là hết chuyện. */
+  const TR_IC_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 pointer-events-none" style="margin-left:2px"><path d="M7 4.5v15l12-7.5z"/></svg>';
+  const TR_IC_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 pointer-events-none"><rect x="6.5" y="4.5" width="4" height="15" rx="1"/><rect x="13.5" y="4.5" width="4" height="15" rx="1"/></svg>';
+
   function trNhipVideo() {
+    let phatCu = null;
     setInterval(() => {
       if (!tr.videoSan || !tr.yt) return;
       try {
         const cur = tr.yt.getCurrentTime() || 0, dur = tr.yt.getDuration() || 0;
         const phat = tr.yt.getPlayerState() === 1;
-        $('trungScreen').classList.toggle('dang-phat', phat);
-        $('trPlay').innerHTML = '<i data-lucide="' + (phat ? 'pause' : 'play') + '" class="w-4 h-4 pointer-events-none"></i>';
+        /* Chỉ vẽ lại icon khi TRẠNG THÁI ĐỔI — đỡ đập DOM 2,5 lần mỗi giây. */
+        if (phat !== phatCu) {
+          phatCu = phat;
+          $('trPlay').innerHTML = phat ? TR_IC_PAUSE : TR_IC_PLAY;
+        }
         if (!tr.keo && dur) $('trSeek').value = Math.round((cur / dur) * 1000);
         $('trCur').textContent = fmtClock(cur);
         $('trDur').textContent = fmtClock(dur);
@@ -3369,6 +3412,15 @@
   function trToiGiay(s) {
     if (!tr.videoSan || !tr.yt) return;
     try { tr.yt.seekTo(Math.max(0, s - 1), true); tr.yt.playVideo(); } catch (e) {}
+  }
+  /* Nhích tương đối — nút −5s / +5s. Không tự phát: em đang dừng để đọc thì cứ để dừng. */
+  function trNhich(giay) {
+    if (!tr.videoSan || !tr.yt) return;
+    try {
+      const cur = tr.yt.getCurrentTime() || 0;
+      const dur = tr.yt.getDuration() || 0;
+      tr.yt.seekTo(Math.max(0, Math.min(dur || 1e9, cur + giay)), true);
+    } catch (e) {}
   }
 
   function datAvatarTrung() {
@@ -3429,6 +3481,8 @@
       if (!tr.videoSan || !tr.yt) return;
       try { if (tr.yt.getPlayerState() === 1) tr.yt.pauseVideo(); else tr.yt.playVideo(); } catch (e) {}
     });
+    $('trLui').addEventListener('click', () => trNhich(-5));
+    $('trToi').addEventListener('click', () => trNhich(5));
     $('trSeek').addEventListener('input', () => { tr.keo = true; });
     $('trSeek').addEventListener('change', () => {
       tr.keo = false;

@@ -1969,3 +1969,36 @@ Ba bức tường (đều đã vượt được về mặt kỹ thuật, chỉ l
 **Để lại trên Console, vô hại**: site key reCAPTCHA · app trong App Check · reCAPTCHA Enterprise
 API · Firebase AI Logic. Không thứ nào đụng Firestore.
 ⬜ **Nên xoá khoá Gemini** ở AI Studio (project mySpeaking) cho sạch — không còn dùng ở đâu.
+
+### Bổ sung 03/09/2026 (thầy duyệt giao diện lần 2) — `?v=45`
+
+Thầy xem hai màn chạy thật rồi giao 12 chỉnh. Đã làm hết:
+
+**Cả hai màn — thanh tiếng:** bọc trong đúng khung `max-w-7xl` như `<main>` nên mép thẳng hàng
+với hai cột, **không lòi ra hai bên** · thêm nút **−5s / +5s** · **bỏ sóng âm** và **bỏ tên
+thành viên đội bị chấm** · nút play/pause đổi sang **nền trắng viền tím, icon vẽ bằng SVG thật**.
+⛔ **Vì sao icon trước đó là vòng tròn trống**: nhịp 400ms gán `innerHTML` bằng thẻ
+`<i data-lucide="play">`, mà thẻ đó chỉ thành hình khi có ai gọi `lucide.createIcons()`. Vẽ
+thẳng SVG là hết, và chỉ vẽ lại **khi trạng thái đổi** chứ không 2,5 lần mỗi giây.
+
+**Màn KIỂM TRA TRÙNG:**
+- **Hai cột cân nhau**: cột phải nay cũng là một khung `.tr-khung` y hệt cột trái, **luôn hiện
+  kể cả khi chưa có cụm nào** (bên trong ghi "Chưa có cụm lỗi gộp nào").
+- Tiêu đề **MISTAKES / GROUPS** căn giữa, có vạch mảnh hai bên (`.tr-tieu`); bỏ chữ "theo thứ
+  tự thời gian", bỏ "TEAM x bị bắt", bỏ "CỤM ĐÃ GỘP · TEAM x SẼ BỎ PHIẾU", bỏ dòng phụ
+  "gộp những lỗi các đội khác bắt trùng nhau". Dải số dời vào **trong khung, dưới tiêu đề**.
+- ⭐ **VẠCH NGĂN HAI NHÓM GỢI Ý NẰM LIỀN NHAU** (`.tr-ngan`, vạch cam có nhãn "nhóm khác"):
+  `SPTrung.goiY` nay trả thêm `nhom = {errId: số nhóm}` (union-find). Chỉ chèn khi **hai ô xanh
+  SÁT NHAU khác nhóm** — ô nhạt chen giữa đã tự tách rồi. Đo trên buổi thật: 22 vạch/137 dòng.
+  ⛔ Không có vạch thì bốn ô xanh liên tiếp trông như MỘT cụm, em tích nhầm cả bốn.
+
+**Màn XÁC NHẬN TRÙNG:** bỏ ô trắng trống · dải số ra **giữa cột nội dung** · "gửi" đổi thành
+**"yêu cầu xem xét"**.
+
+⛔⛔ **BUG THẬT THẦY BẮT ĐƯỢC — CÁI Ô TRẮNG TRỐNG**: class `lg:grid` của Tailwind **ĐÈ LÊN
+`.hidden`** ở màn ≥1024px (cùng độ đặc hiệu, media query khai báo sau) ⇒ ở màn XÁC NHẬN TRÙNG,
+khung `#ktWrap` đang bị ẩn vẫn hiện ra một ô trắng. **Đúng cái bẫy đã ghi sẵn trong chính file
+này** ở khối CSS "Bố cục GHIM" — vậy mà vẫn vấp lại. Đã chuyển bố cục hai cột sang CSS riêng
+`#ktWrap:not(.hidden){display:grid}`.
+👉 **Luật rút ra: phần tử nào có thể mang `.hidden` thì TUYỆT ĐỐI không gắn class `lg:*` đổi
+`display` cho nó.**

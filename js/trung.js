@@ -152,7 +152,23 @@
       danhDau[ds[c[1]].id] = true;
       return [ds[c[0]].id, ds[c[1]].id];
     });
-    return Promise.resolve({ danhDau: danhDau, cap: capId, soCapMo: b1.mo.length });
+
+    /* ⭐ 03/09 (thầy chốt) — GOM CÁC CẶP THÀNH NHÓM và trả về `nhom = {errId: số nhóm}`.
+       Màn hình cần nó để **kẻ vạch ngăn** khi hai nhóm gợi ý nằm liền nhau trong danh sách:
+       không có vạch thì bốn ô xanh liên tiếp trông như một cụm, em gộp nhầm cả bốn.
+       Union-find nhỏ, cùng luật với `_hop_nhom` bên app máy tính. */
+    var cha = ds.map(function (_, i) { return i; });
+    function tim(i) { while (cha[i] !== i) { cha[i] = cha[cha[i]]; i = cha[i]; } return i; }
+    b1.chac.forEach(function (c) { cha[tim(c[0])] = tim(c[1]); });
+    var soNhom = {}, dem = 0, nhom = {};
+    ds.forEach(function (x, i) {
+      if (!danhDau[x.id]) return;
+      var g = tim(i);
+      if (soNhom[g] == null) soNhom[g] = ++dem;
+      nhom[x.id] = soNhom[g];
+    });
+
+    return Promise.resolve({ danhDau: danhDau, cap: capId, nhom: nhom, soCapMo: b1.mo.length });
   }
 
   window.SPTrung = { goiY: goiY, LECH_GIAY: LECH_GIAY };
