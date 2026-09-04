@@ -457,15 +457,10 @@
     if (!r.ok) throw new Error('FS_' + r.status);
     return fsGiaiDoc(await r.json());
   }
-  // `mask` (tuỳ chọn) = danh sách TÊN TRƯỜNG cần ghi; trường nào không kể tên thì trên kho GIỮ
-  // NGUYÊN — đúng cách `kho-fs.js` bên app máy tính đã làm (`ghiDoc(duong, data, mask)`).
-  // ⛔ Không có mask thì Firestore ghi đè CẢ TÀI LIỆU (LUẬT 9️⃣): thiếu trường nào là XOÁ trường đó.
-  async function fsPatch(duong, duLieu, mask) {
+  async function fsPatch(duong, duLieu) {
     const fields = {};
     Object.keys(duLieu).forEach((k) => { fields[k] = fsMa(duLieu[k]); });
-    let q = fsKey();
-    (mask || []).forEach((f) => { q += '&updateMask.fieldPaths=' + encodeURIComponent(f); });
-    const r = await fetch(FS_GOC + duong + q, {
+    const r = await fetch(FS_GOC + duong + fsKey(), {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields }),
     });
     if (!r.ok) {
@@ -489,60 +484,8 @@
   }
 
   const tongLoiLay = (buoiId, slug) => fsGet('/spBuoi/' + encodeURIComponent(buoiId) + '/tongLoi/' + encodeURIComponent(slug));
-  const tongLoiGhi = (buoiId, slug, d, mask) => fsPatch('/spBuoi/' + encodeURIComponent(buoiId) + '/tongLoi/' + encodeURIComponent(slug), d, mask);
+  const tongLoiGhi = (buoiId, slug, d) => fsPatch('/spBuoi/' + encodeURIComponent(buoiId) + '/tongLoi/' + encodeURIComponent(slug), d);
   const phanHoiGhi = (buoiId, phId, d) => fsPatch('/spBuoi/' + encodeURIComponent(buoiId) + '/phanHoi/' + encodeURIComponent(phId), d);
-
-  /* ═══ ⛔⛔ 04/09/2026 — CHỐT CHỐNG MẤT BÀI ═══
-     (đọc `GHI CHU DU AN.md` mục "CHẶNG — 04/09/2026" trước khi sửa khối này)
-     CHUYỆN ĐÃ XẢY RA: em TIẾN (B1AH) mất 23 câu, em KHÁNH NGÂN (A2B) mất 32 câu. Máy cũ còn
-     NHÁP CŨ trong localStorage (khoá `myspeaking_<TÊN>_<link video>` không bao giờ hết hạn) —
-     mở bài trên máy đó rồi bấm Keep/Accept là `tongLoiGhi` ĐẨY NGUYÊN mảng lỗi trong RAM máy
-     đó lên kho, nuốt sạch mẻ làm ở máy khác. Cứu được em Tiến chỉ vì Firestore giữ bản cũ
-     ĐÚNG 1 TIẾNG (`versionRetentionPeriod=3600s`, đọc lại bằng tham số `readTime`).
-
-     LUẬT MỚI: mọi lượt ghi `tongLoi` phải đi qua đây. Đọc bản trên kho rồi GỘP theo MÃ LỖI —
-     lỗi nào có trên kho mà máy này không có thì GIỮ NGUYÊN, thêm lại vào. KHÔNG BAO GIỜ để
-     một lượt ghi làm mất một lỗi đã nằm trên kho.
-     ⛔ Đọc kho hỏng thì KHÔNG GHI (ném lỗi) — thà báo "lưu không được, thử lại" còn hơn ghi đè
-     mù. Ghi mù đúng là cái đã làm mất bài của hai em.
-     ⛔ Xếp thêm vào CUỐI mảng là đủ: `renderErrors` xếp lại theo mốc giờ trong video (`tSec`),
-     thứ tự trong mảng không ảnh hưởng gì tới cái học sinh nhìn thấy. */
-  const KHO_TUOI = 5000;      // ms — bản kho đọc trong 5 giây gần đây thì dùng lại, khỏi tốn lượt đọc
-  let m2KhoErrors = null;     // mảng lỗi ĐANG CÓ trên kho theo hiểu biết mới nhất
-  let m2KhoDocLuc = 0;        // mốc lần ĐỌC THẬT gần nhất (⛔ ghi xong không đụng mốc này)
-  function m2QuenKho() { m2KhoErrors = null; m2KhoDocLuc = 0; }
-
-  async function tongLoiGhiAnToan(buoiId, slug, duLieu) {
-    if (!m2KhoErrors || (Date.now() - m2KhoDocLuc) >= KHO_TUOI) {
-      // Ném thẳng lỗi ra ngoài cho `submitM2`/`guiNgamKetLuan` báo "lưu không được".
-      const kho = await tongLoiLay(buoiId, slug);
-      m2KhoErrors = ((kho && kho.errors) || []).map(chuanLoi);
-      m2KhoDocLuc = Date.now();
-    }
-    const co = {};
-    (duLieu.errors || []).forEach((e) => { if (e.id) co[e.id] = 1; });
-    const themLai = m2KhoErrors.filter((e) => e.id && !co[e.id]);
-    const errors = (duLieu.errors || []).concat(themLai);
-    const banGhi = Object.assign({}, duLieu, { errors });
-    // Kèm `updateMask` liệt kê ĐÚNG mấy trường mình gửi: trường nào NƠI KHÁC đặt (app thầy,
-    // đợt sau…) thì trên kho giữ nguyên, không bị lượt ghi này xoá theo (LUẬT 9️⃣).
-    await tongLoiGhi(buoiId, slug, banGhi, Object.keys(banGhi));
-    m2KhoErrors = errors;      // vừa ghi xong thì kho ĐÚNG BẰNG cái này
-    return { errors, themLai };
-  }
-
-  /* Lượt ghi vừa rồi có nhặt lại được lỗi cũ ⇒ đổ vào bảng đang mở để em ấy THẤY NGAY.
-     ⛔ PHẢI gọi TRƯỚC `m2GhiNhanDongBo()` — hàm đó chụp ảnh `state.errors`, chụp lúc bảng còn
-     thiếu thì nút SUBMIT vàng nhấp nháy mãi vì bảng lệch bản kho. Trả về SỐ câu nhặt lại được. */
-  function m2NhanLaiLoi(kq) {
-    if (!kq || !kq.themLai || !kq.themLai.length) return 0;
-    state.errors = kq.errors;
-    return kq.themLai.length;
-  }
-  function m2BaoNhanLai(n) {
-    if (!n) return;
-    toast('Recovered ' + n + ' mistake' + (n > 1 ? 's' : '') + ' from your other device ✓', 'info');
-  }
 
   // Chuẩn hoá một lỗi mô hình 2 (bản cũ trong kho có thể thiếu trường mới)
   function chuanLoi(er) {
@@ -609,29 +552,6 @@
   function loadingAn() {
     $('m2LoadModal').classList.add('hidden');
     $('m2LoadModal').classList.remove('flex');
-  }
-
-  /* ⛔ 04/09/2026 — KHÔNG ĐỌC ĐƯỢC BÀI TRÊN KHO thì hỏi hẳn, đừng lặng lẽ coi như chưa có bài.
-     Trả 'thulai' (gọi lại startM2) hoặc 'offline' (ghi chép tạm trên máy; lượt lưu vẫn bị
-     `tongLoiGhiAnToan` chặn cho tới khi đọc được kho, nên không có đường nào ghi đè mù). */
-  function hoiKhoHong() {
-    return new Promise((chot) => {
-      const m = $('khoHongModal');
-      m.classList.remove('hidden'); m.classList.add('flex');
-      refreshIcons();
-      const dong = (kq) => { m.classList.add('hidden'); m.classList.remove('flex'); chot(kq); };
-      $('btnKhoThuLai').onclick = () => dong('thulai');
-      $('btnKhoOffline').onclick = () => dong('offline');
-    });
-  }
-
-  /* Một dòng mô tả ngắn cho pop-up "Two versions found": bao nhiêu câu, lưu lúc nào.
-     `luc` nhận cả mốc mili-giây (capNhatLuc) lẫn chuỗi ISO (savedAt của nháp). */
-  function moTaBanCham(errors, luc) {
-    const n = (errors || []).filter((e) => e.trangThai !== 'an').length;
-    const iso = typeof luc === 'number' ? new Date(luc).toISOString() : luc;
-    const khi = iso ? gioDep(iso) : '';
-    return n + ' mistake' + (n === 1 ? '' : 's') + (khi ? ' · ' + khi : '');
   }
 
   // Mã lượt nộp yyMMdd-HHmmss-<3 số>, giờ VN — ⛔ CÙNG ĐỊNH DẠNG makeSid trong Code.gs
@@ -1852,21 +1772,9 @@
     dungManChinh();
     loadingHien('Loading your saved check…');
     let serverDoc = null;
-    m2QuenKho();
     try {
       serverDoc = await tongLoiLay(state.buoiId, slugHs(state.student));
-      // Đọc được rồi thì DÙNG LUÔN làm bản kho đã biết — lượt lưu đầu tiên khỏi phải đọc lại.
-      m2KhoErrors = ((serverDoc && serverDoc.errors) || []).map(chuanLoi);
-      m2KhoDocLuc = Date.now();
-    } catch (e) {
-      /* ⛔ 04/09/2026 — TRƯỚC ĐÂY NUỐT LỖI Ở ĐÂY: mạng chập/kho từ chối là coi như "chưa có bản
-         trên kho", lấy nháp máy làm bản chính rồi ghi đè lên bài thật. Nay HỎI EM hẳn hoi.
-         (Làm bài tiếp vẫn an toàn: `tongLoiGhiAnToan` không đọc được kho thì KHÔNG ghi.) */
-      loadingAn();
-      const chon = await hoiKhoHong();
-      if (chon === 'thulai') { startM2(); return; }
-      loadingHien('Loading your saved check…');
-    }
+    } catch (e) { /* mạng/luật hỏng → coi như chưa có bản trên kho, vẫn cho làm bài */ }
     try {
       m2.phanHoi = await fsQuery(state.buoiId, 'phanHoi', 'chuLoi', state.student, 2000);
     } catch (e) { m2.phanHoi = []; }
@@ -1907,13 +1815,6 @@
     loadingAn();
     if (khac && serverDoc) {
       // Hai bản lệch nhau → em chọn (pop-up #draftModal). Chọn xong mới dựng bảng.
-      // ⛔ 04/09/2026 — ghi rõ MỖI BÊN BAO NHIÊU CÂU, LƯU LÚC NÀO. Bản cũ chỉ nói "khác nhau",
-      // học sinh bấm mò vào nháp cũ là mất mẻ làm ở máy khác (ca em Tiến + em Khánh Ngân).
-      $('draftSvInfo').textContent = moTaBanCham(svErrors, serverDoc.capNhatLuc);
-      $('draftLcInfo').textContent = moTaBanCham(nhap.errors, saved && saved.savedAt);
-      const itHon = nhap.errors.filter((e) => e.trangThai !== 'an').length
-        < svErrors.filter((e) => e.trangThai !== 'an').length;
-      $('draftCanhBao').classList.toggle('hidden', !itHon);
       $('draftModal').classList.remove('hidden');
       $('draftModal').classList.add('flex');
       refreshIcons();
@@ -2350,15 +2251,13 @@
     loadingHien('Saving your check…');
     const laLanDauTien = !m2.daNopLanNao;   // (Đợt SUBMIT/UPDATE) chốt SUBMITTED/UPDATED TRƯỚC khi cờ đổi true
     try {
-      // ⛔ 04/09/2026 — ĐI QUA CHỐT AN TOÀN, đừng gọi thẳng `tongLoiGhi` (xem khối chú thích ở đó)
-      const kq = await tongLoiGhiAnToan(state.buoiId, slugHs(state.student), {
+      await tongLoiGhi(state.buoiId, slugHs(state.student), {
         student: state.student, myTeam: state.myTeam, checkedTeam: state.checkedTeam,
         videoUrl: state.videoUrl, videoId: state.videoId,
         classCode: state.classCode, lesson: state.lesson,
         errors: state.errors, timers: cleanTimers(),
         daNop: true, capNhatLuc: Date.now(),
       });
-      const nhatLai = m2NhanLaiLoi(kq);
       m2.daNopLanNao = true;
       m2.nhanXanh = laLanDauTien ? 'SUBMITTED' : 'UPDATED';
       m2GhiNhanDongBo();
@@ -2369,11 +2268,9 @@
       renderErrors();          // icon uploaded xanh hiện đủ ở từng ô
       capNhatNutSubmit();
       toast('🎉 Submitted successfully! Thank you.');
-      m2BaoNhanLai(nhatLai);
     } catch (e) {
       loadingAn();
-      toast('Submission failed (' + e.message + '). Nothing on the server was changed — check your '
-        + 'internet and press SUBMIT again, or tap Export Excel to send it to your teacher.', 'err');
+      toast('Submission failed (' + e.message + '). Try again or tap Export Excel to send to your teacher.', 'err');
     }
   }
 
@@ -2382,25 +2279,20 @@
     if (!m2CoSuaChuaGui()) return;
     const laLanDauTien = !m2.daNopLanNao;
     try {
-      // ⛔ 04/09/2026 — ĐI QUA CHỐT AN TOÀN. Chính đường này (bấm Keep/Accept) đã ghi đè mất
-      // bài của em Tiến sáng 04/09, vì nó lưu NGẦM nên không ai kịp thấy gì.
-      const kq = await tongLoiGhiAnToan(state.buoiId, slugHs(state.student), {
+      await tongLoiGhi(state.buoiId, slugHs(state.student), {
         student: state.student, myTeam: state.myTeam, checkedTeam: state.checkedTeam,
         videoUrl: state.videoUrl, videoId: state.videoId,
         classCode: state.classCode, lesson: state.lesson,
         errors: state.errors, timers: cleanTimers(),
         daNop: true, capNhatLuc: Date.now(),
       });
-      const nhatLai = m2NhanLaiLoi(kq);
       m2.daNopLanNao = true;
       m2.nhanXanh = laLanDauTien ? 'SUBMITTED' : 'UPDATED';
       m2GhiNhanDongBo();
       renderErrors();
       capNhatNutSubmit();
       toast('Saved ✓', 'info');
-      m2BaoNhanLai(nhatLai);
-    } catch (e) { toast('Could not save (' + e.message + ') — nothing was changed on the server. '
-      + 'Check your internet, then press SUBMIT.', 'err'); }
+    } catch (e) { toast('Could not save (' + e.message + ') — press Submit to retry.', 'err'); }
   }
 
   // ─── (Đợt B) NÚT REQUIREMENT — đếm câu CÒN VIỆC PHẢI XỬ (thầy chốt) ───

@@ -1,5 +1,23 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> ⛔⛔⛔ **ĐỌC TRƯỚC MỌI THỨ — 04/09/2026 (`?v=48`): CHỐT CHỐNG MẤT BÀI CHẤM.**
+>
+> Hai em đã mất bài THẬT: **TIẾN (B1AH) 23 câu** (cứu được) · **KHÁNH NGÂN (A2B) 32 câu**
+> (mất hẳn). Máy cũ còn **nháp cũ** trong `localStorage` mở lại là `tongLoiGhi` đẩy nguyên
+> mảng lỗi trong RAM máy đó lên kho, nuốt sạch mẻ làm ở máy khác.
+>
+> **LUẬT MỚI — ⛔ đừng gỡ, đừng đi vòng:**
+> - **MỌI lượt ghi `tongLoi` phải đi qua `tongLoiGhiAnToan()`** — nó đọc bản trên kho rồi GỘP
+>   theo mã lỗi, không bao giờ để một lượt ghi làm mất lỗi đã có trên kho.
+> - **Đọc kho hỏng thì KHÔNG GHI.** Thà báo "lưu không được" còn hơn ghi đè mù — ghi đè mù
+>   đúng là cái đã làm mất bài hai em.
+> - `startM2` **không được nuốt lỗi mạng** nữa: hiện `#khoHongModal` hỏi hẳn.
+>
+> ⭐⭐ **Mất bài thì CỨU NGAY trong 1 TIẾNG**: Firestore giữ bản cũ `versionRetentionPeriod
+> = 3600s`, đọc lại bằng tham số `readTime` (`?readTime=2026-09-04T00:46:40Z`). Quá 1 tiếng
+> là mất vĩnh viễn — PITR của project đang TẮT. Cách bắt lỗi mất bài + toàn bộ phép thử:
+> `GHI CHU DU AN.md` mục **"CHẶNG — 04/09/2026"**.
+
 > ⭐⭐⭐⭐⭐ **CẬP NHẬT 03/09/2026 (`?v=46`) — HAI MÀN MỚI: GỘP LỖI TRÙNG.**
 >
 > Thầy hỏi: nhiều em cùng bắt một lỗi thì tính sao — *"1 lỗi mà 4 người bắt thì bị oan"*.

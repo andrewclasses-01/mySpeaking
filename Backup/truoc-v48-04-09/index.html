@@ -697,47 +697,15 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- ══════════ (Đợt B) NHÁP TRÊN MÁY ≠ BẢN TRÊN KHO — hỏi em, không âm thầm đè ══════════
-     ⛔ 04/09/2026 — SỬA SAU SỰ CỐ MẤT BÀI (em TIẾN B1AH 23 câu · em KHÁNH NGÂN A2B 32 câu).
-     Bản cũ chỉ nói "hai bản khác nhau" mà KHÔNG nói bên nào bao nhiêu câu, lại để nút nguy hiểm
-     "My draft" làm nút CHÍNH màu xanh, nút an toàn "Server copy" xám mờ ⇒ bấm mò vào nháp cũ.
-     Nay: hiện SỐ CÂU + GIỜ LƯU mỗi bên · "Server copy" là nút chính · cảnh báo đỏ khi nháp ÍT
-     câu hơn. ⛔ Đổi mã `draftSvInfo`/`draftLcInfo`/`draftCanhBao` thì sửa cả `startM2` bên app.js. -->
+<!-- ══════════ (Đợt B) NHÁP TRÊN MÁY ≠ BẢN TRÊN KHO — hỏi em, không âm thầm đè ══════════ -->
 <div id="draftModal" class="fixed inset-0 z-[65] bg-black/50 hidden items-center justify-center p-4">
   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop">
     <h3 class="font-extrabold text-lg mb-2 flex items-center gap-2"><i data-lucide="git-compare" class="w-5 h-5 text-amber-500"></i> Two versions found</h3>
-    <p class="text-sm text-slate-600 mb-3">This device has an <b>unsubmitted draft</b> that is different from your <b>saved check on the server</b>. Which one do you want to open?</p>
-    <div class="space-y-2 mb-3">
-      <div class="rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2">
-        <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wide">Server copy</div>
-        <div id="draftSvInfo" class="text-sm font-semibold text-slate-700">—</div>
-      </div>
-      <div class="rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">
-        <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">My draft (this device)</div>
-        <div id="draftLcInfo" class="text-sm font-semibold text-slate-700">—</div>
-      </div>
-    </div>
-    <p id="draftCanhBao" class="hidden text-xs text-rose-600 font-semibold mb-3">⚠ Your draft has fewer mistakes than the server copy. Open the <b>server copy</b> unless you are sure.</p>
+    <p class="text-sm text-slate-600 mb-4">This device has an <b>unsubmitted draft</b> that is different from your <b>saved check on the server</b>. Which one do you want to open?</p>
     <div class="flex gap-2">
-      <button id="btnDraftServer" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 font-bold text-sm">Server copy</button>
-      <button id="btnDraftLocal" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">My draft</button>
+      <button id="btnDraftServer" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">Server copy</button>
+      <button id="btnDraftLocal" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 font-bold text-sm">My draft</button>
     </div>
-  </div>
-</div>
-
-<!-- ══════════ ⛔ 04/09/2026 — KHÔNG ĐỌC ĐƯỢC BÀI TRÊN KHO ══════════
-     Trước đây `startM2` nuốt lỗi này và coi như "chưa có bài trên kho" ⇒ lấy nháp máy làm bản
-     chính rồi ghi đè lên bài thật. Nay hỏi hẳn. Chọn "Take notes offline" vẫn an toàn vì
-     `tongLoiGhiAnToan` không đọc được kho thì KHÔNG ghi. -->
-<div id="khoHongModal" class="fixed inset-0 z-[70] bg-black/50 hidden items-center justify-center p-4">
-  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop">
-    <h3 class="font-extrabold text-lg mb-2 flex items-center gap-2"><i data-lucide="cloud-off" class="w-5 h-5 text-rose-500"></i> Could not load your check</h3>
-    <p class="text-sm text-slate-600 mb-4">We could not reach the server, so we cannot show the mistakes you saved before. <b>Nothing is lost</b> — but please try again before you start working.</p>
-    <div class="flex gap-2">
-      <button id="btnKhoThuLai" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 font-bold text-sm">Try again</button>
-      <button id="btnKhoOffline" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">Take notes offline</button>
-    </div>
-    <p class="text-[11px] text-slate-500 mt-3">Offline notes stay on this device. You can submit them once you are back online.</p>
   </div>
 </div>
 
@@ -876,6 +844,6 @@ tailwind.config = {
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
 <script src="js/trung.js?v=6"></script>
-<script src="js/app.js?v=48"></script>
+<script src="js/app.js?v=47"></script>
 </body>
 </html>

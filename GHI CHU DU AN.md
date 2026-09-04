@@ -2061,3 +2061,100 @@ của học sinh thì lãng phí thật**. Thầy chốt làm cho **cả hai** w
 mạng · quá 10 phút mốc không đổi → **chỉ MỐC (254B)** · mốc đổi → MỐC rồi TRỌN GÓI, ảnh cũ bị
 thay sạch · mất mạng → vẫn **18 em**, bắn 1 lượt rồi im 60 giây · đè DOM qua đúng
 `batAvatarKho()` → đè đúng ô tên đầy đủ **và** ô tên gọi ngắn (luật ĐUÔI), bỏ qua ô tên lạ.
+
+## CHẶNG — 04/09/2026: ⛔⛔ CHỐT CHỐNG MẤT BÀI CHẤM (`?v=48`)
+
+### Chuyện đã xảy ra — hai em mất bài THẬT
+
+Thầy báo em **TIẾN (B1AH)** thấy thẻ SP Check tụt **45 → 21**. Đọc thẳng Firestore:
+bài của em ấy bị ghi đè lúc **07:46:49 sáng 04/09**, từ **46 lỗi (45 sống) xuống 23 lỗi
+(21 sống)** — mất nguyên mẻ làm chiều 02/09 (14:48 → 16:05).
+
+Quét cả 5 buổi tìm thêm: **KHÁNH NGÂN (A2B) mất 32 lỗi** (01/09 15:41 → 03/09 10:45),
+**PHONG (A2B) mất 1**. B1AH đã khôi phục đủ; **A2B KHÔNG cứu được**.
+
+### ⭐⭐ CÁCH CỨU — CỬA SỔ 1 TIẾNG CỦA FIRESTORE (nhớ lấy, dùng lại được)
+
+Firestore giữ MỌI bản cũ đúng `versionRetentionPeriod = 3600s`. Đọc lại bằng tham số
+`readTime`:
+
+```
+GET https://firestore.googleapis.com/v1/projects/aword-70dae/databases/(default)/documents/
+    spBuoi/<buổi>/tongLoi/<em>?readTime=2026-09-04T00:46:40Z
+```
+
+⛔ **CHẠY NGAY, ĐỪNG ĐIỀU TRA TIẾP** — quá 1 tiếng là mất vĩnh viễn (lần này đọc lúc 08:44,
+cửa đóng lúc 08:46:49). PITR của project đang **TẮT**; khoá service account không xem được
+backups (403). Bản cứu + biên bản:
+`E:\LAP TRINH APP\DU LIEU TONG HOP\CUU SP CHECK B1AH 04-09-2026\`.
+
+### Cách BẮT lỗi mất bài (không đoán, dùng lại được cho buổi sau)
+
+Mô hình 2 chỉ xoá **mềm** (`trangThai='an'`, hàm `xoaLoiDangSua`), không bao giờ cắt dòng khỏi
+mảng ⇒ **một mã lỗi biến mất khỏi mọi `tongLoi` = MẤT THẬT**. Dò bằng `phanHoi.errId` +
+`cum.ids` **mồ côi**. ⛔ Đếm theo **MÃ LỖI RIÊNG BIỆT**, đừng đếm số phiếu (một lỗi có thể 2
+bạn chấm — đếm nhầm ra 34 thay vì 32).
+⭐ `taoErrId()` = `Date.now().toString(36)` + 2 ký tự ⇒ **8 ký tự đầu giải base36 ra ĐÚNG GIỜ
+TẠO**. Dựng dòng thời gian là thấy ngay hình dạng "mẻ GIỮA bị xoá" — dấu vân tay của máy cũ
+mang nháp cũ đè lên.
+
+### Nguyên nhân trong code
+
+`tongLoiGhi` đẩy **nguyên mảng `errors` trong RAM máy đó** lên kho — không gộp, không so bản
+nào mới hơn. Hai đường tới mất bài:
+
+1. **Máy cũ còn nháp cũ.** Nháp `localStorage` khoá `myspeaking_<TÊN>_<link video>` không bao
+   giờ hết hạn. Pop-up "Two versions found" bản cũ chỉ nói "hai bản khác nhau", lại để nút
+   nguy hiểm **[My draft]** làm nút CHÍNH màu xanh.
+2. **`startM2` nuốt lỗi mạng** (`catch` rỗng): đọc kho hỏng là coi như "chưa có bản trên kho",
+   lấy nháp máy làm bản chính rồi ghi đè — **im lặng, không hỏi một câu nào**.
+
+Ca em Tiến chắc chắn là đường (1)+(2) trên một phiên làm bài SỐNG: so bản cứu với bản hỏng
+thấy 4 lỗi cũ đổi trạng thái Keep/Accept đúng sáng hôm đó.
+
+### Đã vá gì (`js/app.js`, `index.html` → `js/app.js?v=48`)
+
+**Gói A — chốt an toàn ở tầng ghi**
+- `tongLoiGhiAnToan()` — MỌI lượt ghi `tongLoi` đi qua đây. Đọc bản trên kho rồi **gộp theo mã
+  lỗi**: lỗi nào có trên kho mà máy này không có thì **giữ nguyên**, thêm lại vào cuối mảng.
+  ⛔ Xếp cuối là đủ — `renderErrors` xếp lại theo mốc giờ trong video (`tSec`).
+- ⛔ **Đọc kho hỏng thì KHÔNG GHI** (ném lỗi ra ngoài). Thà báo "lưu không được, thử lại" còn
+  hơn ghi đè mù.
+- `m2NhanLaiLoi()` đổ lỗi nhặt lại được vào bảng + toast *"Recovered N mistakes from your other
+  device ✓"*. ⛔ PHẢI gọi **TRƯỚC** `m2GhiNhanDongBo()` (hàm đó chụp ảnh `state.errors`).
+- **Nhịp đọc `KHO_TUOI = 5000ms`** để khỏi đụng LUẬT 8: bản kho đọc trong 5 giây gần đây thì
+  dùng lại; ghi xong thì `m2KhoErrors` = đúng cái vừa ghi (không đụng mốc ĐỌC).
+- `fsPatch(duong, duLieu, mask)` nay nhận `updateMask` (đúng cách `kho-fs.js` bên app máy tính
+  đã làm); lượt ghi `tongLoi` gửi kèm đủ 11 tên trường ⇒ trường do NƠI KHÁC đặt không bị xoá.
+
+**Gói B — pop-up + không nuốt lỗi mạng**
+- `#draftModal` hiện **số câu + giờ lưu MỖI BÊN**, cảnh báo đỏ khi nháp ÍT câu hơn, và đổi
+  **"Server copy" thành nút chính**, "My draft" xuống nút phụ.
+- `#khoHongModal` mới: đọc kho hỏng thì hỏi hẳn — **[Try again]** / **[Take notes offline]**.
+  Chọn offline vẫn an toàn vì Gói A không cho ghi khi chưa đọc được kho.
+
+### Đã thử thật — bàn thử cách ly, KHÔNG một byte nào ra kho thật
+
+`ZTEST-shim.js` chặn `window.fetch` → kho Firestore GIẢ trong RAM tab (46 lỗi trên kho, nháp
+máy cũ 23 lỗi — đúng hình dạng ca em Tiến); `ZTEST-v48.html` = chép `index.html` chèn shim.
+Chạy trên `python -m http.server` cổng 8899, bấm bằng script trên trang THẬT.
+
+| Phép thử | Bản v48 | Bản cũ (nạp từ `Backup/truoc-v48-04-09`) |
+|---|---|---|
+| Chọn nhầm **My draft** rồi Submit | kho **vẫn 46**, bảng nhảy về 46, toast "Recovered 23" | kho **46 → 23**, báo "🎉 Submitted successfully!" |
+| Đọc kho hỏng (`?ztloi=1`) | hỏi hẳn; chọn offline thì **ghi = 0**, kho vẫn 46 | **không hỏi gì**, ghi đè xuống 23, báo thành công |
+| "Try again" sau khi mạng có lại | đọc lại đúng 46, hiện pop-up chọn bản, ghi = 0 | — |
+| Nhịp đọc | 3 lượt lưu = **2** lượt đọc (2 lượt sát nhau dùng chung 1) | — |
+| `updateMask` | đủ 11 trường | không có |
+
+⭐ **Bản cũ ĐỎ đúng cả hai ca** ⇒ phép thử có giá trị thật, và cũng là dựng lại đúng sự cố.
+Đã xoá sạch file `ZTEST-*`, `git status` sạch. `node --check` OK; `tsc --allowJs --checkJs`
+lọc TS2304/TS2552 → không có biến mồ côi.
+
+### ⬜ CÒN LẠI
+
+- Thầy nhắn các lớp: gặp pop-up "Two versions found" thì đọc **số câu** rồi chọn, thường là
+  **Server copy**. (Nay chọn nhầm cũng không mất, nhưng bảng sẽ hiện thiếu cho tới lượt lưu.)
+- A2B: thầy chốt cho em **KHÁNH NGÂN** nhập lại mẻ đã mất, hay chấm theo số đã từng có (94).
+- Nên cân nhắc **bật Point-in-time recovery** cho project — 3600s quá ngắn cho một sự cố cuối
+  tuần. (Chưa bàn với thầy.)
