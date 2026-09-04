@@ -2026,3 +2026,38 @@ Em sửa xong bấm SAVE là gửi lại bản mới.
 **Đã kiểm trên bàn thử với dữ liệu A2B thật**: mở khoá (viền cam + 2 nút ✕) · xoá 1 dòng của cụm
 2 dòng ⇒ cụm giải tán, **cả hai dòng 5 và 7 quay lại MISTAKES**, dải số 2 cụm → 1 cụm, 133 →
 135 lỗi chưa gộp. Đã xoá sạch file ZTEST.
+
+---
+
+## CHẶNG 04/09/2026 — ĐỆM ẢNH ĐẠI DIỆN SỐNG QUA CÁC PHIÊN (`?v=47`)
+
+Thầy hỏi bên myLesson: cơ chế ảnh đại diện có tốn lượt đọc/ghi Firebase không, có đệm không,
+mở web có tải lại từ đầu không. Khảo sát ra **tiền Firebase không đáng lo, nhưng băng thông
+của học sinh thì lãng phí thật**. Thầy chốt làm cho **cả hai** web cùng lượt.
+
+**Hồ sơ đầy đủ (số đo, luồng, 10 phép thử, các bẫy) nằm ở `myLesson/app/BAN GIAO.md` mục
+`0💾`** — đọc ở đó, đừng chép lại vào đây rồi hai bản lệch nhau.
+
+### Đổi cái gì trong `js/app.js`
+
+- Đệm `sessionStorage` (`sp_av1`, chết theo tab) → **`localStorage`** (`sp_av2`, sống qua các
+  phiên). Khoá MỚI, không dùng lại khoá cũ vì hình dạng đã khác (`{luc, kiem, tai, em}`).
+- Quá hạn kiểm 10 phút thì **hỏi riêng mốc `luc`** bằng `?mask.fieldPaths=luc` —
+  đo thật: **254 byte** thay vì **57.869 byte**. Mốc giống ⇒ dùng luôn ảnh trong máy.
+- Thêm `AV_RAM` (bản nhớ RAM) và `AV_BAY` (chống hai màn gọi cùng lúc bắn hai lượt đọc).
+- Mất mạng mà máy đã có ảnh ⇒ **trả ảnh cũ**, không trả rỗng như bản trước.
+
+### ⛔ Ba điều đừng quên
+
+1. **Số lượt đọc Firestore KHÔNG giảm** — Firestore tính theo TÀI LIỆU, hỏi mốc hay hỏi trọn
+   gói đều 1 lượt (LUẬT 8). Cái giảm là băng thông + tốc độ hiện ảnh.
+2. ⛔ **BẢN CHÉP HAI NƠI** với `myLesson/web/js/chung.js` (bản v1.59.0) — sửa một bên sửa cả
+   hai. Bên kia viết ES5 (`var`/`function`), bên này viết `const`/`async`; logic y hệt.
+3. Kho web mySpeaking nằm ở nhánh **master**, không phải `main`.
+
+### Đã thử thật (bàn thử `python -m http.server` cổng 8132, gọi hàm THẬT, đếm lượt `fetch`)
+
+3 lượt gọi cùng lúc lần đầu → **1** lượt mạng, 18 em, ghi 52 KB · gọi lại 5 lượt → **0** lượt
+mạng · quá 10 phút mốc không đổi → **chỉ MỐC (254B)** · mốc đổi → MỐC rồi TRỌN GÓI, ảnh cũ bị
+thay sạch · mất mạng → vẫn **18 em**, bắn 1 lượt rồi im 60 giây · đè DOM qua đúng
+`batAvatarKho()` → đè đúng ô tên đầy đủ **và** ô tên gọi ngắn (luật ĐUÔI), bỏ qua ô tên lạ.

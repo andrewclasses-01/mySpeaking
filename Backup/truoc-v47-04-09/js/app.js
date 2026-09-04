@@ -236,24 +236,9 @@
      Ở đây KHÔNG có mã số em (gói `?goi=` chỉ mang tên), nên dò bằng `avTenKhop`:
      bằng nhau HOẶC là ĐUÔI của nhau — chính luật đuôi này khớp được "THƯ" của buổi
      cũ với "MINH THƯ" trên kho.
-     💸 1 lượt đọc cho CẢ LỚP + đệm (04/09: đệm sống qua các phiên, xem khối ngay dưới)
-     (LUẬT 8). ⛔ Đừng tách mỗi em một tài liệu.
+     💸 1 lượt đọc cho CẢ LỚP + đệm 10 phút (LUẬT 8). ⛔ Đừng tách mỗi em một tài liệu.
      ⛔ Luật này CHÉP Ở HAI NƠI với `myLesson/web/js/chung.js` — sửa một bên sửa cả hai. */
-  /* ⭐⭐ 04/09/2026 (`?v=47`) — ĐỆM ẢNH SỐNG QUA CÁC PHIÊN, HỎI MỐC TRƯỚC KHI TẢI
-     Bản chép Y HỆT khối v1.59.0 bên `myLesson/web/js/chung.js` — sửa một bên sửa cả hai.
-     Đo thật 04/09 trên kho đang chạy: gói ảnh một lớp nặng 33–62 KB. Bản cũ đệm bằng
-     `sessionStorage` hạn 10 phút ⇒ đóng tab là mất sạch, mở lại tải trọn 52 KB dù cả
-     tuần không em nào đổi ảnh. Nay:
-       ① `localStorage` — ảnh sống qua các lần đóng/mở trình duyệt.
-       ② Quá hạn kiểm thì hỏi RIÊNG mốc `luc` bằng `?mask.fieldPaths=luc` — đo được
-          **254 byte** thay vì 57.869 byte. Mốc giống bản trong máy ⇒ dùng luôn ảnh cũ.
-     💸 ⛔ SỐ LƯỢT ĐỌC KHÔNG ĐỔI — Firestore tính tiền theo TÀI LIỆU, hỏi mốc hay hỏi
-        trọn gói đều là 1 lượt (LUẬT 8). Cái tiết kiệm là BĂNG THÔNG + tốc độ hiện ảnh.
-     ⛔ KHOÁ MỚI `sp_av2` (bản cũ `sp_av1` ở sessionStorage, để nguyên cho chết theo tab):
-        trùng khoá là bản mới đọc phải hình dạng cũ (không có `kiem`/`tai`). */
-  const AV_KIEM_GIAY = 600;         // trong 10 phút: tin thẳng ảnh trong máy, không hỏi mạng
-  const AV_HAN_GIAY = 86400;        // quá 24 giờ: tải lại trọn gói dù mốc có vẻ giống
-  const KHOA_AV = 'sp_av2';
+  const AV_CACHE_GIAY = 600;
   let AV_KHO = null;          // { "<id>": {t, a} } đã nạp cho lớp của buổi này
   // ⛔⛔ CHỐT CHỐNG HỎI LẠI LIÊN TỤC (bắt được lúc chạy thử 03/09 bên myLesson).
   // `batAvatarKho()` được gọi ở CẢ BA màn (`datAvatarDauTrang` gọi mỗi lần đổi màn).
@@ -262,8 +247,6 @@
   // dung rỗng, chỉ đệm cái sự "vừa hỏi hụt".
   const AV_HONG = {};
   const AV_HONG_GIAY = 60;
-  const AV_RAM = {};          // bản nhớ trong RAM, khỏi đọc + parse 52 KB mỗi lượt gọi
-  const AV_BAY = {};          // lượt hỏi ĐANG BAY: hai màn gọi cùng lúc chỉ tốn 1 lượt đọc
 
   function avTenKhop(a, b) {
     const x = khongDauTen(a).replace(/\s+/g, ' ').trim();
@@ -274,108 +257,34 @@
                                : y.slice(-(x.length + 1)) === (' ' + x);
   }
 
-  // Còn trong hạn không? Đồng hồ máy lệch về TƯƠNG LAI cũng coi như hết hạn (hiệu số âm)
-  // — thà hỏi lại một lượt còn hơn đóng băng ảnh cũ vĩnh viễn trên máy đó.
-  function avConHan(moc, giay) {
-    if (typeof moc !== 'number') return false;
-    const d = Date.now() - moc;
-    return d >= 0 && d < giay * 1000;
-  }
-
-  // Bản đang giữ trong máy: { luc, kiem, tai, em }. `luc` = mốc của KHO (do app đóng),
-  // `kiem` = lần cuối đối chiếu mốc, `tai` = lần cuối tải trọn gói.
-  function docAvatarMay(slug) {
-    if (AV_RAM[slug]) return AV_RAM[slug];
-    try {
-      const o = JSON.parse(localStorage.getItem(KHOA_AV + ':' + slug) || 'null');
-      if (o && o.em && typeof o.em === 'object') { AV_RAM[slug] = o; return o; }
-    } catch (e) {}
-    return null;
-  }
-
-  function ghiAvatarMay(slug, o) {
-    AV_RAM[slug] = o;
-    let chuoi;
-    try { chuoi = JSON.stringify(o); } catch (e) { return; }
-    try { localStorage.setItem(KHOA_AV + ':' + slug, chuoi); return; } catch (e) {}
-    // Hết chỗ: dọn ảnh của các lớp KHÁC rồi thử lại đúng MỘT lần. Vẫn hỏng thì thôi —
-    // bản RAM ở trên vẫn chạy tốt cho phiên này, chỉ là lần mở sau phải tải lại.
-    try {
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const k = localStorage.key(i);
-        if (k && k.indexOf(KHOA_AV + ':') === 0 && k !== KHOA_AV + ':' + slug)
-          localStorage.removeItem(k);
-      }
-      localStorage.setItem(KHOA_AV + ':' + slug, chuoi);
-    } catch (e) {}
-  }
-
-  // Mốc `luc` của kho. 404 (lớp chưa từng được đẩy ảnh) trả 0 — và bản trong máy của
-  // lớp đó cũng mang `luc: 0`, nên hai bên khớp nhau, không tải lại vô ích.
-  function avMoc(j) {
-    const v = j && j.fields && j.fields.luc;
-    return (v && (Number(v.integerValue || v.doubleValue) || 0)) || 0;
-  }
-
-  function avBoc(j) {
-    const em = {}, f = (j.fields && j.fields.em && j.fields.em.mapValue
-                        && j.fields.em.mapValue.fields) || {};
-    Object.keys(f).forEach((id) => {
-      const g = (f[id].mapValue && f[id].mapValue.fields) || {};
-      const a = g.a && g.a.stringValue;
-      if (a) em[id] = { t: (g.t && g.t.stringValue) || '', a };
-    });
-    return { em, luc: avMoc(j) };
-  }
-
   async function napAvatarKho() {
     const slug = avLopSlug();
     if (!FS_GOC || !slug) return {};
-    const cu = docAvatarMay(slug);
-
-    // ① Vừa kiểm trong 10 phút — dùng thẳng, không đụng tới mạng.
-    if (cu && avConHan(cu.kiem, AV_KIEM_GIAY)) return cu.em;
-    // ② Kho vừa hỏi hụt — im 60 giây. Có bản cũ thì vẫn xài (ảnh cũ hơn hẳn không ảnh).
-    if (AV_HONG[slug] && avConHan(AV_HONG[slug], AV_HONG_GIAY)) return cu ? cu.em : {};
-    // ③ Đang có lượt hỏi bay — bám vào nó, đừng bắn thêm lượt đọc thứ hai.
-    if (AV_BAY[slug]) return AV_BAY[slug];
-
-    const goc = FS_GOC + '/lessonAvatar/' + encodeURIComponent(slug) + fsKey();
-
-    const doc = async (u) => {
-      const r = await fetch(u, { cache: 'no-store' });
+    const khoa = 'sp_av1:' + slug;
+    try {
+      const o = JSON.parse(sessionStorage.getItem(khoa) || 'null');
+      if (o && (Date.now() - o.luc) < AV_CACHE_GIAY * 1000) return o.em;
+    } catch (e) {}
+    if (AV_HONG[slug] && (Date.now() - AV_HONG[slug]) < AV_HONG_GIAY * 1000) return {};
+    try {
+      const r = await fetch(FS_GOC + '/lessonAvatar/' + encodeURIComponent(slug) + fsKey(),
+        { cache: 'no-store' });
       // 404 = lớp chưa từng được đẩy ảnh lên kho. KHÔNG phải lỗi — lớp nền lo tiếp.
-      if (r.status === 404) return { fields: {} };
-      if (!r.ok) return null;
-      return r.json();
-    };
-
-    const taiDu = async () => {
-      const j = await doc(goc);
-      if (!j) { AV_HONG[slug] = Date.now(); return cu ? cu.em : {}; }
+      if (!r.ok && r.status !== 404) { AV_HONG[slug] = Date.now(); return {}; }
       delete AV_HONG[slug];
-      const b = avBoc(j), gio = Date.now();
-      // ⛔ CHỈ ghi khi đọc được thật — ghi cả lượt hỏng là đóng băng bảng rỗng.
-      ghiAvatarMay(slug, { luc: b.luc, kiem: gio, tai: gio, em: b.em });
-      return b.em;
-    };
-
-    const chay = (async () => {
-      if (!cu || !avConHan(cu.tai, AV_HAN_GIAY)) return taiDu();
-      // Hỏi RIÊNG mốc `luc` — 254 byte. Giống mốc đang giữ thì đóng lại dấu `kiem`
-      // và dùng luôn ảnh cũ; khác (hoặc đọc không ra mốc) mới tải trọn gói.
-      const j = await doc(goc + '&mask.fieldPaths=luc');
-      if (!j) { AV_HONG[slug] = Date.now(); return cu.em; }
-      delete AV_HONG[slug];
-      if (avMoc(j) !== cu.luc) return taiDu();
-      ghiAvatarMay(slug, { luc: cu.luc, kiem: Date.now(), tai: cu.tai, em: cu.em });
-      return cu.em;
-    })();
-
-    AV_BAY[slug] = chay
-      .catch(() => { AV_HONG[slug] = Date.now(); return cu ? cu.em : {}; })
-      .then((em) => { delete AV_BAY[slug]; return em; });
-    return AV_BAY[slug];
+      const j = r.status === 404 ? { fields: {} } : await r.json();
+      const f = (j.fields && j.fields.em && j.fields.em.mapValue
+                 && j.fields.em.mapValue.fields) || {};
+      const em = {};
+      Object.keys(f).forEach((id) => {
+        const g = (f[id].mapValue && f[id].mapValue.fields) || {};
+        const a = g.a && g.a.stringValue;
+        if (a) em[id] = { t: (g.t && g.t.stringValue) || '', a };
+      });
+      // ⛔ CHỈ đệm khi đọc được thật — đệm cả lượt hỏng là đóng băng bảng rỗng 10 phút.
+      try { sessionStorage.setItem(khoa, JSON.stringify({ luc: Date.now(), em })); } catch (e) {}
+      return em;
+    } catch (e) { AV_HONG[slug] = Date.now(); return {}; }
   }
 
   // Đè ảnh kho lên mọi ô đã vẽ. Ô nào cũng mang `data-av-em`.
