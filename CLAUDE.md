@@ -1,5 +1,93 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> # 🗺 VIỆC CÒN LẠI — ĐỌC KHỐI NÀY KHI TIẾP TỤC (chốt 05/09/2026)
+>
+> Xếp theo **thứ tự thầy muốn làm**. ⛔ Chưa việc nào được "ok build" — phải hỏi thầy trước.
+>
+> ---
+>
+> ## ① ⭐⭐⭐ TỰ LƯU LIÊN TỤC, KHÔNG CẦN BẤM SUBMIT — **VIỆC ĐẦU TIÊN**
+>
+> Thầy giao 05/09: *"cải tiến quá trình ghi nhận dữ liệu chấm bài mà không cần bấm submit —
+> soạn đến đâu, lưu đến đó, tương tự auto save trong Google Docs hoặc Google Sheet."*
+>
+> ### Hiện đang chạy thế nào
+> - `autosave()` (debounce 300ms) **chỉ ghi `localStorage` của MÁY ĐÓ** — không lên kho.
+> - Lên kho chỉ khi bấm SUBMIT (`submitM2`) hoặc bấm Keep/Accept (`guiNgamKetLuan` — lưu ngầm).
+> - ⇒ Em làm 113 lỗi mà quên bấm SUBMIT, hoặc máy hết pin, là **mất sạch**. Đây đúng là thứ
+>   thầy muốn chữa.
+>
+> ### Nền đã có sẵn, DÙNG LẠI ĐƯỢC — đừng dựng lại từ đầu
+> - **`tongLoiGhiAnToan()`** — chốt chống mất bài 04/09: đọc bản trên kho rồi **GỘP theo mã lỗi**,
+>   một lượt ghi không bao giờ làm mất lỗi đã có. ⛔ **MỌI đường ghi mới BẮT BUỘC đi qua đây.**
+> - **`m2CoSuaChuaGui()`** — so ảnh chụp `state.errors` với bản đã đồng bộ ⇒ biết có gì mới chưa gửi.
+>   Dùng nó làm cửa: **không có gì mới thì KHÔNG ghi**, khỏi đốt lượt ghi vô ích.
+> - **`KHO_TUOI = 5000ms`** — bản kho đọc trong 5 giây thì dùng lại, khỏi tốn lượt đọc.
+> - **`capNhatNutSubmit()`** — 4 trạng thái nút, sẽ phải đổi nghĩa (xem điểm ③ bên dưới).
+>
+> ### ⛔ NĂM ĐIỂM PHẢI QUYẾT / PHẢI CẨN THẬN — hỏi thầy trước khi build
+>
+> **① Cờ `daNop` — nguy hiểm nhất.** `submitM2` ghi `daNop: true`. Nếu lượt tự lưu cũng ghi cờ đó
+> thì **bài đang làm dở cũng thành "đã nộp"**, và trang `sp-chitiet.html` của thầy đếm sai hết.
+> 👉 Đề xuất: lượt tự lưu **giữ nguyên `daNop` cũ** (đừng gửi trường này trong `updateMask`);
+> chỉ nút SUBMIT mới đặt `true`.
+>
+> **② Số lượt ghi Firestore.** Ước tính từ số thật: một em có tới **113 lỗi** (ảnh thầy gửi 05/09),
+> buổi A2B cả lớp **464 dòng**. Ghi mỗi lần thêm/sửa một lỗi ⇒ **~1.800 lượt ghi/buổi** thay vì
+> ~80 như nay — gấp **20–25 lần**. Cả cụm 3 app xài **chung một hạn mức** (LUẬT 8️⃣).
+> 👉 Đề xuất: **gom nhịp** — im 3 giây mới ghi, và **tối đa 1 lượt ghi / 10 giây**; ghép nhiều
+> thay đổi vào một lượt. Ước còn ~100–150 lượt/buổi/em.
+> ⛔ **ĐỪNG ghi theo từng phím gõ.** Ô SENTENCE/MISTAKE/EXPLANATION gõ liên tục — ghi theo phím là
+> hàng nghìn lượt cho MỘT câu.
+>
+> **③ Nút SUBMIT còn để làm gì?** Nếu mọi thứ tự lưu thì 4 trạng thái SUBMIT/UPDATE mất nghĩa.
+> 👉 Đề xuất (thầy chốt): giữ nút nhưng **đổi nghĩa thành "NỘP BÀI" (chốt xong việc)**, còn tình
+> trạng lưu hiện dạng chữ nhỏ kiểu Google Docs: *"Đang lưu…" / "Đã lưu lúc 20:14"*.
+> Chỗ đặt: cạnh nút SUBMIT ở thanh đầu trang (điện thoại đã rất chật — cân nhắc chỉ hiện icon).
+>
+> **④ Hai máy cùng lúc.** `tongLoiGhiAnToan()` chống MẤT lỗi, nhưng **không** xử lý ca hai máy
+> cùng sửa MỘT câu (cùng `id`): máy ghi sau thắng. Hiếm nhưng có thật (em mở 2 tab).
+> 👉 Ít nhất phải: tự lưu xong mà nhặt lại được lỗi từ máy khác thì **báo cho em biết**
+> (`m2BaoNhanLai()` đã có sẵn).
+>
+> **⑤ Mạng chập chờn.** Tự lưu hỏng mà im lặng thì em tưởng đã an toàn — **nguy hơn cả không có
+> tự lưu**. ⛔ Giữ đúng luật 04/09: **đọc kho hỏng thì KHÔNG GHI**, và phải hiện trạng thái
+> *"Chưa lưu được — đang thử lại"* rõ ràng, đừng nuốt lỗi.
+>
+> ### Cách đo sau khi build (đừng bỏ)
+> Đếm số lượt ghi thật của MỘT buổi trước/sau; xem `daNop` của bài chưa nộp có bị bật nhầm không;
+> tắt mạng giữa chừng rồi bật lại xem có mất câu nào không; mở 2 tab cùng một em, mỗi bên thêm
+> vài câu, kiểm cả hai bên đều đủ.
+>
+> ---
+>
+> ## ② ⭐⭐ `nguoncham.js` — SUY GIỜ NÓI TỪ MỐC CÁC LỖI (app máy tính)
+> Nợ từ đợt `?v=50`: đã **bỏ 4 ô giờ nói** khỏi màn chấm ⇒ khối ① của
+> `mySpeaking/app/src/main/lib/nguoncham.js` (bảng giờ nói từng em, nuôi phần Chấm đội / Chấm học
+> sinh) **mất nguồn**. Thầy chốt: *"trong các bài check của học sinh đã có check bạn nào đúng sai
+> đoạn nào rồi… có thể biết được ai nói câu nào ở mức độ gần đúng. Chấp nhận bỏ phần đó đi."*
+> 👉 Suy khoảng nói của mỗi em = từ mốc lỗi SỚM NHẤT đến mốc lỗi MUỘN NHẤT ghi tên em đó.
+> ⛔ Em nào **không bị bắt lỗi nào** thì không có giờ — phải quyết xử lý sao (bỏ qua? lấy phần
+> còn trống giữa hai bạn kề?).
+> ⛔ Buổi CŨ trên kho **vẫn còn `timers` thật** — ưu tiên dùng số thật, chỉ suy khi thiếu.
+>
+> ## ③ ⭐ ĐIỂM THEO CỤM + "CỤM TREO CHỜ THẦY" (`sp-chitiet.html`)
+> Nợ từ đợt gộp lỗi trùng (`?v=46`). Cố ý để sau vì cần **cụm chốt thật** để đo, không đoán từ code.
+> Nay thầy đã dùng vài buổi ⇒ có dữ liệu thật để làm. Xem `myLesson/app/BAN GIAO.md` mục `0🧩` G.
+>
+> ## ④ ⚠️ HAI MÀN GỘP LỖI TRÙNG CHƯA ĐƯỢC VÁ BỐ CỤC ĐIỆN THOẠI
+> **Phát hiện 05/09 khi rà cuối đợt:** `#trungScreen` (KIỂM TRA TRÙNG / XÁC NHẬN TRÙNG) vẫn dùng
+> `min-h-screen` + dải player `sticky top-0` — **ĐÚNG Y cách vừa hỏng ở màn chấm**, chỉ là chưa ai
+> mở nó bằng iPhone để phát hiện. Gần như chắc chắn cũng trôi mất dải trên khi cuộn / khi bàn phím bật.
+> 👉 Chép nguyên cách chữa của `#appScreen`: khoá khung + một vùng cuộn + `theoKhungNhin()`
+> (`position:fixed` + `top = visualViewport.offsetTop`). Xem khối `?v=54` bên dưới.
+>
+> ## ⑤ Tab **KẾT QUẢ** của app mySpeaking chưa theo luật CHÍNH CHỦ QUYẾT
+> Cố ý từ 02/09 (thầy sẽ dựng lại tab đó) — số của nó lệch số học sinh thấy là **biết trước**,
+> không phải lỗi. Khi dựng lại thì chép bộ ba `tenBang` / `chinhChuDaNhan` / `tranhChapThat`.
+>
+> ---
+
 > ⛔⛔⛔ **05/09/2026 (`?v=54`) — VỆT TRẮNG DƯỚI: TRANG BỊ ĐẨY, KHÔNG PHẢI ĐO SAI.**
 > Manh mối nằm ngay trong ảnh thầy gửi: **thanh tím đầu trang KHÔNG có trong ảnh**, mà phía
 > dưới lại thừa ra một vệt trắng **đúng bằng chiều cao nó**. Cái mất tích ở MỘT đầu và cái thừa
