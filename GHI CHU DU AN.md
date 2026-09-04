@@ -2158,3 +2158,32 @@ lọc TS2304/TS2552 → không có biến mồ côi.
 - A2B: thầy chốt cho em **KHÁNH NGÂN** nhập lại mẻ đã mất, hay chấm theo số đã từng có (94).
 - Nên cân nhắc **bật Point-in-time recovery** cho project — 3600s quá ngắn cho một sự cố cuối
   tuần. (Chưa bàn với thầy.)
+
+---
+
+## CHẶNG — 04/09/2026: Ô GIỜ TRONG DANH SÁCH LỖI BẤM ĐƯỢC (`?v=49`)
+
+### Thầy yêu cầu
+"Trong mọi ô bắt lỗi đều có ô thời gian... bấm vào ô thời gian đó sẽ phát video ở giây đó, bấm
+lại thì về giây đó rồi tiếp tục chạy, bấm đúp thì pause."
+
+### Hiện trạng trước khi sửa (đã đo, không đoán)
+- Màn **PHẢN BIỆN** vốn đã có ô giờ bấm được (`data-pbseek` → `seekVideoTo`) từ đợt mô hình 2.
+- Màn **BẮT LỖI** (`renderErrors`, khung `#errList`) thì ô giờ chỉ là `<span>` trơ — đây mới là
+  chỗ thầy nói tới.
+
+### Đã làm
+1. Ô giờ ở màn bắt lỗi đổi thành `<button data-erseek="<giây>">`, cùng kiểu dáng ô giờ màn phản
+   biện (nền đen, hover xanh) để hai màn nhìn như nhau.
+2. Thêm `chayVideo()` / `dungVideo()` (chạy được cả video HTML5 lẫn YouTube nhúng) và `bamOGio()`.
+3. Nhánh mới trong listener sẵn có của `#errList`, đặt ngay cạnh nhánh `data-pbseek`.
+
+### ⛔ Bẫy phải nhớ
+**Bấm đúp bao giờ cũng bắn ra HAI lần bấm đơn trước nó**, nên không xử lý thẳng được: `bamOGio()`
+hẹn 250ms rồi mới seek+play; cú bấm thứ hai tới trong khoảng đó thì HUỶ hẹn và dừng video. Xử lý
+thẳng thì mỗi lần bấm đúp video lại giật chạy một nhịp rồi mới dừng.
+
+### Chưa kiểm được
+Mới `node --check` và soi mã. **Cần thầy (hoặc một em) mở bài thật bấm thử** cả ba thao tác:
+bấm · bấm lại · bấm đúp — trên cả video YouTube lẫn video Drive (nhánh iframe không seek được,
+vốn đã vậy từ trước).

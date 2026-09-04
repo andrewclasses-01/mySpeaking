@@ -811,6 +811,34 @@
   function manualTimeSeek() {
     seekVideoTo((parseInt($('fMin').value, 10) || 0) * 60 + (parseInt($('fSec').value, 10) || 0));
   }
+
+  // ═══ (04/09/2026 — thầy chốt) BẤM Ô GIỜ TRONG DANH SÁCH LỖI ═══════════════════════════
+  // Bấm một cái = nhảy tới giây đó rồi CHẠY (bấm lại câu cũ cũng vậy: về đúng giây đó chạy
+  // tiếp) · bấm ĐÚP = tạm dừng.
+  // ⛔ Bấm đúp bao giờ cũng bắn ra HAI lần bấm đơn trước, nên không thể xử lý thẳng: phải hẹn
+  // ~250ms rồi mới chạy, cú bấm thứ hai tới trong khoảng đó thì HUỶ hẹn và dừng video. Xử lý
+  // thẳng là mỗi lần bấm đúp video lại giật chạy một nhịp rồi mới dừng.
+  let erSeekHen = null;
+  function chayVideo() {
+    if (video.mode === 'html5' && video.el) { try { video.el.play(); } catch (e) {} }
+    else if (video.mode === 'youtube' && video.yt && video.ready) { try { video.yt.playVideo(); } catch (e) {} }
+  }
+  function dungVideo() {
+    if (video.mode === 'html5' && video.el) { try { video.el.pause(); } catch (e) {} }
+    else if (video.mode === 'youtube' && video.yt && video.ready) { try { video.yt.pauseVideo(); } catch (e) {} }
+  }
+  function bamOGio(giay) {
+    if (erSeekHen) {                       // cú thứ hai trong 250ms = bấm đúp ⇒ chỉ dừng
+      clearTimeout(erSeekHen); erSeekHen = null;
+      dungVideo();
+      return;
+    }
+    erSeekHen = setTimeout(() => {
+      erSeekHen = null;
+      seekVideoTo(giay);
+      chayVideo();
+    }, 250);
+  }
   function vcAttachHtml5(v) {
     vcShow();
     v.addEventListener('timeupdate', () => {
@@ -1263,7 +1291,10 @@
         // file Excel bên app máy tính. (02/09/2026) lấy từ bảng `sttChuan` chốt sẵn ở trên,
         // KHÔNG dùng vị trí sau khi dồn — xem chú thích chỗ dựng bảng đó.
         '<span class="shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center">' + (sttChuan[e.id || ('#' + i)] || '') + '</span>' +
-        '<span class="font-mono font-bold text-sm bg-slate-900 text-white rounded-lg px-2 py-0.5">' + fmtTime(e) + '</span>' +
+        // ⭐ (04/09/2026 — thầy chốt) Ô giờ BẤM ĐƯỢC y như màn phản biện (`data-pbseek`):
+        // bấm = nhảy tới giây đó rồi chạy · bấm lại = về đúng giây đó chạy tiếp · ĐÚP = tạm dừng.
+        '<button data-erseek="' + tSec(e) + '" title="Bấm để xem đoạn này · bấm đúp để dừng" ' +
+          'class="font-mono font-bold text-sm bg-slate-900 text-white rounded-lg px-2 py-0.5 hover:bg-indigo-700 transition">' + fmtTime(e) + '</button>' +
         (e.section ? '<span class="text-xs font-bold text-slate-500">Section ' + escapeHtml(e.section) + '</span>' : '') +
         '<span class="text-xs font-bold rounded-full px-2.5 py-1 ' + st.badge + '">' + typeLabel(e.type) + '</span>' +
         (e.who ? '<span class="text-xs font-semibold text-slate-600 flex items-center gap-1">👤 ' + escapeHtml(e.who) + '</span>' : '') +
@@ -2910,6 +2941,9 @@
       // (phản biện) bấm mốc giờ → video nhảy đúng đoạn bị chấm
       const seek = ev.target.closest('[data-pbseek]');
       if (seek) { seekVideoTo(+seek.dataset.pbseek || 0); return; }
+      // (04/09/2026) màn BẮT LỖI: ô giờ bấm = xem đoạn đó · đúp = dừng (xem `bamOGio`)
+      const erSeek = ev.target.closest('[data-erseek]');
+      if (erSeek) { bamOGio(+erSeek.dataset.erseek || 0); return; }
       // (phản biện) cặp tích Đồng ý / Phản đối — loại trừ nhau, phiếu của CHÍNH EM
       const vote = ev.target.closest('[data-pbvote]');
       if (vote) {
