@@ -1279,6 +1279,18 @@
     // Safari đã đẩy trang (offsetTop > 0) hoặc trang đang bị cuộn ⇒ kéo về mốc 0.
     if (vv.offsetTop || window.scrollY) window.scrollTo(0, 0);
   }
+  // ⭐ 05/09/2026 (thầy chốt) — ĐO LẠI MỘT LƯỢT NỮA SAU 350ms.
+  // Bàn phím iOS **trượt lên có hoạt cảnh**, và cái thanh phụ của nó (hàng icon chìa khoá / thẻ /
+  // vị trí) hiện SAU một nhịp. `visualViewport.resize` bắn ngay từ đầu hoạt cảnh nên con số đầu
+  // tiên còn DƯ ra đúng phần thanh phụ đó ⇒ để lại một vệt trắng ngay trên bàn phím (thầy bắt
+  // được ở ảnh 01:36). Đo lại khi mọi thứ đứng yên thì lấy được số cuối cùng.
+  // ⛔ Giữ CẢ HAI lượt đo, đừng bỏ lượt ngay: chỉ đo trễ thì màn giật một nhịp mới co lại.
+  let henKhungNhin = null;
+  function theoKhungNhinTre() {
+    theoKhungNhin();
+    clearTimeout(henKhungNhin);
+    henKhungNhin = setTimeout(theoKhungNhin, 350);
+  }
 
   // ⛔ Màn PHẢN BIỆN không có form ⇒ bỏ qua (CSS cũng đã có chốt `:not(.pb-mode)`).
   let dsChe = 'check';
@@ -3059,7 +3071,7 @@
       clearTimeout(banPhimHen);
       banPhimHen = setTimeout(() => {
         $('appScreen').classList.toggle('go-banphim', bat);
-        theoKhungNhin();
+        theoKhungNhinTre();   // đo lại cả lượt trễ — thanh phụ bàn phím hiện sau một nhịp
         // Bàn phím vừa lên: đưa ô đang gõ vào tầm nhìn của khung cuộn. Chờ thêm một nhịp cho
         // bàn phím trượt lên xong rồi mới cuộn — cuộn sớm là đo nhầm chỗ.
         if (bat && o) setTimeout(() => { try { o.scrollIntoView({ block: 'nearest' }); } catch (e) {} }, 250);
@@ -3075,11 +3087,11 @@
     // ⛔ Bám theo khung nhìn thật — xem chú thích ở `theoKhungNhin()`. Bàn phím lên/xuống, xoay
     // máy, thanh địa chỉ Safari co giãn đều bắn vào đây.
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', theoKhungNhin);
+      window.visualViewport.addEventListener('resize', theoKhungNhinTre);
       window.visualViewport.addEventListener('scroll', theoKhungNhin);
     }
-    window.addEventListener('orientationchange', () => setTimeout(theoKhungNhin, 300));
-    window.addEventListener('resize', theoKhungNhin);
+    window.addEventListener('orientationchange', () => setTimeout(theoKhungNhinTre, 300));
+    window.addEventListener('resize', theoKhungNhinTre);
     theoKhungNhin();
 
     // Thanh kéo DỰ PHÒNG: kéo → giờ hiển thị chạy theo; SET TIME → đưa vào MIN/SEC kèm ánh sáng bay

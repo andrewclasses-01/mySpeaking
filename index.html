@@ -220,7 +220,16 @@ tailwind.config = {
   @media (max-width:1023.98px){
     #appScreen:not(.hidden) > main{ flex:1 1 0%; min-height:0; display:flex; flex-direction:column; }
     #khoiVideo{ flex-shrink:0; }
-    #khoiNhap{ flex:1 1 0%; min-height:0; overflow-y:auto; padding-bottom:.5rem; }
+    #khoiNhap{ flex:1 1 0%; min-height:0; overflow-y:auto; }
+    /* ⭐ 05/09/2026 (thầy chốt) — BÓP MỌI KHOẢNG DỌC THỪA. Màn điện thoại đã bé, mỗi vệt trống
+       là một dòng chữ bị mất. Ba nguồn sinh ra vệt trắng dưới thanh player:
+         ① `py-2` của <main>  ② `space-y-2.5` giữa khối video và khung nhập  ③ `pt-1 pb-2` của #khoiVideo
+       ⛔ Phải đè `space-y-2.5` bằng selector có #id (Tailwind sinh
+          `.space-y-2\.5 > :not([hidden]) ~ :not([hidden])`, class thường không thắng nổi). */
+    #appScreen:not(.hidden) > main{ padding-top:.25rem; padding-bottom:0; }
+    #appScreen:not(.hidden) > main > * + *{ margin-top:.375rem; }
+    #khoiVideo{ padding-top:0; padding-bottom:0; }
+    #errFormCard, #errListCard{ padding:.75rem; }
   }
   /* ── Bố cục GHIM (desktop ≥1024px): video + khung bắt lỗi đứng yên, CHỈ danh sách lỗi cuộn ── */
   @media (min-width:1024px){
@@ -987,6 +996,6 @@ tailwind.config = {
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
 <script src="js/trung.js?v=6"></script>
-<script src="js/app.js?v=52"></script>
+<script src="js/app.js?v=53"></script>
 </body>
 </html>

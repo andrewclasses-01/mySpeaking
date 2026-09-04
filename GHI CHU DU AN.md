@@ -2370,3 +2370,42 @@ báo khi bàn phím lên):
 
 ⚠️ **Chưa thử được trên iPhone thật** — bàn phím iOS không mô phỏng được trên máy tính, chỉ giả
 lập được *hệ quả* của nó (khung nhìn co lại). Cần thầy xác nhận một lượt.
+
+---
+
+## CHẶNG — 05/09/2026 (`?v=53`): BÓP HAI VỆT TRẮNG THỪA TRÊN ĐIỆN THOẠI
+
+### Thầy báo gì
+`?v=52` **đã giữ được** thanh đầu trang + CHECK/LIST + player khi bàn phím bật (thầy xác nhận).
+Nhưng còn **hai vệt trắng thừa**: một ngay **dưới thanh player**, một **trên bàn phím**.
+*"Màn hình điện thoại đã bé, nay lại có 2 khoảng viền thừa thãi này lại càng bé hơn."*
+
+### Vệt ① — dưới thanh player: đệm CSS chồng nhau
+Ba nguồn cộng dồn ≈ 30px: `py-2` của `<main>` · `space-y-2.5` giữa `#khoiVideo` và `#khoiNhap`
+· `pt-1 pb-2` của `#khoiVideo`. Bóp cả ba ở `@media (max-width:1023.98px)`, thêm `padding:.75rem`
+cho hai thẻ (mobile) thay cho `p-4`/`p-5`.
+⛔ Phải đè `space-y-2.5` bằng selector **có #id** — Tailwind sinh
+`.space-y-2\.5 > :not([hidden]) ~ :not([hidden])`, class thường không thắng nổi độ đặc hiệu đó.
+**Đo:** khe player → form **30px → 7px**; `#khoiNhap` kéo tới `258..812` (sát đáy màn).
+
+### Vệt ② — trên bàn phím: `visualViewport` báo DƯ lúc bàn phím đang trượt
+Bàn phím iOS **trượt lên có hoạt cảnh**, và **thanh phụ** của nó (hàng icon chìa khoá / thẻ /
+vị trí — cao cỡ 100px) hiện **sau một nhịp**. `visualViewport.resize` bắn ngay từ đầu hoạt cảnh
+nên con số đầu tiên còn **dư ra đúng phần thanh phụ đó** ⇒ để lại vệt trắng.
+Chữa: `theoKhungNhinTre()` — đo NGAY (để màn không giật) **rồi đo lại sau 350ms** để lấy số cuối.
+Gắn vào `visualViewport.resize`, `window.resize`, `orientationchange`, và lượt bật `.go-banphim`.
+⛔ Giữ **cả hai** lượt đo; chỉ đo trễ thì màn giật một nhịp mới co lại.
+
+### Đã đo (bàn thử)
+| Mục | 375×812 | 375×420 (giả lập bàn phím) | 1100×700 |
+|---|---|---|---|
+| header | `0..44` | `0..44` | — |
+| `#dsTab` | `48..82` | `48..82` | ẩn |
+| `#khoiVideo` | `48..252` | `48..138` (video 0, còn player) | — |
+| `#khoiNhap` | `258..812` | `144..420` | `display:contents` |
+| **trống dưới cùng** | 0 | **0** | — |
+| khe player → form | **7px** | — | — |
+| máy tính | — | — | `77..245` / `312..680` / `76..680`, đệm thẻ vẫn 20px |
+
+⚠️ Vệt ② chỉ **suy ra nguyên nhân** rồi chữa — bàn thử trên máy tính không có bàn phím iOS thật
+để tái hiện. Cần thầy xác nhận.
