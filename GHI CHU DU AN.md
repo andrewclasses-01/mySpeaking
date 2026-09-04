@@ -2317,3 +2317,56 @@ một dải chắc chắn đứng yên thì khoá khung ngoài (`100dvh` + `over
 vùng bên trong cuộn — cách này đã chạy đúng ở desktop từ CHẶNG 30, nay dùng chung cho cả hai.
 Và: **bản mẫu + bàn thử trên máy tính KHÔNG thay được một lượt bấm tay trên máy thật** — lỗi này
 chỉ lộ ra khi thầy mở bằng điện thoại.
+
+---
+
+## CHẶNG — 05/09/2026 (`?v=52`): VÁ LẦN 2 — BÁM `visualViewport`, KHÔNG TIN `100dvh`
+
+### Thầy báo gì
+Ảnh 01:29: bật bàn phím thì **thanh đầu trang + hai nút CHECK/LIST + video vẫn trôi khỏi màn**,
+chỉ còn nửa nút play lấp ló — **y như trước khi vá `?v=51`**, dù bản đó đã khoá `height:100dvh`
++ `overflow:hidden` và đo trên bàn thử thì thấy "đứng yên".
+
+### Vì sao `?v=51` vẫn chưa đủ — và vì sao bàn thử KHÔNG bắt được
+Safari trên iPhone **không thu nhỏ trang** khi bàn phím hiện. Nó giữ nguyên **layout viewport**
+(`100dvh` vẫn là chiều cao MÀN, *không* trừ bàn phím) rồi **đẩy cả trang lên** ở tầng
+**visual viewport** để lộ ô đang gõ. Cú đẩy đó ở ngoài tầm với của CSS:
+`height:100dvh` · `overflow:hidden` · `position:fixed` · `position:sticky` — **không cái nào cản**.
+
+⛔ Bàn thử trên máy tính không tài nào lộ ra chuyện này: ở đó "bàn phím" chỉ là một class CSS
+(`.go-banphim`) do chính mình bật, còn khung nhìn thì không hề đổi. **Chỉ máy thật mới bắt được.**
+
+### Cách chữa — `theoKhungNhin()`
+Đo `window.visualViewport.height` (phần màn CÒN THẤY sau khi trừ bàn phím) rồi ép `#appScreen`
+cao đúng bấy nhiêu ⇒ trang không còn gì thừa để Safari đẩy. Cộng chốt `window.scrollTo(0,0)` khi
+`vv.offsetTop` (hoặc `window.scrollY`) khác 0, phòng khi nó vẫn cố đẩy.
+
+- Nghe: `visualViewport.resize` · `visualViewport.scroll` · `orientationchange` · `window.resize`.
+- Gọi thêm một lượt trong `datCheDoDs()` — **ba đường vào màn chấm đều đi qua đó**, còn lúc
+  `noiSuKien()` chạy thì `#appScreen` vẫn đang ẩn, đo được cũng vô nghĩa.
+- Khi `focusin` vào ô nhập: sau 120ms bật `.go-banphim` + `theoKhungNhin()`, rồi sau 250ms nữa
+  mới `scrollIntoView({block:'nearest'})` ô đang gõ (chờ bàn phím trượt lên xong; cuộn sớm là
+  đo nhầm chỗ — cùng họ bẫy "đo layout quá sớm").
+- **Chỉ đặt dưới 1024px**; máy tính **xoá inline height**, trả chiều cao về cho CSS.
+
+⛔ **ĐỪNG chữa bằng `transform: translateY(...)`** để kéo trang xuống cho bằng phần bị đẩy:
+`transform` tạo **khung quy chiếu mới**, mọi pop-up `position:fixed` bên trong (`submitModal`,
+`khoHongModal`, `pbThieuModal`…) sẽ neo nhầm vào `#appScreen` thay vì màn hình. Đúng cái bẫy
+"fixed trong khối có transform/backdrop-filter" đã trả giá ở app khác.
+
+### Đã đo
+Giả lập bàn phím bằng cách **thu khung nhìn** 375×812 → 375×400 (đúng thứ mà `visualViewport`
+báo khi bàn phím lên):
+
+| Mục | Kết quả |
+|---|---|
+| `#appScreen` | bám đúng `400px` (inline height = vv.height) |
+| header | `0..44` — đứng yên |
+| `#dsTab` (CHECK/LIST) | `56..90` — đứng yên |
+| video | `0` (đã co) · thanh player vẫn hiện |
+| `#khoiNhap` | `164..392`, cuộn được |
+| thân trang | không cuộn được |
+| máy tính 1100×700 | inline height **rỗng** (CSS lo) · `77..245` / `312..680` / `76..680` |
+
+⚠️ **Chưa thử được trên iPhone thật** — bàn phím iOS không mô phỏng được trên máy tính, chỉ giả
+lập được *hệ quả* của nó (khung nhìn co lại). Cần thầy xác nhận một lượt.

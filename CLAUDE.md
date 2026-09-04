@@ -1,6 +1,26 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
-> ⛔⛔ **VÁ NGAY SAU ĐÓ — 05/09/2026 (`?v=51`): KHOÁ BỐ CỤC Ở MỌI CỠ MÀN.**
+> ⛔⛔⛔ **VÁ LẦN 2 — 05/09/2026 (`?v=52`): BÁM THEO `visualViewport`, KHÔNG TIN `100dvh`.**
+> Thầy bấm thử lần nữa (ảnh 01:29): **bật bàn phím là ba thanh trên vẫn trôi khỏi màn**, dù
+> `?v=51` đã khoá `height:100dvh` + `overflow:hidden`.
+> **VÌ SAO:** Safari trên iPhone **không thu nhỏ trang** khi bàn phím hiện — nó giữ nguyên khung
+> bố cục (`100dvh` vẫn là chiều cao MÀN, **không** trừ bàn phím) rồi **đẩy cả trang lên** ở tầng
+> *visual viewport* cho lộ ô đang gõ. Cú đẩy đó nằm NGOÀI tầm với của CSS: `height:100dvh`,
+> `overflow:hidden`, `position:fixed`, `sticky` — **không cái nào cản được**.
+> **CÁCH CHỮA (`theoKhungNhin()` trong app.js):** đo `window.visualViewport.height` (phần màn
+> CÒN THẤY sau khi trừ bàn phím) rồi ép `#appScreen` cao đúng bấy nhiêu, cộng chốt
+> `window.scrollTo(0,0)` khi `vv.offsetTop` khác 0. Nghe `resize` + `scroll` của `visualViewport`,
+> `orientationchange`, `resize` của window; gọi thêm một lượt trong `datCheDoDs()` (ba đường vào
+> màn đều qua đó). Dưới 1024px mới đặt; máy tính **xoá inline height**, trả về cho CSS.
+> ⛔ **ĐỪNG chữa bằng `transform: translateY(...)`** để kéo trang xuống — `transform` tạo khung
+> quy chiếu mới, mọi pop-up `position:fixed` bên trong sẽ neo nhầm vào `#appScreen`.
+> **Đo thật (giả lập bàn phím bằng cách thu khung nhìn 375×812 → 375×400):** `#appScreen` bám
+> đúng `400px` · header `0..44` · `#dsTab` `56..90` · video `0` · `#khoiNhap` `164..392` cuộn
+> được · thân trang không cuộn. Máy tính: inline height rỗng, `77..245` / `312..680` / `76..680`.
+> ⚠️ **Chưa thử được trên iPhone thật** (bàn phím iOS không mô phỏng được trên máy tính) — cần
+> thầy xác nhận một lượt.
+>
+> ⛔⛔ **VÁ LẦN 1 — 05/09/2026 (`?v=51`): KHOÁ BỐ CỤC Ở MỌI CỠ MÀN.**
 > Thầy bấm thử trên **điện thoại thật** rồi chụp ảnh về: cuộn xuống là **thanh đầu trang, hai
 > nút CHECK/LIST và cả thanh player đều trôi mất**. Nguyên nhân: điện thoại vẫn để cả thân
 > trang cuộn và chỉ ghim khối video bằng `position:sticky` — **sticky KHÔNG giữ được trên máy

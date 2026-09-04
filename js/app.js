@@ -1253,6 +1253,33 @@
   // ⛔ CHỈ đổi class trên #appScreen — việc ẩn/hiện do CSS trong media query lo (xem index.html).
   //    Đừng gán .hidden bằng JS cho #errFormCard/#errListCard: desktop phải hiện CẢ HAI, mà
   //    .hidden thì không có media query nào gỡ được ⇒ máy tính mất luôn một khung.
+  // ═══ ⛔⛔ 05/09/2026 — BÁM THEO **KHUNG NHÌN THẬT** (iPhone: bàn phím ĐẨY CẢ TRANG LÊN) ═══
+  // Thầy bấm thử lần 2 (ảnh 01:29): khoá `height:100dvh` VẪN chưa đủ — bật bàn phím là thanh
+  // đầu trang + hai nút CHECK/LIST + video vẫn trôi khỏi màn.
+  //
+  // VÌ SAO: Safari trên iPhone **không thu nhỏ trang** khi bàn phím hiện. Nó giữ nguyên khung
+  // bố cục (`100dvh` vẫn là chiều cao MÀN, không trừ bàn phím) rồi **đẩy cả trang lên** ở tầng
+  // "visual viewport" cho lộ ô đang gõ. Cú đẩy đó nằm NGOÀI tầm với của CSS — `height:100dvh`,
+  // `overflow:hidden`, `position:fixed` hay `sticky` đều không cản được.
+  //
+  // CÁCH CHỮA: đo bằng `window.visualViewport` (phần màn CÒN THẤY ĐƯỢC sau khi trừ bàn phím)
+  // rồi ép `#appScreen` cao đúng bấy nhiêu. Trang không còn gì thừa để Safari đẩy nữa; thêm
+  // `window.scrollTo(0,0)` làm chốt cho trường hợp nó vẫn cố đẩy.
+  //
+  // ⛔ ĐỪNG chữa bằng `transform: translateY(...)` để kéo trang xuống: `transform` tạo khung
+  //    quy chiếu mới, mọi pop-up `position:fixed` bên trong (submitModal, khoHongModal…) sẽ
+  //    neo nhầm vào #appScreen thay vì màn hình — đúng cái bẫy "fixed trong khối có transform".
+  // ⛔ CHỈ áp dụng dưới 1024px; máy tính trả `height` về cho CSS lo, không đụng inline style.
+  function theoKhungNhin() {
+    const vv = window.visualViewport;
+    const ap = $('appScreen');
+    if (!vv || !ap) return;
+    if (window.innerWidth >= 1024) { ap.style.height = ''; return; }
+    ap.style.height = Math.round(vv.height) + 'px';
+    // Safari đã đẩy trang (offsetTop > 0) hoặc trang đang bị cuộn ⇒ kéo về mốc 0.
+    if (vv.offsetTop || window.scrollY) window.scrollTo(0, 0);
+  }
+
   // ⛔ Màn PHẢN BIỆN không có form ⇒ bỏ qua (CSS cũng đã có chốt `:not(.pb-mode)`).
   let dsChe = 'check';
   function datCheDoDs(che) {
@@ -1261,6 +1288,9 @@
     const el = $('appScreen');
     el.classList.toggle('ds-check', dsChe === 'check');
     el.classList.toggle('ds-list', dsChe === 'list');
+    // Ba đường vào màn chấm đều đi qua đây ⇒ đo lại khung nhìn một lượt ngay khi màn hiện ra
+    // (lúc `noiSuKien()` chạy thì #appScreen còn đang ẩn, đo được cũng không có nghĩa).
+    theoKhungNhin();
     document.querySelectorAll('#dsTab .dsBtn').forEach((b) => {
       const on = b.dataset.ds === dsChe;
       b.classList.toggle('bg-indigo-600', on);
@@ -3025,16 +3055,32 @@
     //    nào cũng có. Đổi ô này sang ô kia trong cùng khung vẫn bắn focusout rồi focusin ngay
     //    sau đó, nên video sẽ nháy một nhịp — chốt lại bằng hẹn 120ms rồi mới co lại.
     let banPhimHen = null;
-    const datBanPhim = (bat) => {
+    const datBanPhim = (bat, o) => {
       clearTimeout(banPhimHen);
-      banPhimHen = setTimeout(() => $('appScreen').classList.toggle('go-banphim', bat), 120);
+      banPhimHen = setTimeout(() => {
+        $('appScreen').classList.toggle('go-banphim', bat);
+        theoKhungNhin();
+        // Bàn phím vừa lên: đưa ô đang gõ vào tầm nhìn của khung cuộn. Chờ thêm một nhịp cho
+        // bàn phím trượt lên xong rồi mới cuộn — cuộn sớm là đo nhầm chỗ.
+        if (bat && o) setTimeout(() => { try { o.scrollIntoView({ block: 'nearest' }); } catch (e) {} }, 250);
+      }, 120);
     };
     $('errFormCard').addEventListener('focusin', (ev) => {
-      if (ev.target.matches('input, textarea')) datBanPhim(true);
+      if (ev.target.matches('input, textarea')) datBanPhim(true, ev.target);
     });
     $('errFormCard').addEventListener('focusout', (ev) => {
       if (ev.target.matches('input, textarea')) datBanPhim(false);
     });
+
+    // ⛔ Bám theo khung nhìn thật — xem chú thích ở `theoKhungNhin()`. Bàn phím lên/xuống, xoay
+    // máy, thanh địa chỉ Safari co giãn đều bắn vào đây.
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', theoKhungNhin);
+      window.visualViewport.addEventListener('scroll', theoKhungNhin);
+    }
+    window.addEventListener('orientationchange', () => setTimeout(theoKhungNhin, 300));
+    window.addEventListener('resize', theoKhungNhin);
+    theoKhungNhin();
 
     // Thanh kéo DỰ PHÒNG: kéo → giờ hiển thị chạy theo; SET TIME → đưa vào MIN/SEC kèm ánh sáng bay
     $('swSeek').addEventListener('input', () => { $('swCur').textContent = fmtClock(parseInt($('swSeek').value, 10) || 0); swFill(); });
