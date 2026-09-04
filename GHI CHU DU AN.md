@@ -2187,3 +2187,83 @@ thẳng thì mỗi lần bấm đúp video lại giật chạy một nhịp rồ
 Mới `node --check` và soi mã. **Cần thầy (hoặc một em) mở bài thật bấm thử** cả ba thao tác:
 bấm · bấm lại · bấm đúp — trên cả video YouTube lẫn video Drive (nhánh iframe không seek được,
 vốn đã vậy từ trước).
+
+---
+
+## CHẶNG — 05/09/2026 (`?v=50`): DỰNG LẠI BỐ CỤC TRANG CHẤM BÀI CÁ NHÂN
+
+### Thầy giao gì
+Ba nhóm việc trong một lượt, kèm một câu chốt cách làm: **"Thiết kế cho tôi xem trước, build
+vào web sau."** Nên đợt này đi qua **bản mẫu** rồi mới đụng file thật:
+`DU LIEU TONG HOP\MAU-CHAM-CA-NHAN-v1.html` → thầy sửa 3 điểm → `…-v2.html` → thầy nói "ok build".
+
+1. **Chung cả máy tính lẫn điện thoại**: bỏ hẳn ô giờ nói dưới tên · thu nhỏ player + khung
+   video tối đa · bỏ hẳn dòng "A2B · TEAM 4 · HÂN · MY · TRỌNG · DUY" · thêm nút lùi/tiến 5 giây.
+2. **Máy tính**: video + khối check lỗi dồn về nửa trái (video trên, check dưới); Mistakes found
+   chiếm nửa phải, cao bằng tổng hai khối trái.
+3. **Điện thoại**: video co còn một nửa · hai nút CHECK/LIST trên đầu video, luôn hiện · bấm sửa
+   một lỗi thì lỗi nhảy về khung sửa và nhảy về nút CHECK · bàn phím ảo hiện thì khung video co
+   lại chỉ còn player · thanh đầu trang co hẹp tối đa và luôn hiển thị.
+
+Ba điểm thầy sửa sau khi xem v1: nút ±5s **bỏ số 5** ("chỉ cần thể hiện sự tiến lùi") · hai cột
+phải **cân cả mép trên lẫn mép dưới** · hai nút CHECK/LIST **cũng luôn hiện**.
+
+### Xung đột đã báo TRƯỚC khi build (thầy quyết)
+Bỏ ô giờ nói thì **app máy tính mất nguồn chấm điểm**: `app/src/main/lib/nguoncham.js` khối ①
+lấy "bảng giờ nói từng em" từ `tongLoi[].timers`, gom bản ghi cả đội rồi chốt theo đa số — chính
+là thứ phần Chấm đội / Chấm học sinh đang ăn. Kèm theo, `autoPickStudent()` (tự sáng tên em theo
+mốc video) mất nguồn.
+
+Thầy chốt: *"Trong các bài check của học sinh đã có check bạn nào đúng sai đoạn nào rồi, vì vậy
+có thể biết được ai nói câu nào thông qua các dữ liệu này (ở mức độ gần đúng). Chấp nhận bỏ phần
+đó đi và sửa các phần khác cho phù hợp."*
+⬜ **CÒN NỢ:** sửa `nguoncham.js` suy giờ nói từ mốc các lỗi đã bắt — **đợt riêng, chưa làm.**
+
+Và thầy chốt bỏ luôn dòng "LỚP · TEAM · thành viên" ("Bỏ luôn, không cần").
+
+### Đã sửa những gì
+**`index.html`**
+- `.video-shell`: bỏ tỷ lệ 16:9 cứng ở điện thoại, khoá `height:14dvh` (≈110px, một nửa cũ);
+  máy tính giữ 16:9 nhưng `max-height:24dvh`.
+- `#vcSeek`: thanh 8→6px, nút mốc 24→14px (⛔ đừng nhỏ hơn 14px, ngón tay kéo trượt hụt).
+- Khối "Bố cục GHIM" (`@media min-width:1024px`): **đảo ngược CHẶNG 30**. Vẫn grid 2 cột × 2 hàng
+  `auto minmax(0,1fr)`, chỉ đổi chỗ ngồi — video cột 1 hàng 1, `#errFormCard` cột 1 hàng 2
+  (`min-height:0; overflow-y:auto; flex-direction:column`), `#errListCard` cột 2 trải cả 2 hàng.
+  `#errAddRow{margin-top:auto}` cho nút đỏ dính đáy thẻ.
+- Khối CSS mới cho hai chế độ điện thoại (`.ds-check` / `.ds-list`) + `.go-banphim` co video.
+- Header: thêm `sticky top-0 z-40`, `py-3`→`py-1.5`, avatar 36→28px; `#hdTopic` ẩn ở điện thoại.
+- Thẻ video: bỏ đệm + `overflow-hidden` để video tràn sát mép trên thẻ; `#videoCtrl` dựng lại
+  (nút play 56→34px, thêm `#vcBack5` / `#vcFwd5`, bỏ nền xám + viền).
+- Thêm `#dsTab` (hai nút CHECK/LIST) ngay trên khối video.
+
+**`js/app.js`**
+- `buildStudentField()`: bỏ `timerCellHtml(i)`; gỡ luôn `T_IN` + `timerCellHtml()`.
+- `openSubmitModal()`: **gỡ hai tầng chặn theo ô giờ**; gỡ 4 hàm phục vụ chúng.
+- Gỡ `videoInfoHtml()`, 3 lời gọi đổi thành `setVideoStatus('')`.
+- Thêm `vcNow()` + `vcNhich(giay)` (`NHICH_SEC = 5`) và nối vào hai nút mới.
+- Thêm `datCheDoDs()` + `capNhatSoDs()`; gọi `datCheDoDs('check')` ở **cả ba** đường vào màn.
+- Nối `#dsTab`, và `focusin`/`focusout` trên `#errFormCard` để bật/tắt `.go-banphim`.
+- Gỡ tay bắt gõ `[data-tt]`.
+
+### ⛔ Bốn bẫy đã trả giá (chép sang CLAUDE.md, đọc ở đó)
+1. **BA đường vào màn chấm** — `dungManChinh()` · `start()` (buổi cũ, đi thẳng) · `openReview()`.
+   Đặt chế độ CHECK ở một chỗ ⇒ buổi cũ hiện chồng cả hai khung. **Bắt được nhờ chạy thật.**
+2. **Gỡ ô nhập phải gỡ luôn tầng chặn Submit của nó** — không thì khoá cứng nút Submit cả lớp.
+3. **`autoGrowAll()` đo lúc form còn ẩn ra 0** ⇒ ba ô chữ bị cắt cụt. Đổi chế độ TRƯỚC rồi mới đo.
+4. **`tenLopNgan()` suýt bị xoá nhầm** — `avLopSlug()` còn dùng nó cho kho ảnh đại diện.
+
+### Đã kiểm những gì
+- `node --check` xanh; `tsc --checkJs` không còn TS2304/TS2552 nào của mình (8 lỗi còn lại là
+  YT/XLSX/lucide — thư viện nạp bằng thẻ `<script>`).
+  ⚠️ Lần chạy `tsc` đầu tiên ra "sạch" là **KẾT QUẢ GIẢ**: `npx --yes typescript tsc …` báo
+  *"could not determine executable to run"* mà grep vẫn ra rỗng. Phải `npx --yes -p typescript@5.6.3 tsc …`
+  và **đếm tổng số dòng output** mới biết nó có chạy thật hay không.
+- Chạy thật trên `http://localhost:8123` bằng gói `?goi=` **mô hình 1** (cố ý KHÔNG có `kho:'fs'`
+  ⇒ app không đọc/ghi Firestore một byte nào; khoá localStorage riêng `ZTEST`, đã dọn sau khi kiểm).
+  Đo bằng `getBoundingClientRect` trên màn 1100×700: video `77..245` · form `312..680` ·
+  list `76..680` — mép trên và mép dưới trùng đúng như thầy chốt. Điện thoại 375×812: video
+  114px, bật `.go-banphim` thì về 0. Tua: 0:00 → 0:05 → 0:10 → lùi 0:06. Modal Submit mở được.
+- ⚠️ **Chưa ai bấm tay thật.** Chuột của công cụ bị treo (timeout 30s) vì iframe YouTube, phải
+  điều khiển bằng lệnh trên trang; phần bàn phím ảo kiểm bằng bắn `focusin`/`focusout` vì khung
+  xem không giữ được con trỏ thật (`document.activeElement` = BODY). **Thầy bấm thử tay một lượt
+  trên điện thoại thật.**

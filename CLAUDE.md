@@ -1,5 +1,53 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> ⭐⭐⭐⭐⭐ **MỚI NHẤT — 05/09/2026 (`?v=50`): DỰNG LẠI BỐ CỤC TRANG CHẤM BÀI CÁ NHÂN.**
+> **BẮT BUỘC đọc trước khi đụng** `#appScreen` · `<main>` · `.video-shell` · `#videoCtrl` ·
+> `#errFormCard` / `#errListCard` · `buildStudentField()` · `openSubmitModal()`.
+> Thầy duyệt qua bản mẫu 2 vòng (`DU LIEU TONG HOP\MAU-CHAM-CA-NHAN-v2.html`) rồi mới cho build.
+>
+> **Ba nhóm việc thầy chốt:**
+> 1. **Chung cả hai giao diện** — ⛔ **BỎ HẲN 4 ô giờ nói dưới mỗi tên học sinh** · thu nhỏ
+>    player + khung video tối đa · ⛔ **bỏ hẳn dòng "LỚP · TEAM · thành viên"** dưới video ·
+>    **thêm hai nút lùi/tiến 5 giây** hai bên nút play (cố ý KHÔNG ghi số "5" trong nút).
+> 2. **Máy tính** — nửa TRÁI = video (trên) + khối check lỗi (dưới); nửa PHẢI = Mistakes found
+>    trải cả hai hàng. **Hai cột cân mép**: mép trên video = mép trên khung Mistakes; mép dưới
+>    khối check lỗi = mép dưới khung Mistakes. (ĐẢO NGƯỢC bố cục CHẶNG 30.)
+> 3. **Điện thoại** — video co còn ~một nửa (14dvh) · hai nút **CHECK / LIST** trên đầu video,
+>    **luôn hiện** · bấm bút chì ở LIST thì lỗi nhảy vào form và tự về CHECK · bấm vào ô gõ chữ
+>    (bàn phím ảo hiện) thì **video co về 0, chỉ còn thanh player** · thanh đầu trang co hẹp
+>    tối đa và **sticky** (đảo ngược luật cũ "header không sticky").
+>
+> **⬜ VIỆC CÒN NỢ — ĐỢT RIÊNG, ĐỪNG QUÊN:** bỏ ô giờ nói ⇒ **app máy tính mất nguồn "bảng giờ
+> nói từng em"** (`app/src/main/lib/nguoncham.js` khối ①, dùng cho Chấm đội / Chấm học sinh).
+> Thầy chốt: **suy giờ nói từ mốc các lỗi đã bắt, chấp nhận gần đúng**. Chưa làm.
+> ⛔ Trường `timers` trong bài nộp **VẪN GIỮ NGUYÊN** (nạp sao gửi vậy): buổi cũ còn dữ liệu
+> thật trên kho, bỏ trường đi là `fsPatch` ghi đè xoá sạch (LUẬT 9️⃣).
+>
+> **⛔ BỐN BẪY ĐÃ TRẢ GIÁ NGAY TRONG ĐỢT NÀY:**
+> 1. ⛔⛔ **CÓ BA ĐƯỜNG vào màn chấm, không phải một**: `dungManChinh()` (buổi mô hình 2) ·
+>    `start()` (buổi CŨ Google Sheets, đi thẳng, KHÔNG gọi hàm kia) · `openReview()` (xem lại
+>    bài đã nộp). Đặt chế độ CHECK ở một chỗ là buổi cũ hiện **chồng cả hai khung** và không nút
+>    nào sáng — bắt được khi kiểm thật, không phải suy từ code.
+> 2. ⛔⛔ **Gỡ ô nhập thì PHẢI gỡ luôn tầng chặn Submit của nó.** Hai tầng cũ
+>    (`missingTimerFields` + `validateTimerRanges`) đòi đủ 4 ô giờ; ô đã biến mất thì chúng
+>    **không bao giờ qua được** ⇒ khoá cứng nút Submit của cả lớp.
+> 3. ⛔ **`autoGrowAll()` đo khi khung form còn ẩn thì ra 0** ⇒ ba ô SENTENCE/MISTAKE/EXPLANATION
+>    bị khoá cao 0px, chữ tràn ra ngoài. Phải `datCheDoDs('check')` **TRƯỚC** khi gán chữ + đo.
+>    Cùng họ với bẫy "đo layout quá sớm".
+> 4. ⛔ **`tenLopNgan()` suýt bị xoá nhầm** cùng `videoInfoHtml()` — nó còn được `avLopSlug()`
+>    dùng để dựng slug lớp cho **kho ảnh đại diện**. Xoá là ảnh cả lớp hỏng CÂM LẶNG.
+>
+> **Đã kiểm gì:** `node --check` xanh · `tsc --checkJs` không còn TS2304/TS2552 nào của mình
+> (8 lỗi còn lại đều là thư viện ngoài YT/XLSX/lucide) · chạy thật trên localhost bằng gói
+> `?goi=` **mô hình 1** (không có `kho:'fs'` ⇒ app KHÔNG đọc/ghi Firestore một byte nào) —
+> đo bằng `getBoundingClientRect`: máy tính video `77..245`, form `312..680`, list `76..680`
+> trên màn 700px (hai mép trùng) · điện thoại video 114px→0 khi bàn phím ảo bật · tua ±5s
+> chạy đúng (0:00→0:05→0:10) · **modal Submit mở được** (chốt chặn cũ đã gỡ sạch).
+> ⚠️ **CHƯA có ai bấm tay bằng chuột/ngón tay thật**: chuột của công cụ bị treo vì iframe
+> YouTube nên phải điều khiển bằng lệnh trên trang; riêng phần bàn phím ảo kiểm bằng **bắn sự
+> kiện `focusin`/`focusout`** (khung xem không giữ được con trỏ thật). **Thầy nên bấm thử tay
+> trên điện thoại thật một lượt.**
+
 > ⛔⛔⛔ **ĐỌC TRƯỚC MỌI THỨ — 04/09/2026 (`?v=48`): CHỐT CHỐNG MẤT BÀI CHẤM.**
 >
 > Hai em đã mất bài THẬT: **TIẾN (B1AH) 23 câu** (cứu được) · **KHÁNH NGÂN (A2B) 32 câu**

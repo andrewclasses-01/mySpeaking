@@ -715,13 +715,10 @@
   }
 
   // ═══════════════ CHẶNG 34 — DÒNG DƯỚI VIDEO LUÔN GỌN 1 DÒNG ═══════════════
-  // ⛔ 05/09/2026 (thầy chốt): dòng "LỚP · TEAM · thành viên" ĐÃ BỎ HẲN khỏi khung video —
-  // hàm `videoInfoHtml()` gỡ theo, ba lời gọi đổi thành `setVideoStatus('')`.
-  // ⚠️ `tenLopNgan()` thì PHẢI GIỮ: `avLopSlug()` dùng nó để dựng slug lớp cho KHO ẢNH ĐẠI DIỆN.
-  //    Gỡ nhầm là ảnh đại diện của cả lớp hỏng CÂM LẶNG (không có lỗi nào bắn ra).
-  // Ô `#videoStatus` GIỮ LẠI vì còn dùng cho chữ trạng thái lúc tải video ("Loading YouTube…",
-  // "Trying to play directly from Drive…"), và tự biến mất khi rỗng nhờ `#videoStatus:empty`.
-  // `fitVideoInfo()` giữ nguyên để chữ trạng thái đó không bao giờ tràn dòng.
+  // Thầy chốt: chữ "CLASS" chỉ dùng ở màn đăng nhập; vào bài rồi thì chỉ cần TÊN LỚP.
+  // Và dòng này KHÔNG BAO GIỜ được tràn xuống dòng 2 — đội 3 người (VD "DIEM MY · CUONG · KHOI")
+  // trên máy 320px là chắc chắn tràn nếu để cỡ chữ cố định. Cách làm: khoá 1 dòng bằng CSS
+  // (flex-nowrap + whitespace-nowrap) rồi TỰ HẠ CỠ CHỮ cho tới khi vừa khung (14px → 9px).
   function tenLopNgan(s) {
     return String(s || '').replace(/^\s*(CLASS|L[ớơo]p)\s+/i, '').trim();   // "CLASS B1AH" → "B1AH"
   }
@@ -736,6 +733,16 @@
       px -= 0.5;
       el.style.fontSize = px + 'px';
     }
+  }
+
+  // Dòng thông tin dưới video: LỚP · ĐỘI ĐƯỢC CHẤM · các thành viên (thay cho chữ trạng thái kỹ thuật)
+  // CHẶNG 34: chỉ TÊN LỚP (bỏ chữ "CLASS" — chữ đó chỉ dùng ở màn đăng nhập, thầy chốt).
+  function videoInfoHtml() {
+    const mem = (state.members || []).join(' · ');
+    return '<i data-lucide="users" class="w-3.5 h-3.5 text-indigo-500 shrink-0"></i> ' +
+      '<b>' + escapeHtml(tenLopNgan(state.className)) + '</b><span class="text-slate-300">|</span>' +
+      '<b class="text-indigo-600">' + escapeHtml(state.checkedTeam) + '</b>' +
+      (mem ? '<span class="text-slate-300">|</span><span class="font-semibold">' + escapeHtml(mem) + '</span>' : '');
   }
 
   // ─── Khung điều khiển video LUÔN HIỆN (nút gốc của trình duyệt tự ẩn — không cấm được,
@@ -803,25 +810,6 @@
   }
   function manualTimeSeek() {
     seekVideoTo((parseInt($('fMin').value, 10) || 0) * 60 + (parseInt($('fSec').value, 10) || 0));
-  }
-
-  // ═══ ⭐ 05/09/2026 (thầy chốt) — LÙI / TIẾN 5 GIÂY ═══════════════════════════════════════
-  // Hai nút hai bên nút play, để em nhích lại một chút mà nghe kỹ chỗ nghi có lỗi.
-  // ⛔ Lấy mốc hiện tại từ CHÍNH TRÌNH PHÁT (`vcNow()`), đừng lấy từ ô MIN/SEC của form: hai
-  //    chỗ đó KHÔNG bằng nhau — ô MIN/SEC còn bị lùi 3 giây khi thêm lỗi mới (`REWIND_SEC`),
-  //    và em sửa tay được. Lấy nhầm là mỗi lần bấm tua video lại nhảy về chỗ khác.
-  // ⛔ Không đụng tới chế độ dự phòng (iframe Drive): ở đó `seekVideoTo` vốn không tua được,
-  //    nên hai nút này tự vô hại — HS vẫn dùng thanh kéo tay + SET TIME như cũ.
-  const NHICH_SEC = 5;
-  function vcNow() {
-    if (video.mode === 'html5' && video.el) return video.el.currentTime || 0;
-    if (video.mode === 'youtube' && video.yt && video.ready) {
-      try { return video.yt.getCurrentTime() || 0; } catch (e) { return 0; }
-    }
-    return 0;
-  }
-  function vcNhich(giay) {
-    seekVideoTo(Math.max(0, vcNow() + giay));
   }
 
   // ═══ (04/09/2026 — thầy chốt) BẤM Ô GIỜ TRONG DANH SÁCH LỖI ═══════════════════════════
@@ -912,7 +900,7 @@
         events: {
           onReady: () => {
             video.ready = true;
-            setVideoStatus('');   // ⬅ 05/09: bỏ dòng "LỚP · TEAM · thành viên" (thầy chốt)
+            setVideoStatus(videoInfoHtml());
             vcAttachYouTube();
             refreshIcons();
           },
@@ -971,7 +959,7 @@
       settled = true;
       clearTimeout(guard);
       video.ready = true;
-      setVideoStatus('');   // ⬅ 05/09: bỏ dòng "LỚP · TEAM · thành viên" (thầy chốt)
+      setVideoStatus(videoInfoHtml());
       vcAttachHtml5(v);
       refreshIcons();
     });
@@ -987,7 +975,7 @@
     const wrap = $('stopwatchWrap');
     wrap.classList.remove('hidden'); wrap.classList.add('flex');
     swFill();
-    setVideoStatus('');   // ⬅ 05/09: bỏ dòng "LỚP · TEAM · thành viên" (thầy chốt)
+    setVideoStatus(videoInfoHtml());
     refreshIcons();
   }
   // Tô phần đã qua XANH DƯƠNG trên thanh kéo dự phòng
@@ -1030,22 +1018,26 @@
   // Bấm ai người đó sáng, 1 thời điểm chỉ 1 tên (1 người nói tại 1 thời điểm).
   let fWhoSel = '';
   // Ô nhập thời gian nói nhỏ dưới tên (min:sec → min:sec) — type=text + inputmode để không có nút spin chiếm chỗ
-  // ⛔ 05/09/2026 — ĐÃ GỠ `T_IN` + `timerCellHtml()` (4 ô giờ nói dưới mỗi tên học sinh),
-  // thầy chốt bỏ hẳn. Luật CSS `.tIn` trong index.html cũng đã gỡ theo. Đừng dựng lại.
+  const T_IN = 'tIn w-full min-w-0 rounded-md border border-slate-300 bg-white px-0.5 py-1 text-center font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-500';
+  function timerCellHtml(i) {
+    const t = state.timers[i] || { sMin: '', sSec: '', eMin: '', eSec: '' };
+    const inp = (k, ph) => '<input data-tt="' + i + ':' + k + '" type="text" inputmode="numeric" value="' + escapeHtml(t[k]) + '" placeholder="' + ph + '" class="' + T_IN + '">';
+    // Mobile: 2 tầng (bắt đầu ↓ kết thúc) cho ô đủ to để gõ; ≥640px: 1 hàng có mũi tên →
+    return '<div class="mt-1 rounded-lg bg-slate-50 border border-slate-200 px-1 py-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-0.5">' +
+      '<div class="flex items-center gap-0.5 flex-1 min-w-0">' + inp('sMin', '0') + '<span class="text-slate-400 font-bold text-[11px]">:</span>' + inp('sSec', '00') + '</div>' +
+      '<span class="hidden sm:inline text-slate-400 text-[11px] px-0.5">→</span>' +
+      '<span class="sm:hidden text-slate-300 text-[10px] leading-none text-center">↓</span>' +
+      '<div class="flex items-center gap-0.5 flex-1 min-w-0">' + inp('eMin', '0') + '<span class="text-slate-400 font-bold text-[11px]">:</span>' + inp('eSec', '00') + '</div>' +
+      '</div>';
+  }
   function buildStudentField() {
     const wrap = $('fStudentWrap');
     if (state.members.length) {
-      // ⛔ 05/09/2026 (thầy chốt) — CHỈ CÒN HÀNG NÚT TÊN. Bốn ô giờ nói dưới mỗi tên
-      // (`timerCellHtml`) ĐÃ BỎ HẲN, đừng dựng lại. Ba hệ quả đã lường trước:
-      //   ① app máy tính mất nguồn "bảng giờ nói từng em" (`nguoncham.js` ①) — sẽ suy từ
-      //      mốc các lỗi đã bắt trong MỘT ĐỢT RIÊNG (thầy chốt: chấp nhận gần đúng);
-      //   ② `autoPickStudent()` (tự sáng tên em theo mốc video) chỉ còn chạy ở buổi CŨ đã
-      //      có timers trên kho — buổi mới thì em tự bấm tên, không sao;
-      //   ③ trường `timers` trong bài nộp VẪN GIỮ NGUYÊN (nạp sao gửi vậy): buổi cũ còn dữ
-      //      liệu thật trên kho, bỏ trường đi là `fsPatch` ghi đè mất sạch — xem LUẬT 9️⃣.
-      const cols = state.members.map((n) =>
+      // mỗi thành viên = 1 CỘT: nút tên trên + khung thời gian nói dưới (from → to, BẮT BUỘC trước khi Submit)
+      const cols = state.members.map((n, i) =>
         '<div class="flex-1 min-w-0">' +
         '<button type="button" data-who="' + escapeHtml(n) + '" class="whoBtn">' + escapeHtml(n) + '</button>' +
+        timerCellHtml(i) +
         '</div>'
       ).join('');
       wrap.innerHTML = '<div class="flex gap-1.5">' + cols + '</div>';
@@ -1247,35 +1239,6 @@
     autosave();
   }
 
-  // ═══ ⭐ 05/09/2026 (thầy chốt) — ĐIỆN THOẠI: HAI CHẾ ĐỘ **CHECK** / **LIST** ══════════════
-  // CHECK = khung nhập lỗi · LIST = danh sách lỗi đã bắt. Khung VIDEO nằm ngoài cả hai, nên
-  // đổi qua lại thì video vẫn ở nguyên chỗ, không tải lại, không mất mốc đang xem.
-  // ⛔ CHỈ đổi class trên #appScreen — việc ẩn/hiện do CSS trong media query lo (xem index.html).
-  //    Đừng gán .hidden bằng JS cho #errFormCard/#errListCard: desktop phải hiện CẢ HAI, mà
-  //    .hidden thì không có media query nào gỡ được ⇒ máy tính mất luôn một khung.
-  // ⛔ Màn PHẢN BIỆN không có form ⇒ bỏ qua (CSS cũng đã có chốt `:not(.pb-mode)`).
-  let dsChe = 'check';
-  function datCheDoDs(che) {
-    if (state.cheDo === 'phanbien') return;
-    dsChe = (che === 'list') ? 'list' : 'check';
-    const el = $('appScreen');
-    el.classList.toggle('ds-check', dsChe === 'check');
-    el.classList.toggle('ds-list', dsChe === 'list');
-    document.querySelectorAll('#dsTab .dsBtn').forEach((b) => {
-      const on = b.dataset.ds === dsChe;
-      b.classList.toggle('bg-indigo-600', on);
-      b.classList.toggle('text-white', on);
-      b.classList.toggle('text-slate-500', !on);
-    });
-  }
-  // Số trên nút LIST = đúng số câu đang hiện trong danh sách (câu đã xoá 'an' không tính).
-  function capNhatSoDs(n) {
-    const o = $('dsSo');
-    if (!o) return;
-    o.textContent = n;
-    o.classList.toggle('hidden', !n);
-  }
-
   function renderErrors() {
     if (state.cheDo === 'phanbien') { renderErrorsPb(); return; }
     const list = $('errList');
@@ -1383,7 +1346,6 @@
         '</div>';
     }).join('');
     $('errEmpty').style.display = ds.length ? 'none' : '';
-    capNhatSoDs(ds.length);   // ⭐ 05/09: số đỏ trên nút LIST của điện thoại
 
     // đếm theo loại (badge tab đã bỏ cùng tab bar ở chặng 12)
     // CHẶNG 33: dùng CHỮ CÁI G/P/I (không phải tên đầy đủ) — tên đầy đủ làm ô cuối lòi ra ngoài
@@ -1411,10 +1373,7 @@
     return String(e.min || 0).padStart(2, '0') + ':' + String(e.sec || 0).padStart(2, '0');
   }
 
-  // ═══════════════ TIMER (thời gian nói) ═══════════════
-  // ⛔ 05/09/2026: KHÔNG CÒN Ô NHẬP nào cho phần này (thầy chốt bỏ 4 ô dưới mỗi tên). Khối này
-  // giữ lại thuần để KHÔNG LÀM MẤT dữ liệu cũ: bài buổi trước trên kho có timers thật, nạp
-  // vào rồi gửi lại y nguyên — bỏ trường đi là `fsPatch` ghi đè xoá sạch (LUẬT 9️⃣).
+  // ═══════════════ TIMER (thời gian nói — nhập ngay dưới nút tên HS, xem timerCellHtml) ═══════════════
   // timers LUÔN = đúng danh sách thành viên đội được chấm (không thêm/bớt/đổi tên).
   // Khôi phục bài dở: khớp theo TÊN (0 là giá trị hợp lệ nên không dùng || '').
   function initTimers(saved) {
@@ -1425,13 +1384,45 @@
     });
   }
 
-  // ⛔ 05/09/2026 — ĐÃ GỠ BỐN HÀM KIỂM Ô GIỜ NÓI, đừng dựng lại:
-  //     missingTimerFields · markMissingTimers · markBadTimerRows · validateTimerRanges
-  // Chúng phục vụ 4 ô giờ dưới mỗi tên, mà bộ ô đó đã bỏ hẳn (thầy chốt) ⇒ không còn gì để
-  // kiểm, và nếu để nguyên hai tầng chặn trong `openSubmitModal()` thì KHÔNG AI NỘP ĐƯỢC BÀI.
-  // `initTimers()` + `cleanTimers()` thì GIỮ: bài buổi cũ trên kho vẫn có timers thật, nạp
-  // sao gửi vậy để lượt ghi mới không xoá mất chúng (LUẬT 9️⃣ — fsPatch ghi đè cả tài liệu).
-  // `timerRangeOf()` cũng giữ vì `autoPickStudent()` còn dùng cho buổi cũ.
+  // BẮT BUỘC đủ 4 ô thời gian nói của MỌI thành viên mới cho Submit
+  function missingTimerFields() {
+    const miss = [];
+    state.timers.forEach((t, i) => {
+      ['sMin', 'sSec', 'eMin', 'eSec'].forEach((k) => {
+        if (String(t[k]).trim() === '') miss.push(i + ':' + k);
+      });
+    });
+    return miss;
+  }
+  function markMissingTimers(miss) {
+    document.querySelectorAll('[data-tt]').forEach((el) => {
+      el.classList.toggle('border-rose-400', miss.includes(el.dataset.tt));
+      el.classList.toggle('ring-1', miss.includes(el.dataset.tt));
+      el.classList.toggle('ring-rose-300', miss.includes(el.dataset.tt));
+    });
+  }
+  // Đánh dấu đỏ cả 4 ô của những HS có thời gian sai
+  function markBadTimerRows(idxList) {
+    const keys = [];
+    idxList.forEach((i) => ['sMin', 'sSec', 'eMin', 'eSec'].forEach((k) => keys.push(i + ':' + k)));
+    markMissingTimers(keys);
+  }
+  // Thời gian nói phải CHUẨN mới cho Submit: end > start từng HS, các khoảng không đan xen nhau
+  function validateTimerRanges() {
+    const rows = state.timers.map((t, i) => ({ name: t.name, i, r: timerRangeOf(t) }));
+    for (const x of rows) {
+      if (x.r && x.r.e <= x.r.s) {
+        return { msg: x.name + ': the END time must be AFTER the START time!', bad: [x.i] };
+      }
+    }
+    const sorted = rows.filter((x) => x.r).sort((a, b) => a.r.s - b.r.s);
+    for (let k = 0; k + 1 < sorted.length; k++) {
+      if (sorted[k + 1].r.s < sorted[k].r.e) {
+        return { msg: 'Speaking times of ' + sorted[k].name + ' and ' + sorted[k + 1].name + ' overlap — please check!', bad: [sorted[k].i, sorted[k + 1].i] };
+      }
+    }
+    return null;
+  }
 
   // ═══════════════ NỘP BÀI ═══════════════
   function cleanTimers() {
@@ -1446,11 +1437,20 @@
       ? (!state.errors.length && !m2.daNopLanNao)
       : !state.errors.length;
     if (chuaCoGi) { toast('No mistakes to submit yet. Watch the video closely!', 'err'); return; }
-    // ⛔ 05/09/2026 — HAI TẦNG CHẶN THEO Ô GIỜ NÓI ĐÃ GỠ, cùng đợt bỏ 4 ô giờ dưới tên.
-    // BẮT BUỘC gỡ, không phải dọn cho gọn: ô nhập đã biến mất thì hai tầng đó không bao giờ
-    // qua được nữa ⇒ giữ lại là KHOÁ CỨNG nút Submit của cả lớp. Bốn hàm phục vụ chúng
-    // (missingTimerFields / markMissingTimers / markBadTimerRows / validateTimerRanges) cũng
-    // đã gỡ khỏi file — xem chú thích tại chỗ cũ của chúng.
+    // BẮT BUỘC: đủ thời gian nói (from → to) của từng thành viên dưới mỗi nút tên
+    const miss = missingTimerFields();
+    markMissingTimers(miss);
+    if (miss.length) {
+      toast('Please fill each student\'s speaking time (min:sec → min:sec) under their name!', 'err');
+      return;
+    }
+    // Thời gian phải CHUẨN: end > start từng HS + các khoảng không đan xen
+    const bad = validateTimerRanges();
+    if (bad) {
+      markBadTimerRows(bad.bad);
+      toast(bad.msg, 'err');
+      return;
+    }
     // CHẶNG 35 (thầy chốt): icon ĐƠN SẮC (bỏ emoji nhiều màu) · BỎ dòng "Students timed" ·
     // số lỗi ≤ ÍT_LỖI thì tô ĐỎ và khi bấm Submit sẽ hỏi thêm một lần nữa.
     const it = (name) => '<i data-lucide="' + name + '" class="w-4 h-4 text-slate-400 shrink-0"></i>';
@@ -1857,11 +1857,6 @@
     $('loginScreen').classList.add('hidden');
     $('identifyScreen').classList.add('hidden');
     $('appScreen').classList.remove('hidden');
-    // ⭐ 05/09/2026 — điện thoại vào màn là ở chế độ CHECK.
-    // ⛔ PHẢI đặt Ở CẢ HAI CHỖ: buổi MÔ HÌNH 2 hiện màn qua `dungManChinh()`, còn buổi CŨ
-    //    (Google Sheets) đi thẳng đường này và KHÔNG gọi hàm đó. Thiếu một chỗ là buổi cũ
-    //    hiện CẢ HAI khung chồng nhau và hai nút không nút nào sáng — đã vấp thật khi kiểm.
-    datCheDoDs('check');
     autosave();
     refreshIcons();
     maybeRestoreFromServer(saved);   // (CHẶNG 32) máy này trống mà em ĐÃ nộp ở máy khác → kéo bài về
@@ -1880,9 +1875,6 @@
     $('loginScreen').classList.add('hidden');
     $('identifyScreen').classList.add('hidden');
     $('appScreen').classList.remove('hidden');
-    // ⭐ 05/09/2026 — điện thoại vào màn là ở chế độ CHECK (khung nhập lỗi). Đặt ở đây, sau
-    // khi `pb-mode` đã chốt, vì `datCheDoDs()` tự bỏ qua khi đang là màn phản biện.
-    datCheDoDs('check');
     refreshIcons();
   }
 
@@ -2703,9 +2695,6 @@
     $('loginScreen').classList.add('hidden');
     $('identifyScreen').classList.add('hidden');   // (CHẶNG 32) lịch sử nay nằm ở trang xác nhận → phải ẩn cả màn này
     $('appScreen').classList.remove('hidden');
-    // ⭐ 05/09/2026 — đường thứ BA vào màn chấm (XEM LẠI bài đã nộp). Xem chú thích ở `start()`:
-    // ba đường đều phải đặt chế độ CHECK, thiếu đường nào là đường đó hiện chồng hai khung.
-    datCheDoDs('check');
     refreshIcons();
   }
 
@@ -2875,9 +2864,6 @@
         try { video.yt.getPlayerState() === 1 ? video.yt.pauseVideo() : video.yt.playVideo(); } catch (e) {}
       }
     });
-    // ⭐ 05/09/2026 (thầy chốt) — hai nút LÙI / TIẾN 5 giây hai bên nút play
-    $('vcBack5').addEventListener('click', () => vcNhich(-NHICH_SEC));
-    $('vcFwd5').addEventListener('click', () => vcNhich(NHICH_SEC));
     $('vcSeek').addEventListener('input', (e) => {
       vc.dragging = true;
       vcFill(e.target.value / 10);   // 0..1000 → 0..100% — phần đã chạy đỏ theo tay kéo
@@ -2991,13 +2977,6 @@
       if (edit) {
         const i = +edit.dataset.edit;
         const e = state.errors[i];
-        // ⭐ 05/09/2026 — điện thoại: bấm bút chì ở chế độ LIST thì câu đó nhảy vào khung sửa
-        // VÀ màn tự về chế độ CHECK.
-        // ⛔ PHẢI ĐỔI CHẾ ĐỘ TRƯỚC khi gán chữ + gọi `autoGrowAll()`. Đặt sau là ba ô
-        //    SENTENCE/MISTAKE/EXPLANATION bị CẮT CỤT: lúc đo, khung form còn đang ẩn
-        //    (`display:none`) nên `scrollHeight` = 0 ⇒ ô bị khoá cao 0px, hiện ra mới thấy
-        //    chữ tràn khỏi ô. Đã vấp thật khi kiểm — cùng họ với bẫy "đo layout quá sớm".
-        datCheDoDs('check');
         $('fMin').value = e.min; $('fSec').value = e.sec;
         setWho(e.who); fType = e.type; renderTypeBtns();
         $('fSentence').value = e.sentence || ''; $('fDetail').value = e.detail; $('fExplain').value = e.explain;
@@ -3011,29 +2990,15 @@
       // addOrUpdateError() (xoá trắng cả 3 ô khi đang sửa). Đừng dựng lại đường xoá thứ hai.
     });
 
-    // ⛔ 05/09/2026 — tay bắt gõ vào 4 ô giờ nói (`[data-tt]` trong #fStudentWrap) ĐÃ GỠ cùng
-    // bộ ô đó. Khung tên học sinh nay chỉ còn hàng nút, không có ô nhập nào.
-
-    // ═══ ⭐ 05/09/2026 (thầy chốt) — ĐIỆN THOẠI: NÚT CHECK / LIST + BÀN PHÍM ẢO ═══════════
-    $('dsTab').addEventListener('click', (ev) => {
-      const b = ev.target.closest('[data-ds]');
-      if (b) datCheDoDs(b.dataset.ds);
-    });
-    // Bàn phím ảo bật lên ⇒ video co về 0 để vừa nhìn chữ đang gõ vừa còn chỗ cho bàn phím.
-    // ⛔ Bắt bằng focusin/focusout của CHÍNH khung nhập lỗi, KHÔNG dùng `visualViewport`: mỗi
-    //    máy Android báo một kiểu (có máy không đổi chiều cao khung nhìn), còn focus thì máy
-    //    nào cũng có. Đổi ô này sang ô kia trong cùng khung vẫn bắn focusout rồi focusin ngay
-    //    sau đó, nên video sẽ nháy một nhịp — chốt lại bằng hẹn 120ms rồi mới co lại.
-    let banPhimHen = null;
-    const datBanPhim = (bat) => {
-      clearTimeout(banPhimHen);
-      banPhimHen = setTimeout(() => $('appScreen').classList.toggle('go-banphim', bat), 120);
-    };
-    $('errFormCard').addEventListener('focusin', (ev) => {
-      if (ev.target.matches('input, textarea')) datBanPhim(true);
-    });
-    $('errFormCard').addEventListener('focusout', (ev) => {
-      if (ev.target.matches('input, textarea')) datBanPhim(false);
+    // Ô thời gian nói dưới nút tên (delegation cùng chỗ với whoBtn)
+    $('fStudentWrap').addEventListener('input', (ev) => {
+      const f = ev.target.closest('[data-tt]');
+      if (!f) return;
+      const parts = f.dataset.tt.split(':');
+      state.timers[+parts[0]][parts[1]] = f.value.replace(/[^0-9]/g, '');   // chỉ nhận số
+      if (f.value !== state.timers[+parts[0]][parts[1]]) f.value = state.timers[+parts[0]][parts[1]];
+      f.classList.remove('border-rose-400', 'ring-1', 'ring-rose-300');    // gỡ đánh dấu thiếu khi đã nhập
+      autosave();
     });
 
     // Thanh kéo DỰ PHÒNG: kéo → giờ hiển thị chạy theo; SET TIME → đưa vào MIN/SEC kèm ánh sáng bay

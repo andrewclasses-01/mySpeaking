@@ -26,29 +26,17 @@ tailwind.config = {
 <style>
   html { scroll-behavior: smooth; }
   body { font-family: 'Be Vietnam Pro', sans-serif; }
-  /* ⭐ 05/09/2026 (thầy chốt) — KHUNG VIDEO THU NHỎ TỐI ĐA.
-     Điện thoại: bỏ tỷ lệ 16:9 cứng, khoá CHIỀU CAO còn ~một nửa (14dvh ≈ 110px trên máy 844px).
-     Thầy chốt: "không quan trọng việc hiển thị video, chủ yếu là nghe và bắt lỗi" — nhường
-     hết chỗ cho khung check lỗi. Video tự có viền đen hai bên, KHÔNG méo hình.
-     Máy tính: trần riêng ở khối "Bố cục GHIM" bên dưới.
-     ⛔ Bỏ luôn `border-radius` của iframe/video: thẻ bọc nay `overflow-hidden` và video phải
-     TRÀN SÁT MÉP TRÊN thẻ (để mép trên video trùng mép trên khung Mistakes found, thầy chốt). */
-  .video-shell { aspect-ratio:auto; height:14dvh; min-height:88px; }
-  .video-shell iframe, .video-shell video { width:100%; height:100%; border:0; background:#000; }
-  /* Dòng thông tin dưới video nay thường RỖNG (đã bỏ "LỚP · TEAM · thành viên", thầy chốt
-     05/09) — rỗng thì đừng chiếm một khoảng trống vô nghĩa. Vẫn dùng cho chữ "Loading…". */
-  #videoStatus:empty { display:none; }
+  .video-shell { aspect-ratio: 16/9; }
+  .video-shell iframe, .video-shell video { width:100%; height:100%; border:0; border-radius: 1rem; background:#000; }
   input[type=number]::-webkit-inner-spin-button { opacity: 1; }
   @keyframes pop { 0%{transform:scale(.92);opacity:0} 100%{transform:scale(1);opacity:1} }
   .pop { animation: pop .18s ease-out; }
   @keyframes slidein { from{transform:translateY(12px);opacity:0} to{transform:translateY(0);opacity:1} }
   .slidein { animation: slidein .25s ease-out; }
-  /* Thanh tua video; phần đã chạy màu đỏ đặt qua JS (background gradient).
-     ⭐ 05/09/2026: thu nhỏ theo đợt "player gọn tối đa" — thanh 8px→6px, nút mốc 24px→14px.
-     ⛔ Nút mốc KHÔNG được nhỏ hơn 14px: dưới cỡ đó ngón tay trên điện thoại kéo trượt hụt. */
-  #vcSeek { -webkit-appearance:none; appearance:none; height:6px; border-radius:9999px; background:#e2e8f0; outline:none; }
-  #vcSeek::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:14px; height:14px; border-radius:9999px; background:#e11d48; border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.35); cursor:pointer; }
-  #vcSeek::-moz-range-thumb { width:12px; height:12px; border:2px solid #fff; border-radius:9999px; background:#e11d48; box-shadow:0 1px 3px rgba(0,0,0,.35); cursor:pointer; }
+  /* Thanh tua video: nút vị trí TO hơn (custom range); phần đã chạy màu đỏ đặt qua JS (background gradient) */
+  #vcSeek { -webkit-appearance:none; appearance:none; height:8px; border-radius:9999px; background:#e2e8f0; outline:none; }
+  #vcSeek::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:24px; height:24px; border-radius:9999px; background:#e11d48; border:3px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.35); cursor:pointer; }
+  #vcSeek::-moz-range-thumb { width:22px; height:22px; border:3px solid #fff; border-radius:9999px; background:#e11d48; box-shadow:0 1px 4px rgba(0,0,0,.35); cursor:pointer; }
   /* Ô SENTENCE / MISTAKE / EXPLANATION tự giãn cao theo nội dung để xem hết chữ */
   textarea.autogrow { resize:none; overflow:hidden; }
   /* Thanh kéo DỰ PHÒNG: phần đã qua XANH DƯƠNG (JS set), nút mốc TO gấp đôi thanh xịn */
@@ -202,58 +190,22 @@ tailwind.config = {
        Ép 16px làm câu "The sentence that contains the mistake" tràn 2 dòng trong ô cao 1 dòng
        (rows=1 + autogrow) ⇒ HS thấy chữ bị CẮT CỤT. 13px vẫn dễ đọc mà gọn 1 dòng. */
     input::placeholder, textarea::placeholder { font-size:13px !important; }
-    /* ⛔ 05/09/2026: luật `.tIn` (4 ô giờ nói tí hon dưới mỗi tên) đã gỡ cùng bộ ô đó. */
+    /* 4 ô giờ nói tí hon dưới mỗi tên: chữ to lên thì bỏ đệm ngang + siết nét cho vừa khung */
+    .tIn { padding-left:0; padding-right:0; letter-spacing:-.03em; }
   }
   /* ── Bố cục GHIM (desktop ≥1024px): video + khung bắt lỗi đứng yên, CHỈ danh sách lỗi cuộn ──
      Dùng CSS riêng thay vì class lg:flex của Tailwind: nếu dùng lg:flex nó sẽ ĐÈ class .hidden
      (cùng độ ưu tiên, media query nằm sau) làm màn/tab đang ẩn hiện ngược ra — bẫy cascade. */
   @media (min-width:1024px){
     #appScreen:not(.hidden){ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
-    /* ⭐ 05/09/2026 (thầy chốt) — BỐ CỤC MỚI, ĐẢO NGƯỢC CHẶNG 30:
-         NỬA TRÁI  = VIDEO (trên) + KHỐI CHECK LỖI (dưới)
-         NỬA PHẢI = MISTAKES FOUND, cao bằng TỔNG hai khối trái
-       Vẫn là grid 2 cột × 2 hàng `auto minmax(0,1fr)` như cũ, chỉ đổi chỗ ngồi:
-         video     → cột 1 hàng 1, cao theo nội dung (trần 24dvh)
-         form      → cột 1 hàng 2, GIÃN đầy chỗ còn lại và tự cuộn bên trong
-         list      → cột 2, TRẢI CẢ HAI HÀNG
-       ⭐ Hai mép phải trùng nhau (thầy chốt): mép TRÊN video = mép trên khung Mistakes
-       (thẻ video bỏ đệm trên, video tràn sát mép) · mép DƯỚI form = mép dưới khung Mistakes
-       (form `min-height:0` + `flex:1` nên đáy luôn chạm đáy lưới, không còn lửng lơ).
-       ⛔ Đừng cho cả CỘT TRÁI cuộn (bản cũ làm thế): cột cuộn thì thẻ form co theo nội dung,
-       đáy nó không bao giờ bằng đáy cột phải. Phải để CHÍNH THẺ FORM giãn rồi cuộn bên trong.
-       2 wrapper cột "tan ra" bằng display:contents để form + list thành ô grid trực tiếp. */
+    /* CHẶNG 30: main = grid 2 cột × 2 hàng — hàng 1: VIDEO | FORM (video cao ĐÚNG BẰNG form,
+       không tính danh sách lỗi), hàng 2: Mistakes found ở CỘT PHẢI (dưới video để trống).
+       2 wrapper cột cũ "tan ra" bằng display:contents để form + list thành ô grid trực tiếp. */
     #tab-errors:not(.hidden){ display:contents; }
     #tab-errors > *{ margin-top:0; }   /* bỏ margin space-y của mobile khi con đã thành ô grid */
-    /* Máy tính: video giữ 16:9 nhưng CHẶN TRẦN — không còn phải cao bằng cột form như bản cũ */
-    .video-shell{ aspect-ratio:16/9; height:auto; max-height:24dvh; }
-    /* Thẻ form: ô grid cột 1 hàng 2, giãn đầy và tự cuộn bên trong */
-    #errFormCard{ grid-column:1; grid-row:2; min-height:0; overflow-y:auto; display:flex; flex-direction:column; }
-    #errFormCard > .mb-3:last-of-type{ margin-bottom:.75rem; }
-    #errAddRow{ margin-top:auto; }     /* nút đỏ dính đáy thẻ cho cân với cột phải */
+    /* CHẶNG 29→30: khối video bỏ tỷ lệ 16:9 cứng, giãn theo thẻ (video tự thêm viền đen như YouTube) */
+    .video-shell{ aspect-ratio:auto; flex:1 1 0%; min-height:0; }
   }
-  /* ══ ⭐ 05/09/2026 (thầy chốt) — ĐIỆN THOẠI: HAI CHẾ ĐỘ **CHECK** / **LIST** ══
-     Dưới 1024px chỉ hiện MỘT trong hai khung (form hoặc danh sách lỗi); hai nút chọn nằm
-     ngay TRÊN ĐẦU video và LUÔN HIỆN — đổi chế độ thì khung video vẫn còn nguyên tại chỗ.
-     ⛔ #dsTab ẩn ở desktop bằng CSS THUẦN trong media query, KHÔNG dùng class `lg:hidden`:
-        luật sống còn của file này cấm gắn class `lg:*` đổi display lên phần tử có thể mang
-        `.hidden` (bẫy cascade đã cắn ở màn XÁC NHẬN TRÙNG).
-     ⛔ `:not(.pb-mode)` là CHỐT AN TOÀN: màn PHẢN BIỆN vốn đã ẩn #errFormCard, nếu lúc đó
-        còn dính ds-check thì #errListCard cũng ẩn nốt ⇒ MÀN TRẮNG TRƠN. */
-  @media (max-width:1023.98px){
-    #appScreen.ds-check:not(.pb-mode) #errListCard{ display:none; }
-    #appScreen.ds-list:not(.pb-mode)  #errFormCard{ display:none; }
-    /* Bàn phím ảo bật lên (em bấm vào ô gõ chữ): video co về 0, CHỈ CÒN thanh player — vừa
-       nhìn được chữ đang sửa, vừa còn chỗ cho bàn phím. Thanh đầu trang + hai nút CHECK/LIST
-       KHÔNG co theo (thầy chốt: luôn hiện). */
-    #appScreen.go-banphim .video-shell{ height:0; min-height:0; }
-  }
-  @media (min-width:1024px){ #dsTab{ display:none; } }
-  /* Tên bài dưới tên site: điện thoại ẩn cho thanh đầu cao tối thiểu, máy tính vẫn hiện */
-  @media (max-width:1023.98px){ #hdTopic{ display:none; } }
-  #appScreen.pb-mode #dsTab{ display:none; }   /* màn phản biện không có form ⇒ hai nút vô nghĩa */
-  .dsBtn{ flex:1; padding:.375rem 0; font-size:12px; font-weight:800; display:flex; align-items:center;
-          justify-content:center; gap:.375rem; transition:background .15s, color .15s; }
-
   /* CHẶNG 29 — chế độ XEM LẠI bài đã nộp: khoá form + ẩn nút sửa/xoá từng lỗi (mở khoá qua nút Edit) */
   #appScreen.review-locked #errFormCard{ opacity:.45; pointer-events:none; }
   #appScreen.review-locked #errList [data-edit], #appScreen.review-locked #errList [data-ka]{ display:none; }
@@ -400,15 +352,11 @@ tailwind.config = {
 <!-- ══════════ MAIN APP ══════════ -->
 <div id="appScreen" class="hidden">
   <!-- Header -->
-  <!-- ⭐ 05/09/2026 (thầy chốt) — THANH ĐẦU TRANG: CO HẸP TỐI ĐA + LUÔN HIỆN.
-       Điện thoại: `sticky top-0` (ĐẢO NGƯỢC luật cũ "không sticky, video mới là thứ ghim" —
-       thầy chốt lại: thanh này phải luôn thấy để bấm Submit bất cứ lúc nào). Đệm dọc
-       py-3 → py-1.5, avatar 36→28px, và dòng tên bài `#hdTopic` ẩn ở điện thoại cho gọn.
-       Máy tính: `lg:shrink-0` như cũ (bố cục khoá 100dvh nên vốn đã luôn hiện). -->
-  <header class="sticky top-0 z-40 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-lg lg:shrink-0">
+  <!-- Header: không sticky nữa — mobile cuộn qua header để nhường chỗ, VIDEO mới là thứ ghim -->
+  <header class="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-lg lg:shrink-0">
     <!-- CHẶNG 33: LUÔN 1 HÀNG (bỏ flex-wrap). Hẹp <640px: tên site rút "SP in Andrew Classes",
          Submit thành icon, Export ẨN. Rộng ≥640px: Submit đủ chữ + Export = ICON nằm BÊN PHẢI Submit. -->
-    <div class="max-w-7xl mx-auto px-3 sm:px-4 py-1.5 lg:py-2 flex flex-nowrap items-center gap-2 sm:gap-3">
+    <div class="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex flex-nowrap items-center gap-2 sm:gap-3">
       <!-- (Đợt 3 Firebase, 26/08/2026 — thầy chốt) Bấm logo = POP-UP VIDEO CẢ LỚP
            (xem bài các đội khác để học hỏi). Đường "về trang đăng nhập" dời vào nút
            nhỏ trong pop-up đó (vẫn hỏi trước nếu còn dữ liệu chưa submit).
@@ -421,7 +369,7 @@ tailwind.config = {
              (kho ảnh chung andrewclasses.com, cùng hàm `avatarUrl` với avatar phiếu phản biện);
              thiếu ảnh thì rơi về vòng tròn chữ tắt tên em. Việc BẤM giữ nguyên: mở pop-up xem
              video cả lớp. ⛔ Màn ĐĂNG NHẬP vẫn giữ ảnh chibi (img/logo-site.png) — đừng đổi. -->
-        <span class="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full ring-2 ring-white/50 shadow shrink-0 overflow-hidden bg-white/20 flex items-center justify-center">
+        <span class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full ring-2 ring-white/50 shadow shrink-0 overflow-hidden bg-white/20 flex items-center justify-center">
           <span id="hdAvatarChu" class="text-xs font-extrabold text-white"></span>
           <img id="hdAvatar" src="img/avatar-tron.jpg" alt="" class="absolute inset-0 w-full h-full object-cover">
         </span>
@@ -430,9 +378,6 @@ tailwind.config = {
             <span class="sm:hidden">SP in Andrew Classes</span>
             <span class="hidden sm:inline">Speaking in Andrew Classes</span>
           </div>
-          <!-- ⭐ 05/09: ẩn ở điện thoại (thanh phải cao tối thiểu), máy tính vẫn giữ tên bài.
-               ⛔ Ẩn bằng CSS thuần (khối "#hdTopic" trong <style>), KHÔNG dùng `hidden lg:block`:
-               luật của file cấm cặp `.hidden` + `lg:*` đổi display. -->
           <div id="hdTopic" class="text-[11px] sm:text-xs text-indigo-100 truncate"></div>
         </div>
       </button>
@@ -466,57 +411,32 @@ tailwind.config = {
 
     <!-- ─── VIDEO COLUMN ─── (mobile: GHIM trên cùng khi cuộn; desktop: đứng yên trong bố cục khóa.
          CHẶNG 29: cột + thẻ video thành flex dọc giãn hết chiều cao → khối video CAO BẰNG khối check lỗi) -->
-    <div class="sticky top-0 z-30 -mx-4 px-4 pt-1 pb-2 bg-slate-100 lg:static lg:z-auto lg:mx-0 lg:p-0 lg:bg-transparent lg:flex lg:flex-col">
+    <div class="sticky top-0 z-30 -mx-4 px-4 pt-1 pb-2 bg-slate-100 lg:static lg:z-auto lg:mx-0 lg:p-0 lg:bg-transparent lg:min-h-0 lg:overflow-y-auto lg:flex lg:flex-col">
+      <!-- CHẶNG 30: mobile bóp đệm (p-2.5, mt-2.5, py-2) tiết kiệm chiều dọc; desktop giữ thoáng như cũ -->
+      <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-2.5 lg:p-5 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col">
+        <div class="video-shell rounded-2xl overflow-hidden" id="videoContainer"></div>
 
-      <!-- ⭐ 05/09/2026 (thầy chốt) — HAI NÚT CHECK / LIST, ngay TRÊN ĐẦU VIDEO (chỉ điện thoại).
-           ⛔ LUÔN HIỆN: nằm NGOÀI khung cuộn và KHÔNG co theo bàn phím ảo như video.
-              Đừng đưa khối này vào trong khung cuộn, và đừng gắn `lg:*` đổi display cho nó
-              (ẩn ở desktop bằng CSS thuần `@media (min-width:1024px){#dsTab{display:none}}`). -->
-      <div id="dsTab" class="flex rounded-xl overflow-hidden border-2 border-indigo-200 bg-white mb-2">
-        <button data-ds="check" class="dsBtn"><i data-lucide="square-pen" class="w-3.5 h-3.5 pointer-events-none"></i> CHECK</button>
-        <button data-ds="list" class="dsBtn"><i data-lucide="list-checks" class="w-3.5 h-3.5 pointer-events-none"></i> LIST
-          <span id="dsSo" class="rounded-full bg-rose-500 text-white px-1.5 text-[10px]">0</span></button>
-      </div>
-
-      <!-- ⭐ 05/09: thẻ BỎ ĐỆM, `overflow-hidden` — video tràn sát mép trên thẻ để mép trên của
-           nó trùng mép trên khung Mistakes found (thầy chốt). Đệm nay nằm ở từng khối con. -->
-      <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden lg:shrink-0">
-        <div class="video-shell" id="videoContainer"></div>
-
-        <!-- Always-visible player bar (custom — NEVER auto-hides, unlike native video controls)
-             ⭐ 05/09/2026 (thầy chốt) — GỌN TỐI ĐA + THÊM LÙI/TIẾN 5 GIÂY.
-             Nút play 56px → 34px · chữ giờ text-lg → 11px · bỏ nền xám + viền của cả thanh.
-             ⛔ Hai nút tua CỐ Ý không ghi số "5" (thầy chốt: "không cần thể hiện số 5 bên
-                trong, chỉ cần thể hiện sự tiến lùi") — đừng thêm lại. -->
-        <div id="videoCtrl" class="hidden items-center gap-1.5 px-2 py-1.5">
-          <button id="vcBack5" title="Lùi 5 giây" class="w-[30px] h-[30px] shrink-0 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-900 active:scale-95 transition flex items-center justify-center">
-            <i data-lucide="rotate-ccw" class="w-[18px] h-[18px] pointer-events-none"></i>
+        <!-- Always-visible player bar (custom — NEVER auto-hides, unlike native video controls) -->
+        <div id="videoCtrl" class="hidden mt-2.5 lg:mt-6 items-center gap-3.5 rounded-2xl bg-slate-50 border border-slate-200 px-3 py-2 lg:px-4 lg:py-4 lg:shrink-0">
+          <button id="vcPlay" class="w-14 h-14 shrink-0 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white flex items-center justify-center shadow-lg shadow-indigo-600/30">
+            <i data-lucide="play" class="w-6 h-6 pointer-events-none"></i>
           </button>
-          <button id="vcPlay" class="w-[34px] h-[34px] shrink-0 rounded-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white flex items-center justify-center shadow shadow-indigo-600/30">
-            <i data-lucide="play" class="w-4 h-4 pointer-events-none"></i>
-          </button>
-          <button id="vcFwd5" title="Tiến 5 giây" class="w-[30px] h-[30px] shrink-0 rounded-full text-slate-600 hover:bg-slate-200 hover:text-slate-900 active:scale-95 transition flex items-center justify-center">
-            <i data-lucide="rotate-cw" class="w-[18px] h-[18px] pointer-events-none"></i>
-          </button>
-          <span id="vcCur" class="font-mono text-[11px] font-bold text-slate-700 tabular-nums shrink-0">0:00</span>
+          <span id="vcCur" class="font-mono text-lg font-bold text-slate-900 tabular-nums shrink-0">0:00</span>
           <input id="vcSeek" type="range" min="0" max="1000" value="0" class="flex-1 min-w-0 cursor-pointer">
-          <span id="vcDur" class="font-mono text-[11px] text-slate-400 tabular-nums shrink-0">0:00</span>
+          <span id="vcDur" class="font-mono text-lg text-slate-500 tabular-nums shrink-0">0:00</span>
         </div>
 
         <!-- Backup slider (chỉ hiện khi Drive KHÔNG phát trực tiếp được): kéo cho khớp giờ trên video Drive rồi bấm SET TIME.
              Không play/pause, không chữ hướng dẫn — thanh XANH DƯƠNG, nút mốc TO gấp đôi. -->
-        <div id="stopwatchWrap" class="hidden items-center gap-3.5 border-t border-slate-200 px-3 py-2 lg:shrink-0">
+        <div id="stopwatchWrap" class="hidden mt-2.5 lg:mt-6 items-center gap-3.5 rounded-2xl bg-slate-50 border border-slate-200 px-3 py-2 lg:px-4 lg:py-4 lg:shrink-0">
           <span id="swCur" class="font-mono text-lg font-bold text-slate-900 tabular-nums shrink-0 w-14 text-center">0:00</span>
           <input id="swSeek" type="range" min="0" max="900" value="0" class="flex-1 min-w-0 cursor-pointer">
           <button id="swSet" class="shrink-0 bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition text-white rounded-xl px-4 py-2.5 font-bold text-sm shadow shadow-indigo-600/30">SET TIME</button>
         </div>
 
-        <!-- ⛔ 05/09/2026 (thầy chốt) — DÒNG "LỚP · TEAM · thành viên" ĐÃ BỎ HẲN, đừng dựng lại
-             (hàm `videoInfoHtml()` cũng đã gỡ khỏi app.js). Ô này GIỮ LẠI vì còn dùng cho chữ
-             trạng thái lúc tải video ("Loading YouTube…"), và tự biến mất khi rỗng nhờ luật
-             CSS `#videoStatus:empty{display:none}`.
-             CHẶNG 34: LUÔN 1 DÒNG — nowrap + min-w-0 + overflow-hidden; cỡ chữ do fitVideoInfo() hạ. -->
-        <div id="videoStatus" class="px-2 pb-1.5 text-slate-600 flex items-center gap-1.5 flex-nowrap whitespace-nowrap min-w-0 overflow-hidden lg:shrink-0"></div>
+        <!-- CHẶNG 34: LUÔN 1 DÒNG — bỏ flex-wrap, thêm nowrap + min-w-0 + overflow-hidden;
+             cỡ chữ do fitVideoInfo() tự hạ (14px→9px) cho vừa bề ngang mọi màn. -->
+        <div id="videoStatus" class="mt-2 lg:mt-6 text-slate-600 flex items-center gap-1.5 flex-nowrap whitespace-nowrap min-w-0 overflow-hidden lg:shrink-0"></div>
       </div>
     </div>
 
@@ -527,13 +447,8 @@ tailwind.config = {
       <!-- (tab bar đã bỏ chặng 12 — thời gian nói nhập ngay dưới nút tên HS trong form) -->
       <!-- MISTAKES TAB -->
       <div id="tab-errors" class="space-y-4">
-        <div id="errFormCard" class="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 lg:p-5">
-          <!-- STUDENT trên cùng — CHỈ CÒN HÀNG NÚT TÊN.
-               ⛔ 05/09/2026 (thầy chốt): 4 Ô GIỜ NÓI dưới mỗi tên ĐÃ BỎ HẲN, đừng dựng lại.
-                  Hệ quả đã biết và đã báo thầy: app máy tính mất nguồn "bảng giờ nói từng em"
-                  (`nguoncham.js` ①) — sẽ suy từ mốc các lỗi đã bắt trong MỘT ĐỢT RIÊNG.
-                  Trường `timers` trong bài nộp VẪN GIỮ (buổi cũ còn dữ liệu thật trên kho,
-                  ghi đè mất là hỏng — xem LUẬT 9️⃣), chỉ là không ai nhập mới được nữa.
+        <div id="errFormCard" class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:shrink-0">
+          <!-- STUDENT trên cùng (nút tên + thời gian nói dưới mỗi tên)
                CHẶNG 33: BỎ dấu sao đỏ ở cả 6 mục — mọi mục trong khung này đều bắt buộc rồi,
                dấu sao chỉ làm rối. Luật chặn khi thiếu GIỮ NGUYÊN (xem addOrUpdateError). -->
           <div class="mb-3">
@@ -585,9 +500,7 @@ tailwind.config = {
             <textarea id="fExplain" rows="1" placeholder="Why is it wrong? How should it be fixed?" class="autogrow w-full rounded-xl border border-slate-300 px-4 py-2.5 text-xs placeholder:italic placeholder:text-xs placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
           </div>
 
-          <!-- id="errAddRow": máy tính đẩy hàng nút này DÍNH ĐÁY thẻ (`margin-top:auto`) để mép
-               dưới khối check lỗi bằng đúng mép dưới khung Mistakes found — thầy chốt 05/09. -->
-          <div id="errAddRow" class="flex gap-2">
+          <div class="flex gap-2">
             <button id="btnAddErr" class="flex-1 bg-rose-500 hover:bg-rose-600 active:scale-[.98] transition text-white font-bold rounded-xl py-2 flex items-center justify-center gap-2 shadow-lg shadow-rose-500/30">
               <i data-lucide="plus-circle" class="w-5 h-5"></i><span id="btnAddErrLabel">Add this mistake</span>
             </button>
@@ -601,10 +514,7 @@ tailwind.config = {
              1280×800 khung tụt về sàn thì phần cuộn chỉ còn 34px (chưa đủ 1 dòng lỗi). Chọn 12rem
              (không phải 14) để màn 800px CHƯA phải bật van cuộn của <main> — bố cục vẫn ghim.
              Màn thấp hơn nữa vẫn an toàn nhờ van <main lg:overflow-y-auto> của chặng 30. -->
-        <!-- ⭐ 05/09/2026 (thầy chốt): khung này nay chiếm TRỌN CỘT PHẢI, trải CẢ HAI HÀNG
-             (`lg:row-span-2`) — cao bằng tổng video + khối check lỗi bên trái.
-             ⛔ Bỏ `lg:row-start-2` của CHẶNG 30 (khi đó nó nằm dưới form, trên nó để trống). -->
-        <div id="errListCard" class="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 lg:p-5 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:min-h-[12rem] lg:flex lg:flex-col">
+        <div id="errListCard" class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 lg:col-start-2 lg:row-start-2 lg:min-h-[12rem] lg:flex lg:flex-col">
           <div class="flex items-center justify-between mb-3 lg:shrink-0">
             <h2 id="errListTitle" class="font-extrabold flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-indigo-600"></i> Mistakes found</h2>
             <!-- (Đợt lọc ALL/MINE) màn phản biện: thay hẳn tiêu đề trên bằng nút DÀI CHIA ĐÔI —
@@ -966,6 +876,6 @@ tailwind.config = {
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
 <script src="js/trung.js?v=6"></script>
-<script src="js/app.js?v=50"></script>
+<script src="js/app.js?v=49"></script>
 </body>
 </html>
