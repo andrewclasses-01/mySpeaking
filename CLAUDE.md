@@ -1,6 +1,20 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
-> ⭐⭐⭐⭐⭐ **MỚI NHẤT — 05/09/2026 (`?v=50`): DỰNG LẠI BỐ CỤC TRANG CHẤM BÀI CÁ NHÂN.**
+> ⛔⛔ **VÁ NGAY SAU ĐÓ — 05/09/2026 (`?v=51`): KHOÁ BỐ CỤC Ở MỌI CỠ MÀN.**
+> Thầy bấm thử trên **điện thoại thật** rồi chụp ảnh về: cuộn xuống là **thanh đầu trang, hai
+> nút CHECK/LIST và cả thanh player đều trôi mất**. Nguyên nhân: điện thoại vẫn để cả thân
+> trang cuộn và chỉ ghim khối video bằng `position:sticky` — **sticky KHÔNG giữ được trên máy
+> thật**. ⛔ **ĐỪNG quay lại cách sticky.**
+> Nay điện thoại dùng ĐÚNG khuôn của máy tính: `#appScreen` = cột cao `100dvh`, `overflow:hidden`;
+> `header` + `#khoiVideo` (hai nút CHECK/LIST + video + player) `flex-shrink:0` đứng yên;
+> **`#khoiNhap` là PHẦN DUY NHẤT CUỘN**. Hai id `#khoiVideo` / `#khoiNhap` là MỚI — desktop vẫn
+> `lg:contents` cho `#khoiNhap` để form + list thành hai ô grid trực tiếp.
+> **Đo thật (375×812):** thân trang `scrollHeight` không vượt màn nữa · cuộn danh sách hết cỡ
+> (`scrollTop` 0→110) mà `header` vẫn `0..44`, `#khoiVideo` vẫn `52..268` · bàn phím ảo bật thì
+> video 114→0 và vùng nhập nới từ `278..804` lên `164..804`, hai thanh trên vẫn đứng yên ·
+> máy tính không đổi (`77..245` / `312..680` / `76..680`).
+>
+> ⭐⭐⭐⭐⭐ **05/09/2026 (`?v=50`): DỰNG LẠI BỐ CỤC TRANG CHẤM BÀI CÁ NHÂN.**
 > **BẮT BUỘC đọc trước khi đụng** `#appScreen` · `<main>` · `.video-shell` · `#videoCtrl` ·
 > `#errFormCard` / `#errListCard` · `buildStudentField()` · `openSubmitModal()`.
 > Thầy duyệt qua bản mẫu 2 vòng (`DU LIEU TONG HOP\MAU-CHAM-CA-NHAN-v2.html`) rồi mới cho build.

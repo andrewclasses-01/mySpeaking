@@ -204,11 +204,26 @@ tailwind.config = {
     input::placeholder, textarea::placeholder { font-size:13px !important; }
     /* ⛔ 05/09/2026: luật `.tIn` (4 ô giờ nói tí hon dưới mỗi tên) đã gỡ cùng bộ ô đó. */
   }
-  /* ── Bố cục GHIM (desktop ≥1024px): video + khung bắt lỗi đứng yên, CHỈ danh sách lỗi cuộn ──
+  /* ══ ⭐ 05/09/2026 (thầy chốt, sau khi bấm thử trên điện thoại thật) — KHOÁ BỐ CỤC Ở **MỌI CỠ MÀN** ══
+     Trước đây chỉ desktop mới khoá `100dvh`, còn điện thoại để cả thân trang cuộn và ghim khối
+     video bằng `position:sticky`. **Trên máy thật sticky KHÔNG giữ được**: cuộn xuống là thanh
+     đầu trang, hai nút CHECK/LIST và cả thanh player đều trôi mất (thầy chụp ảnh gửi lúc 01:17).
+     ⛔ ĐỪNG quay lại cách sticky. Nay điện thoại dùng ĐÚNG khuôn của máy tính:
+         #appScreen = cột cao đúng 100dvh, không cuộn
+           ├─ header        (shrink-0)  ← đứng yên
+           └─ main          (flex:1)
+              ├─ #khoiVideo (shrink-0)  ← hai nút CHECK/LIST + video + player: đứng yên
+              └─ #khoiNhap  (flex:1, overflow-y:auto)  ← PHẦN DUY NHẤT CUỘN
      Dùng CSS riêng thay vì class lg:flex của Tailwind: nếu dùng lg:flex nó sẽ ĐÈ class .hidden
      (cùng độ ưu tiên, media query nằm sau) làm màn/tab đang ẩn hiện ngược ra — bẫy cascade. */
+  #appScreen:not(.hidden){ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
+  @media (max-width:1023.98px){
+    #appScreen:not(.hidden) > main{ flex:1 1 0%; min-height:0; display:flex; flex-direction:column; }
+    #khoiVideo{ flex-shrink:0; }
+    #khoiNhap{ flex:1 1 0%; min-height:0; overflow-y:auto; padding-bottom:.5rem; }
+  }
+  /* ── Bố cục GHIM (desktop ≥1024px): video + khung bắt lỗi đứng yên, CHỈ danh sách lỗi cuộn ── */
   @media (min-width:1024px){
-    #appScreen:not(.hidden){ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
     /* ⭐ 05/09/2026 (thầy chốt) — BỐ CỤC MỚI, ĐẢO NGƯỢC CHẶNG 30:
          NỬA TRÁI  = VIDEO (trên) + KHỐI CHECK LỖI (dưới)
          NỬA PHẢI = MISTAKES FOUND, cao bằng TỔNG hai khối trái
@@ -405,7 +420,7 @@ tailwind.config = {
        thầy chốt lại: thanh này phải luôn thấy để bấm Submit bất cứ lúc nào). Đệm dọc
        py-3 → py-1.5, avatar 36→28px, và dòng tên bài `#hdTopic` ẩn ở điện thoại cho gọn.
        Máy tính: `lg:shrink-0` như cũ (bố cục khoá 100dvh nên vốn đã luôn hiện). -->
-  <header class="sticky top-0 z-40 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-lg lg:shrink-0">
+  <header class="shrink-0 z-40 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white shadow-lg">
     <!-- CHẶNG 33: LUÔN 1 HÀNG (bỏ flex-wrap). Hẹp <640px: tên site rút "SP in Andrew Classes",
          Submit thành icon, Export ẨN. Rộng ≥640px: Submit đủ chữ + Export = ICON nằm BÊN PHẢI Submit. -->
     <div class="max-w-7xl mx-auto px-3 sm:px-4 py-1.5 lg:py-2 flex flex-nowrap items-center gap-2 sm:gap-3">
@@ -447,7 +462,7 @@ tailwind.config = {
   </header>
 
   <!-- CHẶNG 29: dải báo chế độ XEM LẠI bài đã nộp (chỉ hiện khi vào từ "My submitted checks") -->
-  <div id="reviewBanner" class="hidden bg-emerald-50 border-b border-emerald-200 lg:shrink-0">
+  <div id="reviewBanner" class="hidden bg-emerald-50 border-b border-emerald-200 shrink-0">
     <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center gap-2">
       <span class="text-sm font-semibold text-emerald-800 flex items-center gap-1.5 mr-auto">
         <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i> This check was submitted — you are viewing it.
@@ -466,7 +481,11 @@ tailwind.config = {
 
     <!-- ─── VIDEO COLUMN ─── (mobile: GHIM trên cùng khi cuộn; desktop: đứng yên trong bố cục khóa.
          CHẶNG 29: cột + thẻ video thành flex dọc giãn hết chiều cao → khối video CAO BẰNG khối check lỗi) -->
-    <div class="sticky top-0 z-30 -mx-4 px-4 pt-1 pb-2 bg-slate-100 lg:static lg:z-auto lg:mx-0 lg:p-0 lg:bg-transparent lg:flex lg:flex-col">
+    <!-- ⭐ 05/09/2026 — KHỐI ĐỨNG YÊN của điện thoại (hai nút CHECK/LIST + video + player).
+         ⛔ ĐÃ BỎ `sticky top-0 z-30`: trên máy thật nó KHÔNG giữ được, cuộn xuống là trôi mất
+            (xem khối CSS "KHOÁ BỐ CỤC Ở MỌI CỠ MÀN"). Nay nó đứng yên nhờ `flex-shrink:0`
+            trong cột `main`, chắc chắn hơn hẳn. -->
+    <div id="khoiVideo" class="pt-1 pb-2 lg:p-0 lg:flex lg:flex-col">
 
       <!-- ⭐ 05/09/2026 (thầy chốt) — HAI NÚT CHECK / LIST, ngay TRÊN ĐẦU VIDEO (chỉ điện thoại).
            ⛔ LUÔN HIỆN: nằm NGOÀI khung cuộn và KHÔNG co theo bàn phím ảo như video.
@@ -522,7 +541,9 @@ tailwind.config = {
 
     <!-- ─── INPUT COLUMN ─── (CHẶNG 30: desktop wrapper "tan ra" lg:contents → form + list thành
          2 ô grid riêng; van an toàn màn thấp chuyển lên <main> lg:overflow-y-auto) -->
-    <div class="space-y-4 lg:contents">
+    <!-- ⭐ 05/09/2026 — PHẦN DUY NHẤT CUỘN trên điện thoại (`#khoiNhap` trong CSS).
+         Desktop vẫn "tan ra" bằng `lg:contents` để form + list thành hai ô grid trực tiếp. -->
+    <div id="khoiNhap" class="space-y-4 lg:contents">
 
       <!-- (tab bar đã bỏ chặng 12 — thời gian nói nhập ngay dưới nút tên HS trong form) -->
       <!-- MISTAKES TAB -->
@@ -966,6 +987,6 @@ tailwind.config = {
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
 <script src="js/trung.js?v=6"></script>
-<script src="js/app.js?v=50"></script>
+<script src="js/app.js?v=51"></script>
 </body>
 </html>

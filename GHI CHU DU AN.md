@@ -2267,3 +2267,53 @@ Và thầy chốt bỏ luôn dòng "LỚP · TEAM · thành viên" ("Bỏ luôn,
   điều khiển bằng lệnh trên trang; phần bàn phím ảo kiểm bằng bắn `focusin`/`focusout` vì khung
   xem không giữ được con trỏ thật (`document.activeElement` = BODY). **Thầy bấm thử tay một lượt
   trên điện thoại thật.**
+
+---
+
+## CHẶNG — 05/09/2026 (`?v=51`): VÁ — KHOÁ BỐ CỤC Ở MỌI CỠ MÀN
+
+### Thầy báo gì
+Thầy mở thử trên **điện thoại thật** (ảnh chụp lúc 01:17, `speaking.andrewclasses.com`): cuộn
+xuống thì **thanh đầu trang, hai nút CHECK/LIST và cả thanh player đều bị cuộn mất** — trong ảnh
+chỉ còn nửa dưới thanh player lấp ló ở mép trên. Thầy muốn ba thứ đó **cố định, không bị cuộn**.
+
+### Vì sao bản `?v=50` hỏng
+Bản đó chỉ khoá `100dvh` cho **desktop**; điện thoại vẫn để **cả thân trang cuộn** và ghim khối
+video bằng `position:sticky top-0` (nếp có từ CHẶNG 30). Trên máy thật **sticky không giữ được** —
+đo trên bàn thử cũng thấy `document.documentElement.scrollHeight > innerHeight`, tức body cuộn.
+⛔ **Đừng quay lại cách sticky cho khối này.**
+
+### Cách chữa
+Cho điện thoại dùng ĐÚNG khuôn đã chạy tốt của máy tính — khoá màn, chỉ một vùng cuộn:
+
+```
+#appScreen  (flex column · height:100dvh · overflow:hidden)   ← MỌI cỡ màn, không còn chỉ desktop
+├─ header       (flex-shrink:0)   ← đứng yên
+├─ reviewBanner (flex-shrink:0)
+└─ main         (flex:1 · min-height:0 · flex column)
+   ├─ #khoiVideo (flex-shrink:0)  ← CHECK/LIST + video + player: đứng yên
+   └─ #khoiNhap  (flex:1 · min-height:0 · overflow-y:auto)   ← PHẦN DUY NHẤT CUỘN
+```
+
+- Hai **id mới**: `#khoiVideo` (wrapper video) và `#khoiNhap` (wrapper form+list). Cần id vì CSS
+  không có cách chọn "con thứ nhất/thứ hai của main" cho gọn và an toàn.
+- `#khoiVideo` **bỏ hẳn** `sticky top-0 z-30 -mx-4 px-4 bg-slate-100 lg:static lg:z-auto…`.
+- `header` đổi `sticky top-0 z-40 … lg:shrink-0` → `shrink-0 z-40 …` (không cần sticky nữa).
+- `#reviewBanner` đổi `lg:shrink-0` → `shrink-0`.
+- Desktop **không đổi gì**: `#khoiNhap` vẫn `lg:contents` nên tan ra thành hai ô grid như cũ;
+  luật `@media (max-width:1023.98px)` không chạm tới.
+
+### Đã đo (bàn thử localhost, gói `?goi=` mô hình 1 — không đọc/ghi Firestore)
+| Phép thử | Trước (`?v=50`) | Sau (`?v=51`) |
+|---|---|---|
+| Thân trang có cuộn không (375×812) | có | **không** |
+| Cuộn danh sách hết cỡ (`scrollTop` 0→110) | header + khối video trôi | **header `0..44`, `#khoiVideo` `52..268` — đứng yên** |
+| Bàn phím ảo bật | — | video 114→0, `#khoiNhap` nới `278..804` → `164..804`, hai thanh trên vẫn yên |
+| Máy tính 1100×700 | `77..245` / `312..680` / `76..680` | **y nguyên**, `#dsTab` vẫn ẩn, `#khoiNhap` = `display:contents` |
+
+### ⛔ Bài học
+**Bố cục "ghim bằng sticky trong trang cuộn tự do" không đáng tin trên điện thoại thật.** Muốn
+một dải chắc chắn đứng yên thì khoá khung ngoài (`100dvh` + `overflow:hidden`) rồi cho đúng MỘT
+vùng bên trong cuộn — cách này đã chạy đúng ở desktop từ CHẶNG 30, nay dùng chung cho cả hai.
+Và: **bản mẫu + bàn thử trên máy tính KHÔNG thay được một lượt bấm tay trên máy thật** — lỗi này
+chỉ lộ ra khi thầy mở bằng điện thoại.
