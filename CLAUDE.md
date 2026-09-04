@@ -1,5 +1,19 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> ⛔⛔⛔ **05/09/2026 (`?v=54`) — VỆT TRẮNG DƯỚI: TRANG BỊ ĐẨY, KHÔNG PHẢI ĐO SAI.**
+> Manh mối nằm ngay trong ảnh thầy gửi: **thanh tím đầu trang KHÔNG có trong ảnh**, mà phía
+> dưới lại thừa ra một vệt trắng **đúng bằng chiều cao nó**. Cái mất tích ở MỘT đầu và cái thừa
+> ra ở ĐẦU KIA bằng nhau ⇒ dấu hiệu của một phép **DỊCH CHUYỂN**, không phải sai số đo.
+> Safari **vẫn đẩy cả trang lên** (visual viewport lệch khỏi layout viewport một đoạn `offsetTop`);
+> `#appScreen` cao đúng `vv.height` nhưng vẫn **bắt đầu từ y=0 của layout viewport**.
+> **CHỮA:** `position:fixed` (chỉ dưới 1024px) + `ap.style.top = vv.offsetTop`.
+> ⛔ `window.scrollTo(0,0)` (dùng ở `?v=52`/`?v=53`) **không kéo lại được** — đây không phải cuộn
+> trang thường. ⛔ Giả thuyết "thanh phụ bàn phím làm `vv.height` báo dư" của `?v=53` là **SAI**.
+> ⛔ Dùng `fixed` chứ **không** `transform: translateY()`: `transform` tạo khung quy chiếu mới
+> ⇒ pop-up `fixed` bên trong neo nhầm vào `#appScreen`. Đã kiểm: modal Submit vẫn `0..812` phủ kín màn.
+> **Đo (giả lập `offsetTop=44`):** `top` 0→44px · header `0..44`→`44..88` (trở lại tầm nhìn) ·
+> `#khoiNhap` `258..812`→`302..812` (sát đáy, hết vệt trống). Máy tính: `static`, inline rỗng, không đổi.
+>
 > ⭐ **05/09/2026 (`?v=53`): BÓP HAI VỆT TRẮNG THỪA.** Thầy xác nhận `?v=52` đã giữ được
 > các thanh, nhưng còn hai vệt trắng: **dưới thanh player** (đệm CSS chồng nhau — `py-2` của `<main>`
 > + `space-y-2.5` + `pt-1 pb-2` của `#khoiVideo`, ≈ 30px; nay còn **7px**. ⛔ đè `space-y-2.5` phải
