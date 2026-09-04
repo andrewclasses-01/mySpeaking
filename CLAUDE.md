@@ -1,5 +1,13 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> ⭐ **05/09/2026 (`?v=53`): BÓP HAI VỆT TRẮNG THỪA.** Thầy xác nhận `?v=52` đã giữ được
+> các thanh, nhưng còn hai vệt trắng: **dưới thanh player** (đệm CSS chồng nhau — `py-2` của `<main>`
+> + `space-y-2.5` + `pt-1 pb-2` của `#khoiVideo`, ≈ 30px; nay còn **7px**. ⛔ đè `space-y-2.5` phải
+> dùng selector có **#id**) và **trên bàn phím** (`visualViewport` báo **dư** lúc bàn phím đang
+> trượt: **thanh phụ** của nó — hàng icon chìa khoá/thẻ/vị trí — hiện sau một nhịp ⇒ chữa bằng
+> `theoKhungNhinTre()`: đo NGAY rồi đo LẠI sau 350ms. ⛔ giữ **cả hai** lượt, chỉ đo trễ thì màn giật).
+> **Đo:** 375×420 ⇒ `#khoiNhap` `144..420`, **trống dưới = 0**; máy tính không đổi.
+>
 > ⛔⛔⛔ **VÁ LẦN 2 — 05/09/2026 (`?v=52`): BÁM THEO `visualViewport`, KHÔNG TIN `100dvh`.**
 > Thầy bấm thử lần nữa (ảnh 01:29): **bật bàn phím là ba thanh trên vẫn trôi khỏi màn**, dù
 > `?v=51` đã khoá `height:100dvh` + `overflow:hidden`.
