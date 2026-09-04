@@ -1274,10 +1274,15 @@
     const vv = window.visualViewport;
     const ap = $('appScreen');
     if (!vv || !ap) return;
-    if (window.innerWidth >= 1024) { ap.style.height = ''; return; }
+    if (window.innerWidth >= 1024) { ap.style.height = ''; ap.style.top = ''; return; }
     ap.style.height = Math.round(vv.height) + 'px';
-    // Safari đã đẩy trang (offsetTop > 0) hoặc trang đang bị cuộn ⇒ kéo về mốc 0.
-    if (vv.offsetTop || window.scrollY) window.scrollTo(0, 0);
+    // ⛔⛔ DÒNG SỐNG CÒN (05/09 lần 3): Safari **đẩy cả trang lên** khi bàn phím hiện — visual
+    // viewport lệch khỏi layout viewport một đoạn `offsetTop`. Chỉ đặt `height` là chưa đủ:
+    // phần trên (thanh tím đầu trang) bị đẩy khuất, phần dưới hụt ra ĐÚNG BẰNG `offsetTop`,
+    // thành vệt trắng trên bàn phím. Phải **dịch cả khung xuống** đúng bấy nhiêu.
+    // ⛔ `window.scrollTo(0,0)` KHÔNG kéo lại được — đây không phải cuộn trang thường. Bản
+    //    `?v=52`/`?v=53` dùng nó nên vệt dưới còn nguyên; đừng quay lại cách đó.
+    ap.style.top = Math.round(vv.offsetTop) + 'px';
   }
   // ⭐ 05/09/2026 (thầy chốt) — ĐO LẠI MỘT LƯỢT NỮA SAU 350ms.
   // Bàn phím iOS **trượt lên có hoạt cảnh**, và cái thanh phụ của nó (hàng icon chìa khoá / thẻ /

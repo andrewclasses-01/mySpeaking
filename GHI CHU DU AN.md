@@ -2409,3 +2409,53 @@ Gắn vào `visualViewport.resize`, `window.resize`, `orientationchange`, và l�
 
 ⚠️ Vệt ② chỉ **suy ra nguyên nhân** rồi chữa — bàn thử trên máy tính không có bàn phím iOS thật
 để tái hiện. Cần thầy xác nhận.
+
+---
+
+## CHẶNG — 05/09/2026 (`?v=54`): VỆT TRẮNG DƯỚI — HOÁ RA TRANG BỊ **ĐẨY**, KHÔNG PHẢI ĐO SAI
+
+### Thầy báo gì
+`?v=53` bóp được vệt trên (dưới thanh player) nhưng **vệt dưới còn nguyên**.
+
+### Manh mối quyết định — nằm ngay trong ảnh, hai lần trước đã BỎ SÓT
+Ảnh 01:53: **thanh tím đầu trang KHÔNG có trong ảnh**, chỉ còn CHECK/LIST ở trên cùng. Mà phía
+dưới lại thừa ra một vệt trắng **đúng bằng chiều cao thanh đó**.
+⇒ Không phải `visualViewport` đo sai. Safari **vẫn đang đẩy cả trang lên**: visual viewport lệch
+khỏi layout viewport một đoạn `offsetTop`. `#appScreen` cao đúng `vv.height` nhưng vẫn **bắt đầu
+từ y=0 của layout viewport** ⇒ phần trên bị đẩy khuất, phần dưới hụt ra đúng `offsetTop`.
+
+⛔ **`window.scrollTo(0,0)` (dùng ở `?v=52`/`?v=53`) KHÔNG kéo lại được** — đây không phải cuộn
+trang thường mà là độ lệch của visual viewport. Đừng quay lại cách đó.
+⛔ **Giả thuyết "thanh phụ bàn phím làm `vv.height` báo dư" (đợt `?v=53`) là SAI.** Lượt đo trễ
+350ms giữ lại vì vô hại và vẫn có ích khi bàn phím trượt, nhưng nó KHÔNG phải thứ chữa vệt dưới.
+
+### Cách chữa
+Neo `#appScreen` bằng `position:fixed` (chỉ dưới 1024px) rồi **dịch nó xuống đúng `offsetTop`**:
+
+```js
+ap.style.height = Math.round(vv.height) + 'px';
+ap.style.top    = Math.round(vv.offsetTop) + 'px';   // ⬅ dòng sống còn
+```
+
+⛔ Vì sao `position:fixed` mà KHÔNG phải `transform: translateY()`: `transform` tạo **khung quy
+chiếu mới**, mọi pop-up `position:fixed` bên trong (`submitModal`, `khoHongModal`…) sẽ neo nhầm
+vào `#appScreen` thay vì màn hình. `position:fixed` thì **không** tạo khung quy chiếu cho con
+`fixed` (chỉ `transform`/`filter`/`perspective` mới tạo) ⇒ pop-up vẫn đúng. **Đã kiểm bằng số.**
+
+### Đã đo (bàn thử — giả lập đúng cú đẩy của Safari bằng cách thay tạm `window.visualViewport`)
+| | `offsetTop = 0` | `offsetTop = 44` (bị đẩy) |
+|---|---|---|
+| `#appScreen` | `top:0px` · `height:812px` | **`top:44px`** · `height:768px` |
+| header | `0..44` | **`44..88`** — trở lại trong tầm nhìn |
+| `#khoiNhap` | `258..812` | **`302..812`** — sát đáy, **hết vệt trống** |
+| trả lại bình thường | `top:0px` · `812px` | — |
+
+- Pop-up Submit: `position:fixed`, `0..812`, phủ kín màn ⇒ **không** bị neo nhầm vào `#appScreen`.
+- Máy tính 1100×700: `position:static`, inline `top`/`height` **rỗng**, `77..245` / `312..680` /
+  `76..680` — không đổi.
+
+### ⛔ Bài học cho lần sau
+**Đọc kỹ ảnh thầy gửi trước khi đoán nguyên nhân.** Manh mối "thanh tím biến mất" đã nằm sẵn
+trong ảnh 01:29 và 01:36 mà hai đợt vá trước không để ý, nên đi chữa nhầm hai lần (đo lại trễ,
+bóp đệm). Cái mất tích ở MỘT đầu và cái thừa ra ở ĐẦU KIA, bằng nhau — đó là dấu hiệu của một
+phép **dịch chuyển**, không phải sai số đo.

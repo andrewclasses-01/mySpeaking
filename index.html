@@ -218,6 +218,17 @@ tailwind.config = {
      (cùng độ ưu tiên, media query nằm sau) làm màn/tab đang ẩn hiện ngược ra — bẫy cascade. */
   #appScreen:not(.hidden){ display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
   @media (max-width:1023.98px){
+    /* ⛔⛔⛔ 05/09/2026 lần 3 — `position:fixed` + `top` do JS đặt theo `visualViewport.offsetTop`.
+       BẰNG CHỨNG dẫn tới cách này: trong ảnh thầy gửi lúc 01:53, **thanh tím đầu trang đã biến
+       mất** (chỉ còn CHECK/LIST) mà phía dưới lại thừa ra một vệt trắng ĐÚNG BẰNG chiều cao nó.
+       ⇒ Safari **vẫn đẩy cả trang lên** (visual viewport lệch khỏi layout viewport một đoạn
+       `offsetTop`): phần trên bị đẩy khuất, phần dưới hụt ra đúng bấy nhiêu. `window.scrollTo(0,0)`
+       KHÔNG kéo lại được vì đây KHÔNG phải cuộn trang thường.
+       Chữa: neo `#appScreen` bằng `position:fixed` rồi **dịch nó xuống đúng `offsetTop`**.
+       ⛔ `position:fixed` KHÔNG tạo khung quy chiếu cho con `fixed` (chỉ `transform`/`filter`/
+          `perspective` mới tạo) ⇒ mọi pop-up bên trong vẫn neo đúng vào màn hình. Đây chính là
+          lý do dùng `fixed` chứ KHÔNG dùng `transform: translateY()`. */
+    #appScreen:not(.hidden){ position:fixed; left:0; right:0; top:0; }
     #appScreen:not(.hidden) > main{ flex:1 1 0%; min-height:0; display:flex; flex-direction:column; }
     #khoiVideo{ flex-shrink:0; }
     #khoiNhap{ flex:1 1 0%; min-height:0; overflow-y:auto; }
@@ -996,6 +1007,6 @@ tailwind.config = {
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
 <script src="js/trung.js?v=6"></script>
-<script src="js/app.js?v=53"></script>
+<script src="js/app.js?v=54"></script>
 </body>
 </html>
