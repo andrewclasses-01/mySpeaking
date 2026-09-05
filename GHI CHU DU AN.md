@@ -2662,3 +2662,57 @@ bị kẹp bởi giá trị tường minh thì `margin:auto` mới chia đều.
 - **Điện thoại 375px: KHÔNG đổi** — ở đó `aspect-ratio:auto` nên luật desktop không áp
   (`max-width` tính ra `none`), khung vẫn rộng hết thẻ (341/343).
 - Cột hẹp hơn 377px thì `max-width` không chạm tới, khung rộng full như cũ.
+
+## CHẶNG — 05/09/2026 (`?v=59`): ⭐⭐⭐ MÀN PHẢN BIỆN — DỰNG LẠI THÀNH **MỘT CỘT, BỐN TẦNG**
+
+Thầy chốt: *"Ở cả mobile hay máy tính đều chỉ xếp duy nhất 1 cột"*, và **ghim** ba tầng trên,
+chỉ khung lỗi được cuộn.
+
+| Tầng | Nội dung |
+|---|---|
+| ① | Thanh đầu trang (giữ nguyên) |
+| ② | **MỚI** — dải nút lọc (trái) + badge UNCONFIRMED và số đếm G/P/I (phải) |
+| ③ | Video |
+| ④ | Danh sách lỗi — **phần duy nhất cuộn** |
+
+**Thầy chốt thêm:** "TEAM CONFLICT" → **"CONFLICT"** · badge UNCONFIRMED **đi cùng dải số đếm,
+đứng đầu** · máy tính hai dải chung một hàng (nửa trái / nửa phải), điện thoại **nút lọc hàng trên,
+badge + số đếm hàng dưới**, mỗi hàng trải hết bề ngang và chia đều · **video giữ nguyên chiều cao
+cũ**, nằm căn giữa trong dải, chấp nhận hai bên là nền trắng — nhưng **dải video rộng bằng các dải
+khác** để cả cột thẳng mép thành một khối · bề ngang cột **do tôi tự quyết: 820px**.
+
+### Cách làm
+- HTML thêm `#pbBar` (rỗng, `hidden`) + hai ô con `#pbBarTrai` / `#pbBarPhai`, đặt **trước**
+  `#khoiVideo` trong `<main>`.
+- **`pbDungThanh()`** (app.js) **DỜI** ba phần tử có sẵn `#btnPbLoc` · `#btnPbThieu` · `#errStats`
+  vào đó bằng `appendChild` khi mở màn phản biện. ⛔ Dời chứ không chép — màn CHẤM vẫn cần đúng
+  ba phần tử đó ở chỗ cũ, mà mỗi lần mở trang chỉ vào MỘT màn. `appendChild` giữ nguyên phần tử nên
+  listener gắn trực tiếp trong `noiSuKien()` không mất, mọi chỗ vẽ vẫn tìm theo id.
+- CSS `#appScreen.pb-mode:not(.hidden) > main` đè hẳn lưới 2 cột cũ: flex column, `max-width:820px`,
+  căn giữa, `overflow:hidden`; `#pbBar` + `#khoiVideo` `flex-shrink:0`; `#khoiNhap` là vùng cuộn duy
+  nhất (desktop phải kéo nó ra khỏi `lg:contents`). `#errListHead` nay rỗng ⇒ ẩn hẳn.
+  `scrollbar-gutter:stable` để bề ngang khung lỗi không nhảy 15px lúc có/không thanh cuộn.
+- Thêm tay bắt `focusin`/`focusout` trên **`#errList`** (dùng chung `datBanPhim`): ô gõ lý do ở màn
+  này nằm trong danh sách chứ không nằm trong `#errFormCard` (màn phản biện ẩn hẳn thẻ đó), nên
+  không có nó thì bàn phím iPhone che mất ô đang gõ.
+
+### ⛔⛔ BẪY ĐÃ VẤP NGAY TRONG ĐỢT — luật id ép `display` lên phần tử mang `.hidden`
+Luật `#pbBar #btnPbLoc > button{ display:flex }` có độ đặc hiệu **2 ID** (0,2,0,1), **ăn đứt**
+`.hidden{display:none}` (0,0,1,0) của Tailwind ⇒ nút **CONFLICT hiện ra dù đang bằng 0** (máy tính
+ẩn đúng, điện thoại lộ vì ở đó nút mới có luật `flex:1`). Bắt được khi chụp màn 375px rồi đo lại.
+**CHỮA:** mọi luật đặt `display` trong `#pbBar` đều phải kèm **`:not(.hidden)`**.
+⛔ Đúng họ bẫy cascade mà file này đã ghi ở khối `#dsTab` — lần này vấp bằng CSS id thay vì `lg:*`.
+
+### Đã đo (bàn thử)
+**Máy tính 1340×885:** `main` **820px** căn giữa · `#pbBar` 788px, nửa trái nút lọc (276→543), nửa
+phải badge + G/P/I dồn phải (804→1064) · video **378×212 căn giữa** trong dải 788px · cuộn danh
+sách 118px thì header (t=0), `#pbBar` (t=76), `#khoiVideo` (t=120) **đứng yên tuyệt đối**, thân
+trang không cuộn.
+**Điện thoại 375px:** `#pbBar` cao 74px xếp **2 hàng** — hàng trên nút lọc full 343px chia đều,
+hàng dưới UNCONFIRMED 180px + G/P/I 156px · CONFLICT ẩn đúng khi bằng 0 (2 nút hiện) · bật
+`go-banphim`: video **về 0**, khối video còn **48px = đúng thanh player**, `#pbBar` đứng yên; tắt
+thì video trở lại 114px.
+**Màn CHẤM không đổi:** vẫn lưới 2 cột `614px 614px`, `#pbBar` `display:none`, ba phần tử vẫn nằm
+trong `#errListHead`, video 378 căn giữa.
+⚠️ `focus()` gọi bằng JS trên bàn thử **không sinh sự kiện `focusin`** (cửa sổ không được kích hoạt)
+— đã kiểm listener bằng cách bắn sự kiện thủ công, có ăn. Cần thầy gõ thử trên iPhone thật.

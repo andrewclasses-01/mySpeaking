@@ -2381,10 +2381,28 @@
   // ═══════════════ (Đợt B) MÀN PHẢN BIỆN — xem lỗi ĐỘI MÌNH bị chấm + tích từng câu ═══════════════
   // Gói ?goi= mang pb:1 (myLesson gửi video/members của CHÍNH đội em). Mỗi câu: cặp tích
   // Đồng ý / Phản đối LOẠI TRỪ NHAU, phản đối BẮT BUỘC lý do; phiếu ĐỘC LẬP theo từng em.
+  /* ⭐⭐ `?v=59` (thầy chốt) — MÀN PHẢN BIỆN MỘT CỘT: dời dải nút lọc + badge + số đếm ra khỏi đầu
+     khung "Mistakes found", đưa lên thành TẦNG 2 riêng (`#pbBar`, ngay trên video).
+     ⛔ DỜI chứ không chép: màn CHẤM vẫn cần đúng ba phần tử này ở chỗ cũ, mà mỗi lần mở trang chỉ
+        vào MỘT màn nên không bao giờ cần cả hai nơi cùng lúc.
+     ⛔ `appendChild` giữ nguyên phần tử ⇒ listener gắn trực tiếp (`$('btnPbLoc').addEventListener`
+        trong `noiSuKien`) KHÔNG mất, và mọi chỗ vẽ vẫn tìm theo id như cũ.
+     ⛔ Gọi lại nhiều lần vô hại (phần tử đã ở đúng chỗ thì `appendChild` không đổi gì). */
+  function pbDungThanh() {
+    const bar = $('pbBar'), trai = $('pbBarTrai'), phai = $('pbBarPhai');
+    if (!bar || !trai || !phai) return;
+    const loc = $('btnPbLoc'), thieu = $('btnPbThieu'), stats = $('errStats');
+    if (loc) trai.appendChild(loc);
+    if (thieu) phai.appendChild(thieu);     // badge đứng ĐẦU nửa phải (thầy chốt)
+    if (stats) phai.appendChild(stats);
+    bar.classList.remove('hidden');
+  }
+
   async function startPb() {
     setReviewLock(false);
     tlBat(true, 'phanbien');   // ⭐ `?v=57` — tự lưu: ẩn nút Submit, hiện dòng trạng thái
     dungManChinh();
+    pbDungThanh();             // ⭐ `?v=59` — dựng tầng 2 TRƯỚC khi vẽ, để `veNutLocPb` đo đúng chỗ mới
     loadingHien('Loading the mistakes on your team…');
     try {
       const docs = await fsQuery(state.buoiId, 'tongLoi', 'checkedTeam', state.myTeam, 200);
@@ -2696,7 +2714,7 @@
       btCf.className = 'px-3.5 py-1.5 transition border-x-2 border-slate-300 ' +
         (m2.loc === 'conflict' ? 'bg-amber-500 text-white' : 'bg-white text-slate-300') +
         (nCf ? '' : ' hidden');
-      btCf.innerHTML = 'TEAM CONFLICT <span class="text-red-500">• ' + nCf + '</span>';
+      btCf.innerHTML = 'CONFLICT <span class="text-red-500">• ' + nCf + '</span>';   // `?v=59` rút gọn (thầy chốt)
     }
   }
 
@@ -3465,6 +3483,16 @@
     });
     $('errFormCard').addEventListener('focusout', (ev) => {
       if (ev.target.matches('input, textarea')) datBanPhim(false);
+    });
+    /* ⭐ `?v=59` (thầy chốt) — MÀN PHẢN BIỆN cũng phải co video khi bàn phím ảo bật. Ô gõ ở màn
+       này là textarea lý do nằm TRONG danh sách lỗi (`#errList`), không phải trong `#errFormCard`
+       (màn phản biện ẩn hẳn thẻ đó) — nên phải có tay bắt riêng, không thì gõ lý do trên iPhone
+       là bàn phím che mất ô đang gõ. Dùng chung `datBanPhim` nên nhịp chống nháy 120ms vẫn y hệt. */
+    $('errList').addEventListener('focusin', (ev) => {
+      if (state.cheDo === 'phanbien' && ev.target.matches('textarea')) datBanPhim(true, ev.target);
+    });
+    $('errList').addEventListener('focusout', (ev) => {
+      if (state.cheDo === 'phanbien' && ev.target.matches('textarea')) datBanPhim(false);
     });
 
     // ⛔ Bám theo khung nhìn thật — xem chú thích ở `theoKhungNhin()`. Bàn phím lên/xuống, xoay

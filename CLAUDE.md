@@ -7,6 +7,19 @@
 >
 > ---
 >
+> ## ⭐⭐⭐ `?v=59` — MÀN PHẢN BIỆN NAY LÀ **MỘT CỘT, BỐN TẦNG** (đọc trước khi đụng bố cục màn đó)
+> ① thanh đầu trang · ② **`#pbBar`** dải nút lọc + badge UNCONFIRMED + số đếm · ③ video · ④ danh
+> sách lỗi (**phần duy nhất cuộn**). Ba tầng trên ghim cứng. Cột rộng **820px** căn giữa; máy tính
+> **bỏ hẳn lưới 2 cột** ở màn này. Video giữ chiều cao cũ, căn giữa trong dải rộng bằng các dải khác.
+> ⛔ Ba phần tử `#btnPbLoc` · `#btnPbThieu` · `#errStats` được **`pbDungThanh()` DỜI** vào `#pbBar`
+> khi mở màn phản biện (màn CHẤM vẫn cần chúng ở `#errListHead`) — dời bằng `appendChild` nên
+> listener không mất. Đừng chép thành hai bản.
+> ⛔⛔ **Mọi luật đặt `display` bên trong `#pbBar` PHẢI kèm `:not(.hidden)`** — selector 2 ID ăn đứt
+> `.hidden` của Tailwind, đã làm nút CONFLICT hiện ra dù bằng 0. Cùng họ bẫy cascade của `#dsTab`.
+> ⛔ Tay bắt bàn phím ảo của màn này nằm trên **`#errList`** (ô lý do ở trong danh sách), không phải
+> `#errFormCard`. "TEAM CONFLICT" đã rút gọn thành **"CONFLICT"** (sửa ở HTML *và* `veNutLocPb`).
+> Chi tiết + số đo: GHI CHU chặng `?v=59`.
+>
 > ## ① ✅ TỰ LƯU LIÊN TỤC, KHÔNG CẦN BẤM SUBMIT — **ĐÃ BUILD 05/09/2026, web HS `?v=55` → `?v=57`**
 >
 > ⭐⭐ **`?v=57` — ÁP LUÔN CHO MÀN PHẢN BIỆN CÁ NHÂN.** Chi tiết: GHI CHU chặng `?v=57`.
