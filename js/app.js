@@ -619,18 +619,21 @@
     return p(d.getHours()) + ':' + p(d.getMinutes());
   }
   // Dòng trạng thái giữa thanh đầu trang (#hdLuu) — nhỏ, xanh lá khi đã lưu (thầy chốt)
+  // `?v=56` (thầy chốt trên iPhone): icon đứng cố định bên trái (đổi ✓ / vòng xoay / tam giác theo
+  // `data-kieu` bằng CSS trong index.html), chữ chỉ còn "Saved 09:45" / "Saving…" — bỏ chữ "Auto".
   function datTrangThaiLuu(kieu, chu) {
     const o = $('hdLuu');
     if (!o) return;
     o.dataset.kieu = kieu;
-    o.textContent = chu;
+    const c = $('hdLuuChu');
+    if (c) c.textContent = chu; else o.textContent = chu;
     o.classList.remove('hidden');
   }
   function capNhatTrangThaiLuu() {
     if (!tl.bat) return;
     if (tl.dangGhi || tl.can) datTrangThaiLuu(tl.hong ? 'hong' : 'dang', tl.hong ? 'Not saved — retrying…' : 'Saving…');
-    else if (tl.luuLuc) datTrangThaiLuu('xong', '✓ Auto saved ' + gioNgan(tl.luuLuc));
-    else datTrangThaiLuu('san', 'Auto save on');
+    else if (tl.luuLuc) datTrangThaiLuu('xong', 'Saved ' + gioNgan(tl.luuLuc));
+    else datTrangThaiLuu('san', 'Saved');   // vừa mở bài: bảng đang hiện đúng là bản trên kho
   }
 
   function tlBat(on) {

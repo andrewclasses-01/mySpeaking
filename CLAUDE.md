@@ -7,7 +7,12 @@
 >
 > ---
 >
-> ## ① ✅ TỰ LƯU LIÊN TỤC, KHÔNG CẦN BẤM SUBMIT — **ĐÃ BUILD 05/09/2026 sáng, web HS `?v=55`**
+> ## ① ✅ TỰ LƯU LIÊN TỤC, KHÔNG CẦN BẤM SUBMIT — **ĐÃ BUILD 05/09/2026 sáng, web HS `?v=55` → `?v=56`**
+>
+> ⭐ **`?v=56` (sau khi thầy bấm iPhone thật):** dòng trạng thái chỉ còn **"Saved 09:45" / "Saving…"**
+> (bỏ chữ Auto), icon ✓ / vòng xoay đứng CỐ ĐỊNH bên trái (`.hdLuu-ico` + `min-width`, đổi icon bằng
+> CSS theo `data-kieu`); cột LIST hết trôi ngang (`#khoiNhap` `overflow-x:hidden` + `touch-action:pan-y`
+> + `#errList{overflow-wrap:anywhere}` — thủ phạm là chuỗi dài không chỗ ngắt). Chi tiết: GHI CHU chặng `?v=56`.
 >
 > ⭐⭐⭐ Thầy "ok build" + thêm yêu cầu *dòng "Auto saved HH:MM" cỡ nhỏ, xanh lá, giữa thanh đầu trang*.
 > **Hồ sơ đầy đủ: `GHI CHU DU AN.md` chặng `?v=55`** (đã làm gì · 8 phép thử với kho thật · bẫy để lại).

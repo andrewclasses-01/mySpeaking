@@ -231,7 +231,14 @@ tailwind.config = {
     #appScreen:not(.hidden){ position:fixed; left:0; right:0; top:0; }
     #appScreen:not(.hidden) > main{ flex:1 1 0%; min-height:0; display:flex; flex-direction:column; }
     #khoiVideo{ flex-shrink:0; }
-    #khoiNhap{ flex:1 1 0%; min-height:0; overflow-y:auto; }
+    /* ⭐ 05/09/2026 (`?v=56`, thầy bắt lỗi trên iPhone): vùng cuộn CHỈ được vuốt DỌC. Trước đây một
+       dòng chữ dài không có chỗ ngắt (IPA, link…) làm khung rộng hơn màn ⇒ Safari cho vuốt ngang,
+       cả cột LIST trôi sang trái. Ba lớp chặn: khoá tràn ngang · bảo iOS chỉ nhận cử chỉ dọc ·
+       ép chữ dài tự ngắt (khối `#errList` bên dưới). */
+    #khoiNhap{ flex:1 1 0%; min-height:0; overflow-y:auto; overflow-x:hidden;
+               overscroll-behavior-x:none; touch-action:pan-y; }
+    #khoiNhap > *{ min-width:0; max-width:100%; }
+    #errFormCard, #errListCard{ overflow-x:hidden; }
     /* ⭐ 05/09/2026 (thầy chốt) — BÓP MỌI KHOẢNG DỌC THỪA. Màn điện thoại đã bé, mỗi vệt trống
        là một dòng chữ bị mất. Ba nguồn sinh ra vệt trắng dưới thanh player:
          ① `py-2` của <main>  ② `space-y-2.5` giữa khối video và khung nhập  ③ `pt-1 pb-2` của #khoiVideo
@@ -290,14 +297,30 @@ tailwind.config = {
      ⛔ #hdLuu KHÔNG đặt `display` ở đây để class `.hidden` của Tailwind vẫn ẩn được nó (mô hình 1/phản biện). */
   #appScreen.tu-luu #btnSubmit{ display:none; }
   #appScreen.tu-luu #btnHome{ margin-right:0; }   /* bỏ mr-auto để #hdLuu (mx-auto) đứng đúng giữa khoảng trống */
+  /* ⭐ `?v=56` (thầy chốt trên iPhone): ICON đứng CỐ ĐỊNH bên trái (ô 13px), chữ "Saved 09:45" /
+     "Saving…" căn trái theo icon. Cả khối có bề ngang TỐI THIỂU đủ cho chữ dài nhất trong hai trạng
+     thái thường, nên đổi chữ mà icon không nhích. Icon đổi theo `data-kieu` bằng CSS thuần
+     (không gán .hidden cho SVG — xem bẫy "gán .hidden cho SVG không ăn"). */
+  #hdLuu:not(.hidden){ display:inline-flex; align-items:center; justify-content:flex-start; gap:.35rem; min-width:6.6rem; }
   #hdLuu{ margin-left:auto; margin-right:auto; flex-shrink:0; white-space:nowrap; font-size:11px; font-weight:800;
           line-height:1.2; padding:.2rem .6rem; border-radius:9999px; transition:color .2s, background .2s; }
-  @media (min-width:640px){ #hdLuu{ font-size:12px; } }
+  @media (min-width:640px){ #hdLuu{ font-size:12px; min-width:7rem; } }
+  .hdLuu-ico{ width:13px; height:13px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+  .hdLuu-ico > *{ display:none; }
+  #hdLuu[data-kieu="san"] .hdLuu-check, #hdLuu[data-kieu="xong"] .hdLuu-check{ display:block; }
+  #hdLuu[data-kieu="dang"] .hdLuu-spin{ display:block; }
+  #hdLuu[data-kieu="hong"] .hdLuu-alert{ display:block; }
+  .hdLuu-spin{ width:11px; height:11px; border-radius:50%; border:2px solid rgba(255,255,255,.3);
+               border-top-color:currentColor; animation:hdLuuXoay .8s linear infinite; }
+  @keyframes hdLuuXoay{ to{ transform:rotate(360deg); } }
   #hdLuu[data-kieu="san"]{ color:rgba(255,255,255,.7); }
   #hdLuu[data-kieu="dang"]{ color:rgba(255,255,255,.9); }
   #hdLuu[data-kieu="xong"]{ color:#86efac; }                       /* emerald-300 — xanh lá trên nền tím */
   #hdLuu[data-kieu="hong"]{ color:#fff; background:#e11d48; animation:hdLuuNhay 1.1s ease-in-out infinite; }
   @keyframes hdLuuNhay{ 0%,100%{ opacity:1; } 50%{ opacity:.55; } }
+  /* `?v=56`: chữ dài không có chỗ ngắt (IPA, link) PHẢI tự gãy dòng trong ô lỗi — không thì ô rộng
+     hơn khung và điện thoại vuốt được ngang (xem khối #khoiNhap). Áp mọi cỡ màn. */
+  #errList{ overflow-wrap:anywhere; min-width:0; }
   #appScreen.pb-mode #dsTab{ display:none; }   /* màn phản biện không có form ⇒ hai nút vô nghĩa */
   .dsBtn{ flex:1; padding:.375rem 0; font-size:12px; font-weight:800; display:flex; align-items:center;
           justify-content:center; gap:.375rem; transition:background .15s, color .15s; }
@@ -486,7 +509,14 @@ tailwind.config = {
       </button>
       <!-- ⭐ 05/09/2026 — dòng trạng thái TỰ LƯU ("Saving…" / "✓ Auto saved 20:14" / "Not saved — retrying…"),
            chỉ hiện ở màn chấm mô hình 2 (`tlBat()` gỡ .hidden). CSS ở khối "#hdLuu" trong <style>. -->
-      <span id="hdLuu" class="hidden" data-kieu="san"></span>
+      <span id="hdLuu" class="hidden" data-kieu="san">
+        <span class="hdLuu-ico" aria-hidden="true">
+          <svg class="hdLuu-check" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          <span class="hdLuu-spin"></span>
+          <svg class="hdLuu-alert" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        </span>
+        <span id="hdLuuChu"></span>
+      </span>
       <span id="hdStudent" class="shrink-0 bg-white/15 rounded-xl px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-bold tabular-nums whitespace-nowrap"></span>
       <button id="btnSubmit" title="Submit" class="shrink-0 bg-emerald-500 hover:bg-emerald-400 transition rounded-xl px-2.5 sm:px-4 py-2 text-sm font-bold flex items-center gap-1.5 shadow">
         <i data-lucide="send" class="w-4 h-4 shrink-0"></i><span class="hidden sm:inline">Submit</span>
@@ -999,6 +1029,6 @@ tailwind.config = {
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
 <script src="js/trung.js?v=6"></script>
-<script src="js/app.js?v=55"></script>
+<script src="js/app.js?v=56"></script>
 </body>
 </html>

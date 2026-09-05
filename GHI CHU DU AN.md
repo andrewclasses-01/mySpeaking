@@ -2537,3 +2537,30 @@ Dọn: xoá 2 tài liệu ZTEST bằng khoá quản trị (`don_ztest.py`, venv 
   ngay lúc bấm nên hiếm khi còn gì chờ.
 - `tl` khai báo SAU `tongLoiGhiAnToan`/`autosave` nhưng chỉ được đọc lúc chạy (sau khi IIFE dựng
   xong) — đừng chuyển thành gọi ngay lúc nạp.
+
+## CHẶNG — 05/09/2026 (`?v=56`): VÁ SAU KHI THẦY BẤM iPhone THẬT — dòng trạng thái + cột LIST trôi ngang
+
+Thầy thử `?v=55` trên iPhone (ảnh 09:59, lớp B2A em ANNA, 58 lỗi) và chốt hai việc:
+1. **Dòng trạng thái**: bỏ chữ "Auto" — chỉ còn **"Saved 09:45" / "Saving…"**; icon **đứng cố định**
+   bên trái, đổi giữa dấu ✓ và **vòng xoay** (kiểu hiện đại), chữ tự căn theo icon.
+2. **Cột LIST vuốt bị trôi ngang** — phải khoá, chỉ cho vuốt dọc.
+
+### Đã làm
+- `#hdLuu` nay là `inline-flex` với ô icon `.hdLuu-ico` 13px cố định + `#hdLuuChu`; icon đổi theo
+  `data-kieu` bằng CSS thuần (✓ cho `san`/`xong` · `.hdLuu-spin` vòng xoay CSS cho `dang` · tam giác
+  cảnh báo cho `hong`). `min-width: 6.6rem` (7rem ≥640px) đủ cho chữ dài nhất trong hai trạng thái
+  thường ⇒ đổi chữ mà icon không nhích. Vừa mở bài hiện "Saved" mờ (bảng đang là bản kho).
+  ⛔ Không gán `.hidden` cho SVG (bẫy đã ghi) — chỉ đổi `data-kieu`.
+- Vuốt ngang: nguyên nhân là **chuỗi dài không có chỗ ngắt** (IPA, link) làm ô lỗi rộng hơn khung
+  ⇒ `#khoiNhap` rộng hơn màn ⇒ Safari cho kéo ngang cả cột. Ba lớp chặn (mobile media query):
+  `#khoiNhap{ overflow-x:hidden; overscroll-behavior-x:none; touch-action:pan-y }` +
+  `#khoiNhap > *{ min-width:0; max-width:100% }` + `#errFormCard,#errListCard{ overflow-x:hidden }`;
+  và mọi cỡ màn: `#errList{ overflow-wrap:anywhere; min-width:0 }` để chữ dài tự gãy dòng.
+- `datTrangThaiLuu()` ghi chữ vào `#hdLuuChu`; `app.js?v=56`.
+
+### Đã đo (bàn thử 375×812, kho thật buổi `ZTEST_TULUU`, đã dọn)
+- Icon `left = 155px` ở CẢ BA trạng thái Saved / Saving… / Saved 10:07 — không nhích.
+- Lúc ghi: `.hdLuu-spin` `display:block`, ✓ ẩn; xong: ngược lại.
+- Thêm một lỗi có chuỗi 100+ ký tự không dấu cách: `#khoiNhap` `scrollWidth 343 = clientWidth 343`,
+  `#errList` rộng 317, `touch-action: pan-y`, chữ gãy dòng trong ô.
+⬜ Thầy vuốt lại trên iPhone thật một lượt (bàn thử không giả lập được cử chỉ vuốt chéo của Safari).
