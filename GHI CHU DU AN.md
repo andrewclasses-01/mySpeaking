@@ -2632,3 +2632,33 @@ Máy tính 1280px: `nowrap`, hàng 32px, `mx-2` giữ nguyên — **không đổ
 ### ⬜ Thầy cần bấm tay
 Một buổi phản biện thật trên iPhone: bấm AGREE vài câu · bấm DISAGREE rồi **thoát ra ngay chưa gõ
 lý do** (phải mất phiếu đó, đúng thiết kế — chữ đang gõ dở vẫn còn trong nháp máy) · hai máy cùng lúc.
+
+## CHẶNG — 05/09/2026 (`?v=58`): KHUNG VIDEO CĂN GIỮA TRÊN MÁY TÍNH (cả màn CHẤM lẫn PHẢN BIỆN)
+
+Thầy gửi ảnh hai màn: khung video YouTube **dính hẳn mép trái**, chừa một mảng trắng lớn bên phải.
+
+### Nguyên nhân (ĐO, không đoán — 1340×885)
+| | |
+|---|---|
+| Thẻ trắng bọc ngoài | **614px** |
+| `.video-shell` | **378px**, `left` cách thẻ **1px**, cách mép phải **235px** |
+| `<iframe>` | **đúng bằng** `.video-shell` |
+
+⛔ **KHÔNG phải lỗi của iframe** — `width:100%` vẫn ăn, `initYouTube` không có gì sai, đừng đi sửa
+bên đó. Thủ phạm là chính `.video-shell`: `max-height:24dvh` kẹp chiều cao lại, mà khối có
+`aspect-ratio:16/9` thì trình duyệt **tính lại luôn chiều rộng** cho khớp tỷ lệ (614 → 378), rồi để
+nguyên nó ở mép trái vì `margin` mặc định bằng 0.
+
+### ⛔ Bẫy: `margin:auto` MỘT MÌNH KHÔNG ĐỦ
+Bản vá đầu chỉ thêm `margin-left:auto; margin-right:auto` — đo lại **lệch y nguyên** (chừa trái 1px,
+phải 235px). Vì `margin:auto` chỉ chia đều chỗ trống khi chiều rộng là một giá trị **tường minh**;
+ở đây nó do `aspect-ratio` suy ra từ chiều cao nên trình duyệt vẫn coi là `auto` và dồn hết sang phải.
+**CHỮA:** thêm `max-width:calc(24dvh * 16 / 9)` (đúng bề ngang tối đa ứng với trần chiều cao) — width
+bị kẹp bởi giá trị tường minh thì `margin:auto` mới chia đều.
+
+### Đã đo lại
+- Máy tính 1340×885, **màn chấm**: chừa trái **118** = chừa phải **118**, tỷ lệ vẫn **1.78**.
+- **Màn phản biện** (`pb-mode`): y hệt — 118/118. Một luật chữa cả hai màn.
+- **Điện thoại 375px: KHÔNG đổi** — ở đó `aspect-ratio:auto` nên luật desktop không áp
+  (`max-width` tính ra `none`), khung vẫn rộng hết thẻ (341/343).
+- Cột hẹp hơn 377px thì `max-width` không chạm tới, khung rộng full như cũ.

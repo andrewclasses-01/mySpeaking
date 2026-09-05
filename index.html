@@ -277,8 +277,21 @@ tailwind.config = {
        2 wrapper cột "tan ra" bằng display:contents để form + list thành ô grid trực tiếp. */
     #tab-errors:not(.hidden){ display:contents; }
     #tab-errors > *{ margin-top:0; }   /* bỏ margin space-y của mobile khi con đã thành ô grid */
-    /* Máy tính: video giữ 16:9 nhưng CHẶN TRẦN — không còn phải cao bằng cột form như bản cũ */
-    .video-shell{ aspect-ratio:16/9; height:auto; max-height:24dvh; }
+    /* Máy tính: video giữ 16:9 nhưng CHẶN TRẦN — không còn phải cao bằng cột form như bản cũ.
+       ⭐ `?v=58` (thầy chốt) — CĂN GIỮA. Vì sao trước đây lệch hẳn về trái: `max-height:24dvh`
+       kẹp chiều cao lại, mà khối có `aspect-ratio` thì trình duyệt TÍNH LẠI CẢ CHIỀU RỘNG cho
+       khớp tỷ lệ ⇒ khung co từ 614px xuống 378px nhưng vẫn dính mép trái (margin mặc định 0).
+       ⛔ Đo thật 1340×885: thẻ trắng 614px · `.video-shell` 378px · iframe ĐÚNG BẰNG khung
+       (`width:100%` vẫn ăn) — nên KHÔNG phải lỗi của iframe, đừng đi sửa `initYouTube`.
+       Điện thoại không dính: ở đó `aspect-ratio:auto` nên khung rộng đúng 100%, margin auto = 0.
+       ⛔⛔ CHỈ `margin:auto` là KHÔNG ĐỦ — đã thử, đo lại vẫn lệch y nguyên (chừa trái 1px, phải
+       235px). Lý do: `margin:auto` chỉ chia đều chỗ trống khi chiều rộng là một giá trị TƯỜNG
+       MINH; ở đây nó do `aspect-ratio` suy ra từ chiều cao nên trình duyệt vẫn coi là `auto` và
+       dồn hết chỗ thừa sang phải. Phải nêu `max-width` bằng đúng bề ngang tối đa (chiều cao trần
+       nhân 16/9) — width khi đó bị kẹp bởi một giá trị tường minh, `margin:auto` mới chia đều.
+       Cột hẹp hơn 377px thì `max-width` không chạm tới, khung rộng full như cũ, margin = 0. */
+    .video-shell{ aspect-ratio:16/9; height:auto; max-height:24dvh;
+                  max-width:calc(24dvh * 16 / 9); margin-left:auto; margin-right:auto; }
     /* Thẻ form: ô grid cột 1 hàng 2, giãn đầy và tự cuộn bên trong */
     #errFormCard{ grid-column:1; grid-row:2; min-height:0; overflow-y:auto; display:flex; flex-direction:column; }
     #errFormCard > .mb-3:last-of-type{ margin-bottom:.75rem; }
@@ -1047,6 +1060,6 @@ tailwind.config = {
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
 <script src="js/trung.js?v=6"></script>
-<script src="js/app.js?v=57"></script>
+<script src="js/app.js?v=58"></script>
 </body>
 </html>
