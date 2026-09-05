@@ -8,6 +8,20 @@
 >
 > ## ① ⭐⭐⭐ TỰ LƯU LIÊN TỤC, KHÔNG CẦN BẤM SUBMIT — **VIỆC ĐẦU TIÊN**
 >
+> ⭐⭐ **05/09/2026 TỐI — ĐÃ KHẢO SÁT + THẦY ĐÃ CHỐT 4 ĐIỂM, CHƯA BUILD (chờ "ok build").**
+> Hồ sơ phương án đầy đủ: `E:\LAP TRINH APP\DU LIEU TONG HOP\PHUONG AN TU LUU SP CHECK — 05-09-2026.md`
+> (3 phương án đã cân, chọn **B** = lưu theo sự kiện + nghe kho trực tiếp `onSnapshot` trên đúng
+> 1 tài liệu của em; mục 5 là bẫy phải nhớ khi build; mục 7 là cách đo).
+> **Bốn điểm thầy chốt:** (1) **BỎ HẲN nút SUBMIT**, thay bằng dòng trạng thái *Saving… / Saved ✓
+> 20:14 / Not saved — retrying*; gói ghi **không gửi `daNop`** · (2) quay lại app (chuyển app / Home
+> iPhone) = **đọc kho lại, GIỮ chữ đang gõ** trong form · (3) **không thêm nút ↻** · (4) nháp cũ
+> localStorage **gom một lần vào kho (chỉ thêm) rồi xoá**, không hỏi.
+> ⛔ **Phát hiện khi mổ code (sửa lại hiểu biết cũ bên dưới):** cờ `daNop` **KHÔNG trang nào đọc**
+> — `sp-chitiet.html` · `dashboard.html` · `bai-sp.html` · app mySpeaking (`renderer/js/app.js`
+> `kqTongQuanHtml`) đều coi **"có tài liệu `tongLoi` = đã nộp"** và cộng số lỗi sống trực tiếp.
+> Điểm ① "nguy hiểm nhất" bên dưới vì thế **không còn là vấn đề**; điểm ② thầy chốt không lo chi phí.
+> Không cần sửa luật Firestore. Không đụng mô hình 1, màn PHẢN BIỆN, hai màn TRÙNG.
+>
 > Thầy giao 05/09: *"cải tiến quá trình ghi nhận dữ liệu chấm bài mà không cần bấm submit —
 > soạn đến đâu, lưu đến đó, tương tự auto save trong Google Docs hoặc Google Sheet."*
 >
