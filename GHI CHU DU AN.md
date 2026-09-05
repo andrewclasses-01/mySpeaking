@@ -2716,3 +2716,32 @@ thì video trở lại 114px.
 trong `#errListHead`, video 378 căn giữa.
 ⚠️ `focus()` gọi bằng JS trên bàn thử **không sinh sự kiện `focusin`** (cửa sổ không được kích hoạt)
 — đã kiểm listener bằng cách bắn sự kiện thủ công, có ăn. Cần thầy gõ thử trên iPhone thật.
+
+### ⛔⛔ BẪY TRIỂN KHAI — thầy báo "chưa có gì thay đổi" mà CODE KHÔNG SAI
+Ngay sau khi đẩy `?v=59`, thầy mở trang và thấy y bản cũ. Kiểm bằng số thì ra: **GitHub Pages đang
+`building`**, trang thật vẫn phát commit trước. Lần build này mất **11 phút rưỡi** (04:11:13Z →
+04:22:44Z), trong khi hai lần trước cùng buổi chỉ **37 giây** — rất thất thường.
+Cộng thêm: `index.html` có `Cache-Control: max-age=600` ⇒ trình duyệt còn giữ bản cũ **tới 10 phút**.
+⛔⛔ **Mẹo `?v=NN` KHÔNG cứu được chỗ này** — nó chỉ chống cache cho `app.js`, mà **cả CSS lẫn chính
+thẻ `<script src="app.js?v=NN">` đều nằm TRONG `index.html`**: index cũ thì mọi thứ đều cũ.
+👉 Từ nay: đẩy xong thì **chờ tới lúc trang thật lên** rồi mới báo thầy, kèm câu nhắc **tải lại cứng**
+(Ctrl+F5 · iPhone đóng hẳn tab rồi mở lại). Bốn lệnh kiểm bằng số nằm trong bộ nhớ
+`bay-github-pages-cham-va-cache`. ⛔ Đường raw của repo này là `.../master/index.html` — **không có**
+thư mục `web/` (`.git` nằm ngay trong `web`), tra sai đường trả rỗng, trông y hệt "chưa push".
+
+## CHẶNG — 05/09/2026 (`?v=60`): THANH ĐẦU TRANG BÓ THEO CỘT + BỎ CHỮ "REBUTTAL"
+
+Thầy xem bản `?v=59` thật rồi chốt hai chỉnh nhỏ, **chỉ ở màn phản biện**:
+1. Cụm logo "Speaking in Andrew Classes" và nút tên (KIM NGÂN · T3) phải nằm **trong đúng bề ngang
+   của các dải bên dưới** cho cân, thay vì trải hết màn.
+2. **Bỏ tiền tố "REBUTTAL · "** trên dòng tên bài, chỉ để tên lesson.
+
+**Cách làm:** `#appScreen.pb-mode > header > div{ max-width:820px }` — bó **RUỘT** thanh, nền tím vẫn
+trải hết màn. Ruột dùng chung `px-4` với `<main>` nên mép thẳng khít. Bỏ đoạn nối chuỗi
+`(state.cheDo === 'phanbien' ? 'REBUTTAL · ' : '')` trong `dungManChinh()`.
+
+**Đã đo (1476×933, màn phản biện):** ruột thanh **820px** · logo bắt đầu **344** = đúng `#pbBar.left`
+· nút tên kết thúc **1132** = đúng `#pbBar.right` · dòng trạng thái ở giữa · tên bài chỉ còn
+"ZTEST phan bien".
+**Không đụng chỗ khác:** màn CHẤM ruột thanh vẫn **1280px** = đúng bề ngang `<main>` của nó; điện
+thoại ruột vẫn full 375px (`max-width` không chạm tới) và `#hdTopic` vẫn ẩn như cũ.

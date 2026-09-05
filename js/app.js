@@ -2298,8 +2298,8 @@
     const myTeamNo = String(state.myTeam || '').replace(/[^0-9]/g, '');
     $('hdStudent').textContent = state.student + (myTeamNo ? ' · T' + myTeamNo : '');
     datAvatarDauTrang();   // (02/09/2026) ảnh tròn góc trái = avatar CHÍNH EM, không phải ảnh thầy
-    $('hdTopic').textContent = (state.cheDo === 'phanbien' ? 'REBUTTAL · ' : '') +
-      (state.topic || 'Watch · spot mistakes · improve together');
+    // ⭐ `?v=60` (thầy chốt) — BỎ tiền tố "REBUTTAL · " ở màn phản biện, chỉ để tên bài.
+    $('hdTopic').textContent = state.topic || 'Watch · spot mistakes · improve together';
     $('appScreen').classList.toggle('pb-mode', state.cheDo === 'phanbien');
     $('appScreen').classList.toggle('tu-luu', tl.bat);   // ⭐ 05/09/2026 — chỉ màn chấm mô hình 2 mới ẩn Submit
     $('loginScreen').classList.add('hidden');

@@ -18,7 +18,14 @@
 > `.hidden` của Tailwind, đã làm nút CONFLICT hiện ra dù bằng 0. Cùng họ bẫy cascade của `#dsTab`.
 > ⛔ Tay bắt bàn phím ảo của màn này nằm trên **`#errList`** (ô lý do ở trong danh sách), không phải
 > `#errFormCard`. "TEAM CONFLICT" đã rút gọn thành **"CONFLICT"** (sửa ở HTML *và* `veNutLocPb`).
-> Chi tiết + số đo: GHI CHU chặng `?v=59`.
+> ⭐ `?v=60`: **ruột thanh đầu trang cũng bó về 820px** ở màn này (`#appScreen.pb-mode > header > div`)
+> để logo/nút tên thẳng mép với các dải; **bỏ tiền tố "REBUTTAL · "** trên tên bài.
+> Chi tiết + số đo: GHI CHU chặng `?v=59` và `?v=60`.
+>
+> ⛔⛔ **TRIỂN KHAI:** đẩy xong **KHÔNG lên ngay** — GitHub Pages build thất thường (đo thật: 37 giây
+> → 11 phút rưỡi) và `index.html` còn bị trình duyệt giữ 10 phút. `?v=NN` **không cứu** được vì CSS
+> và thẻ script đều nằm trong index. Chờ tới lúc trang thật lên rồi mới báo thầy, kèm nhắc tải lại
+> cứng. Xem GHI CHU khối "BẪY TRIỂN KHAI" cuối chặng `?v=59`.
 >
 > ## ① ✅ TỰ LƯU LIÊN TỤC, KHÔNG CẦN BẤM SUBMIT — **ĐÃ BUILD 05/09/2026, web HS `?v=55` → `?v=57`**
 >

@@ -383,6 +383,11 @@ tailwind.config = {
   }
   #appScreen.pb-mode:not(.hidden) > main > *{ margin-top:0; }   /* bỏ space-y cũ, nay dùng gap */
   #appScreen.pb-mode #pbBar{ display:flex; align-items:center; gap:.5rem; flex-shrink:0; }
+  /* ⭐ `?v=60` (thầy chốt) — thanh đầu trang cũng bó về ĐÚNG bề ngang cột: logo dính mép trái cột,
+     nút tên dính mép phải cột, dòng trạng thái ở giữa. Cùng `max-width` và cùng `px-4` với `<main>`
+     nên mép thẳng khít với #pbBar (788px nội dung). Nền tím vẫn trải hết màn — chỉ RUỘT bó lại.
+     ⛔ Chỉ áp cho màn phản biện: màn CHẤM vẫn là lưới 2 cột rộng 1280px, bó lại là hỏng. */
+  #appScreen.pb-mode > header > div{ max-width:820px; }
   #appScreen.pb-mode #khoiVideo{ flex-shrink:0; }
   /* Đầu khung "Mistakes found" nay RỖNG (ba phần tử đã dời lên tầng ②) ⇒ ẩn hẳn kẻo chừa
      một khoảng trống vô nghĩa. */
@@ -1124,6 +1129,6 @@ tailwind.config = {
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
 <script src="js/trung.js?v=6"></script>
-<script src="js/app.js?v=59"></script>
+<script src="js/app.js?v=60"></script>
 </body>
 </html>
