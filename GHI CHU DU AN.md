@@ -2564,3 +2564,71 @@ Thầy thử `?v=55` trên iPhone (ảnh 09:59, lớp B2A em ANNA, 58 lỗi) và
 - Thêm một lỗi có chuỗi 100+ ký tự không dấu cách: `#khoiNhap` `scrollWidth 343 = clientWidth 343`,
   `#errList` rộng 317, `touch-action: pan-y`, chữ gãy dòng trong ô.
 ⬜ Thầy vuốt lại trên iPhone thật một lượt (bàn thử không giả lập được cử chỉ vuốt chéo của Safari).
+
+## CHẶNG — 05/09/2026 (`?v=57`): ⭐⭐⭐ TỰ LƯU CHO **MÀN PHẢN BIỆN CÁ NHÂN** + vá nút MINE bị cắt
+
+Thầy duyệt `?v=56` trên iPhone lẫn máy tính rồi giao tiếp: *"chuyển sang Phản biện cá nhân với cơ
+chế tương tự, nhưng Agree/Disagree có chỗ khác nên nghiên cứu trước."* Đã mổ màn phản biện, hỏi 4
+điểm, thầy chốt hết rồi mới build.
+
+### Vì sao màn này KHÁC màn chấm (đọc trước khi sửa)
+| | Màn chấm | Màn phản biện |
+|---|---|---|
+| Kho | **MỘT** tài liệu `tongLoi/{em}` chứa mảng `errors` | **NHIỀU** tài liệu `phanHoi/{errId__em}`, mỗi phiếu một tài liệu |
+| Rủi ro ghi đè | Cao (cả mảng) ⇒ phải `gopLoi`/`tongLoiGhiAnToan` | **Không có** — hai phiếu khác nhau không đụng nhau |
+| Ghi được ngay? | Bấm là ghi | **Phiếu DISAGREE thiếu lý do KHÔNG ghi được** — luật kho chặn 403 |
+
+Luật đang chạy (đã đăng 27/08): `y == 'dongY' || lyDo.size() > 0`. Nghĩa là bấm DISAGREE mà ghi
+liền là bị từ chối — đây chính là chỗ "không giống hệt" thầy linh cảm.
+
+### Bốn điểm thầy chốt
+① **Phiếu DISAGREE chỉ lên kho khi bấm nút máy bay** (không tự gửi theo nhịp gõ). AGREE thì bấm là
+ghi ngay. ② **Bỏ hẳn nút SUBMIT** (như màn chấm) — `submitPb`/`submitPbThatSu`/`#pbThieuModal` còn
+trong file nhưng KHÔNG còn đường gọi; việc nhắc "còn N câu chưa xác nhận" do badge `#btnPbThieu`
+lo (luôn hiện, bấm là cuộn tới câu đó). ③ Đổi ý DISAGREE → AGREE thì **giữ lý do trên kho VÀ vẫn
+hiện**, dạng chữ nhỏ 11px + xám mờ + **gạch ngang** ("đã từng nhận xét nhưng đã bỏ"). ④ **Nghe cả
+collection `phanHoi`** của buổi ⇒ bạn cùng đội bỏ phiếu là badge UNCONFIRMED tự tụt.
+
+### Đã làm (`js/app.js`)
+- Khối `tl` thêm `tl.che` (`'cham'` | `'phanbien'`); `tlBat(on, che)`; `tlChay` phân nhánh.
+- **`tlGhiPb()`**: so `m2.votes` với `m2.votesServer`, ghi TỪNG phiếu đã đổi, **bỏ qua phiếu chưa
+  đủ lý do** (`phieuGuiDuoc`). ⛔ `votesServer` cập nhật **theo từng phiếu trong `finally`** — gán
+  cả cục là nói dối rằng phiếu đang chờ lý do đã đồng bộ, và hỏng giữa chừng vẫn giữ đúng phần đã ghi.
+- **`tlNoiKhoPb()`** `onSnapshot` cả collection `phanHoi`; **`tlNhanPhieuKho()`** đổ về: phiếu của
+  chính em nào **đã đồng bộ** thì lấy bản kho (máy khác vừa đổi), phiếu **đang sửa dở thì giữ**.
+- **`demPhieuChoLyDo()`** + trạng thái mới `data-kieu="cho"` (nền hổ phách): *"N reasons needed"*.
+  ⛔ Bắt buộc phải có — không thì em bấm DISAGREE rồi thấy "Saved" và tưởng đã xong ([[bay-bao-ok-gia]]).
+- `luuNgay()` gắn vào handler `data-pbvote` và `guiPhanBienMotCau`. `tlDocLai`/`tlDayVoi` phân nhánh
+  (phản biện đẩy keepalive được ngay — gói một phiếu rất bé, không lo trần 64 KB).
+- `renderErrorsPb`: `phieuKhacPhanDoi` → **`phieuKhacCoLyDo`** (lấy cả phiếu `dongY` còn lý do), thêm
+  cờ `rut` → chữ nhỏ + `text-slate-300` + `line-through`, và **ẩn nút bút chì** khi đã rút.
+- `phanHoiGhi` nhận `tuyChon` (keepalive). `startPb` gọi `tlBat(true,'phanbien')` + `tlNoiKhoPb()`.
+
+### ⛔ Vá kèm — LỖI CŨ: nút **MINE bị cắt mất** trên điện thoại (màn phản biện)
+Bắt được lúc chụp màn 375px. Hàng đầu khung "Mistakes found" xếp 3 khối trên MỘT dòng `nowrap`:
+nút lọc cần **157px** + badge UNCONFIRMED **122px** + G/P/I **118px** = **397px**, chỗ chỉ có **317px**
+⇒ nút lọc bị bóp còn **60px**, mà bản thân nó có `overflow-hidden` nên **TEAM CONFLICT và MINE biến
+mất hẳn** — học sinh không xem được riêng lỗi của mình.
+⛔ **Đã kiểm là lỗi CŨ, không phải do `?v=56`**: gỡ tạm cả hai luật `overflow-x:hidden` và
+`min-width:0` thêm ở đợt đó thì nút vẫn 60px. Chưa ai mở màn này bằng iPhone nên chưa lộ.
+**CHỮA:** thêm `id="errListHead"`, dưới 1024px cho `flex-wrap:wrap` + `gap:.5rem`, `#btnPbLoc{flex-shrink:0}`,
+bỏ `mx-2` thừa của badge. Đo lại: nút lọc **157px**, MINE nằm trọn trong khung, hàng cao 64px (2 dòng).
+Máy tính 1280px: `nowrap`, hàng 32px, `mx-2` giữ nguyên — **không đổi**.
+
+### Đã kiểm — 9 phép, kho Firestore THẬT (buổi `ZTEST_PBTEST`, đã dọn sạch)
+`node --check` xanh · `tsc --checkJs` không còn TS2304/TS2552 nào của mình.
+| Phép | Kết quả |
+|---|---|
+| Mở màn | 3 câu, nút Submit `display:none`, dòng "Saved", badge UNCONFIRMED: 3 |
+| Lỗi của bạn khác chỉ có DISAGREE | 2 nút AGREE / 3 nút DISAGREE — đúng luật "chỉ chính chủ được AGREE" |
+| Bấm AGREE | ~2 giây sau "Saved 10:26", badge tụt còn 2, kho có phiếu `dongY` |
+| Bấm DISAGREE (chưa lý do) | **"1 reason needed"** nền vàng, kho KHÔNG có gì — đúng thiết kế |
+| Gõ lý do + bấm máy bay | "Saved", kho có phiếu `phanDoi` kèm lý do |
+| Đổi ý sang AGREE | kho giữ `lyDo`, đổi `y='dongY'`; màn hiện dòng đó `line-through`, màu `rgb(203,213,225)`, 11px, mất nút bút |
+| Tab 2 gửi phiếu mới | tab 1 thấy ngay, không tải lại trang |
+| Mất mạng lúc bấm | "Not saved — retrying…" đỏ; mạng về ⇒ tự lưu |
+| Giả rời app / quay lại | PATCH `keepalive:true` bắn ra; quay lại ⇒ `runQuery` đọc phiếu lại |
+
+### ⬜ Thầy cần bấm tay
+Một buổi phản biện thật trên iPhone: bấm AGREE vài câu · bấm DISAGREE rồi **thoát ra ngay chưa gõ
+lý do** (phải mất phiếu đó, đúng thiết kế — chữ đang gõ dở vẫn còn trong nháp máy) · hai máy cùng lúc.

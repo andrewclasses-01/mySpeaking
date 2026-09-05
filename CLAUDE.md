@@ -7,7 +7,24 @@
 >
 > ---
 >
-> ## ① ✅ TỰ LƯU LIÊN TỤC, KHÔNG CẦN BẤM SUBMIT — **ĐÃ BUILD 05/09/2026 sáng, web HS `?v=55` → `?v=56`**
+> ## ① ✅ TỰ LƯU LIÊN TỤC, KHÔNG CẦN BẤM SUBMIT — **ĐÃ BUILD 05/09/2026, web HS `?v=55` → `?v=57`**
+>
+> ⭐⭐ **`?v=57` — ÁP LUÔN CHO MÀN PHẢN BIỆN CÁ NHÂN.** Chi tiết: GHI CHU chặng `?v=57`.
+> Khối `tl` nay có `tl.che` = `'cham'` | `'phanbien'`. Màn phản biện ghi **nhiều tài liệu
+> `phanHoi/{errId__em}`** (mỗi phiếu một tài liệu) nên KHÔNG cần `gopLoi`/`tongLoiGhiAnToan`.
+> **Bốn điểm thầy chốt — đừng "dọn cho giống màn chấm":**
+> ① Phiếu **DISAGREE chỉ lên kho khi bấm nút máy bay** (luật kho cấm `phanDoi` có `lyDo` rỗng ⇒ ghi
+> sớm là 403). AGREE thì bấm là ghi ngay. Còn phiếu chờ lý do thì dòng trạng thái hiện **"N reasons
+> needed"** nền vàng — ⛔ bắt buộc, không thì em thấy "Saved" và tưởng xong.
+> ② **Bỏ hẳn nút SUBMIT**; `submitPb`/`submitPbThatSu`/`#pbThieuModal` không còn đường gọi (giữ làm
+> lịch sử) — badge `#btnPbThieu` lo việc nhắc.
+> ③ Đổi ý DISAGREE → AGREE: **giữ `lyDo` trên kho VÀ vẫn hiện**, chữ 11px xám mờ **gạch ngang**, ẩn
+> nút bút chì (`phieuKhacCoLyDo` + cờ `rut` trong `renderErrorsPb`).
+> ④ Nghe **cả collection `phanHoi`** ⇒ bạn cùng đội bỏ phiếu là badge UNCONFIRMED tự tụt.
+> ⛔ `tlGhiPb` cập nhật `votesServer` **theo từng phiếu trong `finally`**, đừng gán cả cục.
+> ⛔ Cùng đợt đã vá **LỖI CŨ**: trên điện thoại, hàng đầu khung "Mistakes found" chật (397px nội dung
+> / 317px chỗ) làm nút **MINE bị cắt mất hẳn** ⇒ thêm `#errListHead{flex-wrap:wrap}` +
+> `#btnPbLoc{flex-shrink:0}` dưới 1024px. Đã kiểm: không phải do `?v=56`.
 >
 > ⭐ **`?v=56` (sau khi thầy bấm iPhone thật):** dòng trạng thái chỉ còn **"Saved 09:45" / "Saving…"**
 > (bỏ chữ Auto), icon ✓ / vòng xoay đứng CỐ ĐỊNH bên trái (`.hdLuu-ico` + `min-width`, đổi icon bằng

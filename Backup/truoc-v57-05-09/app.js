@@ -493,7 +493,7 @@
 
   const tongLoiLay = (buoiId, slug) => fsGet('/spBuoi/' + encodeURIComponent(buoiId) + '/tongLoi/' + encodeURIComponent(slug));
   const tongLoiGhi = (buoiId, slug, d, mask, tuyChon) => fsPatch('/spBuoi/' + encodeURIComponent(buoiId) + '/tongLoi/' + encodeURIComponent(slug), d, mask, tuyChon);
-  const phanHoiGhi = (buoiId, phId, d, tuyChon) => fsPatch('/spBuoi/' + encodeURIComponent(buoiId) + '/phanHoi/' + encodeURIComponent(phId), d, null, tuyChon);
+  const phanHoiGhi = (buoiId, phId, d) => fsPatch('/spBuoi/' + encodeURIComponent(buoiId) + '/phanHoi/' + encodeURIComponent(phId), d);
 
   /* ═══ ⛔⛔ 04/09/2026 — CHỐT CHỐNG MẤT BÀI ═══
      (đọc `GHI CHU DU AN.md` mục "CHẶNG — 04/09/2026" trước khi sửa khối này)
@@ -600,26 +600,8 @@
          gì thì không vẽ lại, không toast nhầm "từ máy khác".
        · keepalive: thân gói ≤ ~64 KB — bài rất dài thì `tlDayVoi` bỏ qua, tin vào lượt thường
          (vốn đã ghi ngay lúc bấm, nên hiếm khi còn gì chờ). */
-  /* ⭐⭐ `?v=57` — TỰ LƯU CHO MÀN PHẢN BIỆN CÁ NHÂN (thầy chốt 05/09 chiều).
-     Dùng CHUNG khối `tl` này, khác nhau ở `tl.che`:
-       · 'cham'     → ghi MỘT tài liệu `tongLoi/{em}` (mảng errors) — luồng gốc `?v=55`.
-       · 'phanbien' → ghi NHIỀU tài liệu `phanHoi/{errId__em}`, mỗi phiếu một tài liệu, nên KHÔNG
-                      cần `gopLoi`/`tongLoiGhiAnToan`: hai phiếu khác nhau không bao giờ đè nhau.
-     ⛔ BỐN KHÁC BIỆT ĐÃ THỐNG NHẤT VỚI THẦY, đừng "dọn cho giống màn chấm":
-       ① Phiếu DISAGREE **chỉ lên kho khi em bấm nút máy bay** (thầy chốt), KHÔNG tự gửi theo nhịp
-          gõ. Lý do kỹ thuật đi kèm: luật kho CẤM phiếu `phanDoi` có `lyDo` rỗng (403) — bấm
-          DISAGREE mà ghi ngay là bị từ chối. `tlGhiPb()` tự bỏ qua mọi phiếu chưa đủ lý do.
-       ② Nút SUBMIT bỏ hẳn (như màn chấm). `#pbThieuModal` + `submitPb`/`submitPbThatSu` do đó
-          KHÔNG còn đường gọi — giữ lại làm lịch sử. Việc nhắc "còn N câu chưa xác nhận" nay do
-          badge `#btnPbThieu` lo (luôn hiện, bấm là cuộn tới câu đó).
-       ③ Đổi ý DISAGREE → AGREE: **GIỮ nguyên `lyDo` trên kho** và vẫn HIỆN dòng đó, nhưng xám mờ
-          + gạch ngang (thầy chốt: thấy được "đã từng nhận xét rồi rút"). Xem `renderErrorsPb`.
-       ④ Nghe kho CẢ collection `phanHoi` của buổi ⇒ bạn cùng đội vừa bỏ phiếu là badge
-          UNCONFIRMED trên máy em tự tụt. (`startPb` vốn đã đọc hết collection này một lượt,
-          nên lần đầu không tốn thêm lượt đọc nào.) */
   const tl = {
-    bat: false,       // chế độ tự lưu đang bật (mô hình 2: màn chấm hoặc màn phản biện)
-    che: 'cham',      // 'cham' | 'phanbien' — quyết định lượt ghi đi đường nào
+    bat: false,       // chế độ tự lưu đang bật (mô hình 2 + màn chấm)
     can: false,       // có thay đổi CHƯA đẩy lên kho
     dangGhi: false,   // đang có một lượt ghi chạy
     hong: false,      // lượt ghi gần nhất hỏng (đang chờ thử lại)
@@ -649,18 +631,13 @@
   }
   function capNhatTrangThaiLuu() {
     if (!tl.bat) return;
-    if (tl.dangGhi || tl.can) { datTrangThaiLuu(tl.hong ? 'hong' : 'dang', tl.hong ? 'Not saved — retrying…' : 'Saving…'); return; }
-    /* ⭐ `?v=57` — màn phản biện: phiếu DISAGREE chưa gõ lý do thì KHÔNG ghi được (luật kho cấm).
-       Phải nói thẳng ra, đừng hiện "Saved" cho em tưởng đã xong — đúng nếp [[bay-bao-ok-gia]]. */
-    const cho = tl.che === 'phanbien' ? demPhieuChoLyDo() : 0;
-    if (cho) { datTrangThaiLuu('cho', cho + ' reason' + (cho > 1 ? 's' : '') + ' needed'); return; }
-    if (tl.luuLuc) datTrangThaiLuu('xong', 'Saved ' + gioNgan(tl.luuLuc));
+    if (tl.dangGhi || tl.can) datTrangThaiLuu(tl.hong ? 'hong' : 'dang', tl.hong ? 'Not saved — retrying…' : 'Saving…');
+    else if (tl.luuLuc) datTrangThaiLuu('xong', 'Saved ' + gioNgan(tl.luuLuc));
     else datTrangThaiLuu('san', 'Saved');   // vừa mở bài: bảng đang hiện đúng là bản trên kho
   }
 
-  function tlBat(on, che) {
+  function tlBat(on) {
     tl.bat = !!on;
-    tl.che = che === 'phanbien' ? 'phanbien' : 'cham';
     $('appScreen').classList.toggle('tu-luu', tl.bat);
     if (!tl.bat) { tlHuyNghe(); clearTimeout(tl.hen); tl.hen = null; $('hdLuu').classList.add('hidden'); return; }
     tl.can = false; tl.dangGhi = false; tl.hong = false; tl.lanThu = 0; tl.luuLuc = 0; tl.xoaNhapKhi = '';
@@ -694,12 +671,6 @@
     capNhatTrangThaiLuu();
     let ok = false;
     try {
-      if (tl.che === 'phanbien') {
-        await tlGhiPb(tuyChon);
-        ok = true;
-        tl.hong = false; tl.lanThu = 0; tl.luuLuc = Date.now();
-        renderErrorsPb();
-      } else {
       const kq = await tongLoiGhiAnToan(state.buoiId, slugHs(state.student), tlGoi(), tuyChon);
       ok = true;
       tl.hong = false; tl.lanThu = 0; tl.luuLuc = Date.now();
@@ -708,7 +679,6 @@
       m2GhiNhanKho(m2KhoErrors);
       if (!tlApDung(kq.errors)) renderErrors();
       if (tl.xoaNhapKhi) { try { localStorage.removeItem(tl.xoaNhapKhi); } catch (e) {} tl.xoaNhapKhi = ''; }
-      }
     } catch (e) {
       tl.can = true; tl.hong = true; tl.lanThu++;
       if (tl.lanThu === 1) toast('Could not save (' + e.message + ') — nothing was lost, I will keep retrying. Check your internet.', 'err');
@@ -795,120 +765,18 @@
   // Quay lại app: đọc kho một phát (không tin bộ nhớ đệm), nối lại bộ nghe nếu đã chết, ghi nốt phần chờ
   async function tlDocLai() {
     if (!tl.bat || !state.buoiId) return;
-    if (!tl.nghe) { if (tl.che === 'phanbien') tlNoiKhoPb(); else tlNoiKho(); }
-    if (tl.che === 'phanbien') {
-      try { tlNhanPhieuKho(await fsQuery(state.buoiId, 'phanHoi', '', '', 3000)); }
-      catch (e) { /* mạng chưa về — lượt ghi kế tiếp sẽ báo đỏ, không nuốt */ }
-    } else {
-      try { tlNhanKho(await tongLoiLay(state.buoiId, slugHs(state.student))); }
-      catch (e) { /* mạng chưa về — lượt ghi kế tiếp sẽ báo đỏ, không nuốt */ }
-    }
+    if (!tl.nghe) tlNoiKho();
+    try { tlNhanKho(await tongLoiLay(state.buoiId, slugHs(state.student))); }
+    catch (e) { /* mạng chưa về — lượt ghi kế tiếp sẽ báo đỏ, không nuốt */ }
     if (tl.can && !tl.dangGhi) tlChay();
   }
   // Rời app: còn thứ chưa ghi thì đẩy vội bằng keepalive — CHỈ khi bản đệm còn tươi (đang nghe
   // kho, hoặc vừa đọc ≤ KHO_TUOI) để không phải đọc kho trước (đọc là quá muộn, trang đã ẩn).
   function tlDayVoi() {
-    if (!tl.bat || !tl.can || tl.dangGhi) return;
-    // Màn phản biện: mỗi phiếu là một tài liệu riêng, ghi thẳng không cần đọc kho trước ⇒ đẩy được
-    // ngay. Gói cũng bé (một phiếu ≤ 300 ký tự lý do) nên không lo trần 64 KB của keepalive.
-    if (tl.che === 'phanbien') { tlChay({ keepalive: true }); return; }
-    if (!m2KhoErrors) return;
+    if (!tl.bat || !tl.can || tl.dangGhi || !m2KhoErrors) return;
     if (!tl.ngheSong && (Date.now() - m2KhoDocLuc) >= KHO_TUOI) return;
     if (JSON.stringify(state.errors).length > 55000) return;   // quá cỡ keepalive (~64 KB) — để lượt thường lo
     tlChay({ keepalive: true });
-  }
-
-  /* ══════ `?v=57` — PHẦN RIÊNG CỦA MÀN PHẢN BIỆN ══════════════════════════════════════════
-     Phiếu nào đang chờ lý do (bấm DISAGREE nhưng chưa gõ/gửi) ⇒ KHÔNG ghi được, dòng trạng thái
-     phải nói "N reasons needed". ⛔ Đây không phải lỗi — đúng luật kho (`phanDoi` bắt buộc `lyDo`). */
-  function phieuGuiDuoc(v) {
-    return !!v && (v.y === 'dongY' || !!String(v.lyDo || '').trim());
-  }
-  function demPhieuChoLyDo() {
-    return Object.keys(m2.votes || {}).filter((id) => !phieuGuiDuoc(m2.votes[id]) && !daDongBoPhieu(id)).length;
-  }
-  /* Một lượt ghi phản biện: so `m2.votes` với `m2.votesServer`, ghi TỪNG phiếu đã đổi.
-     ⛔ `votesServer` cập nhật THEO TỪNG PHIẾU (không gán cả cục): phiếu chờ lý do vẫn nằm trong
-        `m2.votes` mà chưa hề lên kho — gán cả cục là nói dối rằng nó đã đồng bộ.
-     ⛔ Hỏng giữa chừng thì các phiếu ghi xong TRƯỚC đó vẫn được ghi nhận (đã lên kho thật), phần
-        còn lại ném lỗi ra cho `tlChay` báo đỏ + hẹn thử lại. */
-  async function tlGhiPb(tuyChon) {
-    const sv = JSON.parse(m2.votesServer || '{}');
-    const doi = Object.keys(m2.votes).filter((id) =>
-      phieuGuiDuoc(m2.votes[id]) && JSON.stringify(m2.votes[id]) !== JSON.stringify(sv[id]));
-    if (!doi.length) return 0;
-    let xong = 0;
-    try {
-      for (const id of doi) {
-        const it = m2.dsCham.find((x) => x.err.id === id);
-        const v = m2.votes[id];
-        await phanHoiGhi(state.buoiId, id + '__' + slugHs(state.student), {
-          errId: id,
-          chuLoi: it ? it.chuLoi : '',
-          voter: state.student,
-          voterTeam: state.myTeam,
-          y: v.y,
-          // ⭐ (thầy chốt) đổi ý DISAGREE → AGREE thì GIỮ NGUYÊN lý do cũ trên kho làm dấu vết;
-          // `renderErrorsPb` hiện nó xám mờ + gạch ngang.
-          lyDo: String(v.lyDo || '').trim(),
-          luc: Date.now(),
-        }, tuyChon);
-        sv[id] = v;
-        xong++;
-        // Phiếu của chính em trong bảng chung — thay tại chỗ để avatar/dòng lý do hiện ngay
-        m2.phanHoi = m2.phanHoi.filter((p) => !(p.errId === id && p.voter === state.student));
-        m2.phanHoi.push({ errId: id, chuLoi: it ? it.chuLoi : '', voter: state.student,
-          voterTeam: state.myTeam, y: v.y, lyDo: String(v.lyDo || '').trim(), luc: Date.now() });
-      }
-    } finally {
-      m2.votesServer = JSON.stringify(sv);   // ghi nhận đúng phần ĐÃ lên kho, kể cả khi hỏng giữa chừng
-    }
-    return xong;
-  }
-
-  /* Nhận danh sách phiếu MỚI NHẤT của cả buổi (từ onSnapshot hoặc lượt đọc lại):
-     · `m2.phanHoi` = bản kho (phiếu của mọi người) ⇒ badge UNCONFIRMED cả đội tự tụt.
-     · Phiếu của CHÍNH EM: phiếu nào ở máy này ĐÃ đồng bộ thì lấy bản kho (máy khác vừa đổi);
-       phiếu nào đang sửa dở/chờ gửi thì GIỮ bản máy này, không để snapshot nuốt mất. */
-  function tlNhanPhieuKho(ds) {
-    const cu = JSON.parse(m2.votesServer || '{}');
-    m2.phanHoi = Array.isArray(ds) ? ds : [];
-    const sv = {};
-    let doiTuMayKhac = 0;
-    m2.phanHoi.filter((p) => p.voter === state.student).forEach((p) => {
-      const kho = { y: p.y, lyDo: p.lyDo || '' };
-      sv[p.errId] = kho;
-      const dangCo = m2.votes[p.errId];
-      const chuaGui = dangCo && JSON.stringify(dangCo) !== JSON.stringify(cu[p.errId] || null);
-      if (chuaGui) return;                                   // máy này đang sửa dở → giữ nguyên
-      if (JSON.stringify(dangCo || null) !== JSON.stringify(kho)) doiTuMayKhac++;
-      m2.votes[p.errId] = kho;
-    });
-    m2.votesServer = JSON.stringify(sv);
-    renderErrorsPb();
-    capNhatTrangThaiLuu();
-    if (doiTuMayKhac) {
-      toast('Synced ' + doiTuMayKhac + ' vote' + (doiTuMayKhac > 1 ? 's' : '') + ' from your other device ✓', 'info');
-    }
-  }
-
-  // Nghe CẢ collection `phanHoi` của buổi (thầy chốt ④). `startPb` vốn đã đọc hết một lượt nên
-  // lần đầu không tốn thêm lượt đọc; sau đó chỉ tính lượt cho tài liệu thật sự đổi.
-  async function tlNoiKhoPb() {
-    tlHuyNghe();
-    if (!state.buoiId || !CFG.FIREBASE) return;
-    try {
-      const { fsMod, db } = await laySdkKho();
-      if (!tl.bat || tl.nghe) return;   // rời màn / đã nối trong lúc chờ nạp SDK
-      const goc = fsMod.collection(db, 'spBuoi', state.buoiId, 'phanHoi');
-      tl.nghe = fsMod.onSnapshot(goc, (snap) => {
-        if (snap.metadata && snap.metadata.fromCache) return;   // chỉ tin bản từ MÁY CHỦ
-        tl.ngheSong = true;
-        const ds = [];
-        snap.forEach((d) => { const o = d.data() || {}; o._id = d.id; ds.push(o); });
-        tlNhanPhieuKho(ds);
-      }, () => { tl.ngheSong = false; tl.nghe = null; });
-    } catch (e) { tl.ngheSong = false; }
   }
 
   // Chuẩn hoá một lỗi mô hình 2 (bản cũ trong kho có thể thiếu trường mới)
@@ -2383,7 +2251,6 @@
   // Đồng ý / Phản đối LOẠI TRỪ NHAU, phản đối BẮT BUỘC lý do; phiếu ĐỘC LẬP theo từng em.
   async function startPb() {
     setReviewLock(false);
-    tlBat(true, 'phanbien');   // ⭐ `?v=57` — tự lưu: ẩn nút Submit, hiện dòng trạng thái
     dungManChinh();
     loadingHien('Loading the mistakes on your team…');
     try {
@@ -2415,9 +2282,8 @@
     loadingAn();
     initVideo();
     renderErrorsPb();
-    capNhatTrangThaiLuu();
+    capNhatNutSubmit();
     refreshIcons();
-    tlNoiKhoPb();   // ⭐ `?v=57` — từ đây bạn cùng đội bỏ phiếu là badge UNCONFIRMED tự tụt
     if (!m2.dsCham.length) toast('No mistakes on your team yet — the other team may not have submitted.', 'info');
     // (Đợt cuộn tới câu chưa xác nhận) mở màn phản biện: hiện bình thường 1 giây cho em định
     // hình đã, rồi mới tự cuộn tới câu đầu tiên chưa xác nhận (không có thì im lặng, không cuộn).
@@ -2504,9 +2370,6 @@
     if (dich) flyPhanBien(el, dich, text);
     capNhatNutSubmit();
     renderErrorsPb();
-    // ⭐ `?v=57` (thầy chốt ①) — ĐÂY là lúc DUY NHẤT phiếu DISAGREE lên kho: em đã gõ lý do và
-    // bấm nút máy bay. Không tự gửi theo nhịp gõ.
-    luuNgay();
   }
   // (Đợt lưu nháp) mỗi câu 1 ô nhớ riêng trong cùng khoá localStorage (map errId->chữ đang gõ
   // dở CHƯA gửi) — khoá theo buổi+em nên đổi máy/tải lại trang không mất, tách bạch hẳn với
@@ -2544,9 +2407,7 @@
       const daGo = e.trangThai === 'go';
       const v = m2.votes[e.id] || null;
       const phieuKhac = phieuCuaLoi(e.id).filter((p) => p.voter !== state.student);
-      // ⭐ `?v=57` (thầy chốt ③) — lấy MỌI phiếu CÓ LÝ DO, kể cả phiếu nay đã là 'dongY': người
-      // đó từng phản đối rồi rút, dòng lý do vẫn hiện nhưng xám mờ + gạch ngang.
-      const phieuKhacCoLyDo = phieuKhac.filter((p) => String(p.lyDo || '').trim());
+      const phieuKhacPhanDoi = phieuKhac.filter((p) => p.y === 'phanDoi');
       const chonY = v && v.y === 'dongY', chonN = v && v.y === 'phanDoi';
       // (Đợt yêu cầu mới) Lỗi CỦA CHÍNH EM (e.who === tên em) BẮT BUỘC phải AGREE/DISAGREE mới
       // nộp được — lỗi của đồng đội vẫn TUỲ Ý (xem chặn ở submitPb()). So chuỗi y hệt cách app
@@ -2596,19 +2457,15 @@
         // tên tô vàng; người khác xếp sau, tên trung tính. Chỉ hiện khi đã có lý do THẬT (không
         // hiện phiếu 'phanDoi' rỗng — nghĩa là mới bấm DISAGREE nhưng chưa gõ/gửi gì).
         (function(){
-          // ⭐ `?v=57` (thầy chốt ③) — `rut` = phiếu nay đã là AGREE nhưng còn lý do cũ: VẪN HIỆN,
-          // chữ nhỏ + xám mờ + GẠCH NGANG ("đã từng nhận xét nhưng đã bỏ"). Không cho sửa nữa
-          // (đang đồng ý thì chẳng còn gì để cãi) nên nút bút chì cũng ẩn theo.
-          const minh = (v && String(v.lyDo || '').trim())
-            ? [{ voter: state.student, lyDo: v.lyDo, minh: true, rut: v.y === 'dongY' }] : [];
-          const ds = minh.concat(phieuKhacCoLyDo.map((p) => ({ voter: p.voter, lyDo: p.lyDo, minh: false, rut: p.y === 'dongY' })));
+          const minh = (v && v.y === 'phanDoi' && String(v.lyDo || '').trim())
+            ? [{ voter: state.student, lyDo: v.lyDo, minh: true }] : [];
+          const ds = minh.concat(phieuKhacPhanDoi.map((p) => ({ voter: p.voter, lyDo: p.lyDo, minh: false })));
           if (!ds.length) return '';
           return '<div class="mt-2 space-y-1" data-pbrebut="' + escapeHtml(e.id) + '">' +
-            ds.map((d) => '<div class="flex items-start gap-1.5 ' + (d.rut ? 'text-[11px]' : 'text-xs') + '">' +
-              '<b class="font-extrabold shrink-0 ' +
-              (d.rut ? 'text-slate-300 line-through' : (d.minh ? 'text-amber-600' : 'text-slate-700')) + '">' + escapeHtml(d.voter) + '</b>' +
-              '<span class="font-bold flex-1 ' + (d.rut ? 'text-slate-300 line-through' : 'text-amber-700') + '">: ' + escapeHtml(d.lyDo) + '</span>' +
-              (d.minh && !d.rut ? '<button data-pbedit="' + escapeHtml(e.id) + '" title="Edit" class="shrink-0 text-slate-400 hover:text-indigo-600 p-0.5"><i data-lucide="pencil" class="w-3 h-3 pointer-events-none"></i></button>' : '') +
+            ds.map((d) => '<div class="flex items-start gap-1.5 text-xs">' +
+              '<b class="font-extrabold shrink-0 ' + (d.minh ? 'text-amber-600' : 'text-slate-700') + '">' + escapeHtml(d.voter) + '</b>' +
+              '<span class="font-bold text-amber-700 flex-1">: ' + escapeHtml(d.lyDo) + '</span>' +
+              (d.minh ? '<button data-pbedit="' + escapeHtml(e.id) + '" title="Edit" class="shrink-0 text-slate-400 hover:text-indigo-600 p-0.5"><i data-lucide="pencil" class="w-3 h-3 pointer-events-none"></i></button>' : '') +
               '</div>').join('') +
             '</div>';
         })() +
@@ -3387,10 +3244,6 @@
         m2.votes[id] = { y: vote.dataset.pbvote, lyDo: cu.lyDo || '' };
         renderErrorsPb();
         capNhatNutSubmit();
-        /* ⭐ `?v=57` — AGREE (và ca hiếm "bấm lại DISAGREE khi lý do cũ còn") ghi ngay lên kho.
-           DISAGREE lần đầu chưa có lý do thì `tlGhiPb` tự bỏ qua, dòng trạng thái đổi sang
-           "1 reason needed" — em phải gõ rồi bấm máy bay (thầy chốt ①). */
-        luuNgay();
         if (vote.dataset.pbvote === 'phanDoi') {
           const o = document.querySelector('[data-pblydo="' + id + '"]');
           if (o && !o.value.trim()) o.focus();

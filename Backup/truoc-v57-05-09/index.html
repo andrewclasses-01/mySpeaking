@@ -239,17 +239,6 @@ tailwind.config = {
                overscroll-behavior-x:none; touch-action:pan-y; }
     #khoiNhap > *{ min-width:0; max-width:100%; }
     #errFormCard, #errListCard{ overflow-x:hidden; }
-    /* ⛔ `?v=57` — LỖI CŨ, chỉ lộ khi mở màn PHẢN BIỆN bằng điện thoại (đo thật 375px): hàng đầu
-       khung "Mistakes found" xếp 3 khối trên MỘT dòng không xuống hàng — nút lọc ALL/TEAM
-       CONFLICT/MINE cần 157px, badge UNCONFIRMED 122px, G/P/I 118px = 397px, mà chỗ chỉ có 317px.
-       Nút lọc bị bóp còn 60px và vì bản thân nó có `overflow-hidden` nên **MINE bị cắt mất hẳn**,
-       học sinh không đổi được sang danh sách lỗi của chính mình.
-       ⛔ Đã kiểm: KHÔNG phải do hai luật `overflow-x`/`min-width` thêm ở `?v=56` — gỡ chúng ra
-       nút vẫn 60px. Lỗi có từ trước, chưa ai mở màn này bằng iPhone nên chưa lộ.
-       CHỮA: cho hàng xuống dòng và cấm bóp nút lọc. Máy tính (≥1024px) không đụng. */
-    #errListHead{ flex-wrap:wrap; gap:.5rem; }
-    #btnPbLoc{ flex-shrink:0; }
-    #btnPbThieu{ margin-left:0; margin-right:0; }   /* mx-2 của Tailwind thừa khi đã có gap */
     /* ⭐ 05/09/2026 (thầy chốt) — BÓP MỌI KHOẢNG DỌC THỪA. Màn điện thoại đã bé, mỗi vệt trống
        là một dòng chữ bị mất. Ba nguồn sinh ra vệt trắng dưới thanh player:
          ① `py-2` của <main>  ② `space-y-2.5` giữa khối video và khung nhập  ③ `pt-1 pb-2` của #khoiVideo
@@ -319,7 +308,6 @@ tailwind.config = {
   .hdLuu-ico{ width:13px; height:13px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
   .hdLuu-ico > *{ display:none; }
   #hdLuu[data-kieu="san"] .hdLuu-check, #hdLuu[data-kieu="xong"] .hdLuu-check{ display:block; }
-  #appScreen.pb-mode #hdLuu{ min-width:8.4rem; }   /* chỗ cho chữ dài nhất: "2 reasons needed" */
   #hdLuu[data-kieu="dang"] .hdLuu-spin{ display:block; }
   #hdLuu[data-kieu="hong"] .hdLuu-alert{ display:block; }
   .hdLuu-spin{ width:11px; height:11px; border-radius:50%; border:2px solid rgba(255,255,255,.3);
@@ -327,10 +315,6 @@ tailwind.config = {
   @keyframes hdLuuXoay{ to{ transform:rotate(360deg); } }
   #hdLuu[data-kieu="san"]{ color:rgba(255,255,255,.7); }
   #hdLuu[data-kieu="dang"]{ color:rgba(255,255,255,.9); }
-  /* `?v=57` (màn phản biện): có phiếu DISAGREE chưa gõ lý do ⇒ CHƯA ghi được lên kho (luật kho
-     cấm phiếu phản đối rỗng). Phải nói rõ, đừng hiện "Saved" cho em tưởng xong. */
-  #hdLuu[data-kieu="cho"]{ color:#0f172a; background:#fbbf24; }
-  #hdLuu[data-kieu="cho"] .hdLuu-alert{ display:block; }
   #hdLuu[data-kieu="xong"]{ color:#86efac; }                       /* emerald-300 — xanh lá trên nền tím */
   #hdLuu[data-kieu="hong"]{ color:#fff; background:#e11d48; animation:hdLuuNhay 1.1s ease-in-out infinite; }
   @keyframes hdLuuNhay{ 0%,100%{ opacity:1; } 50%{ opacity:.55; } }
@@ -708,9 +692,7 @@ tailwind.config = {
              (`lg:row-span-2`) — cao bằng tổng video + khối check lỗi bên trái.
              ⛔ Bỏ `lg:row-start-2` của CHẶNG 30 (khi đó nó nằm dưới form, trên nó để trống). -->
         <div id="errListCard" class="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 lg:p-5 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:min-h-[12rem] lg:flex lg:flex-col">
-          <!-- `?v=57`: đặt id để CSS vá được bố cục điện thoại của màn PHẢN BIỆN (xem khối
-               "#errListHead" trong <style>) — dùng chung cho cả màn chấm, đừng đổi tên. -->
-          <div id="errListHead" class="flex items-center justify-between mb-3 lg:shrink-0">
+          <div class="flex items-center justify-between mb-3 lg:shrink-0">
             <h2 id="errListTitle" class="font-extrabold flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-indigo-600"></i> Mistakes found</h2>
             <!-- (Đợt lọc ALL/MINE) màn phản biện: thay hẳn tiêu đề trên bằng nút DÀI CHIA ĐÔI —
                  bên đang hiện thì sáng, bên kia xám mờ (ẩn/hiện qua CSS .pb-mode bên dưới) -->
@@ -1047,6 +1029,6 @@ tailwind.config = {
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
 <script src="js/trung.js?v=6"></script>
-<script src="js/app.js?v=57"></script>
+<script src="js/app.js?v=56"></script>
 </body>
 </html>
