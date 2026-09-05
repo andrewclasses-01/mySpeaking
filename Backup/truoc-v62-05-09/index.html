@@ -128,34 +128,18 @@ tailwind.config = {
   .tr-av img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
   .tr-cum-dau .tr-av { width:22px; height:22px; font-size:8px; }
   /* Hai nút phiếu ở màn xác nhận: SỐ TO trong nút, avatar người đã bỏ nằm dưới */
-  /* ⭐ `?v=62` (thầy chốt) — Ô VOTE DỰNG LẠI NẰM NGANG: SỐ TO sát mép trái (chỗ đó CHỈ có số),
-     bên phải là hai dòng — trên là chữ ĐỒNG Ý GỘP / KHÔNG GỘP, dưới là avatar người đã bỏ.
-     Avatar to lên 30px (trước 26px): cả đội chỉ 4–5 em nên thừa chỗ, để nhỏ thì không nhận ra ai. */
   .tr-phieu { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:12px 13px 13px;
     border-top:1px solid #e2e8f0; background:#f8fafc; }
-  .tr-phieu button { border:2px solid transparent; border-radius:14px; padding:9px 10px;
-    display:flex; flex-direction:row; align-items:center; gap:10px; text-align:left;
-    font-weight:800; font-size:11.5px; letter-spacing:.04em; text-transform:uppercase;
-    transition:transform .15s, background .2s, color .2s; }
+  .tr-phieu button { border:2px solid transparent; border-radius:14px; padding:10px 8px 8px;
+    display:flex; flex-direction:column; align-items:center; gap:2px; font-weight:800; font-size:11.5px;
+    letter-spacing:.04em; text-transform:uppercase; transition:transform .15s; }
   .tr-phieu button:active { transform:scale(.97); }
-  .tr-phieu .so { font-size:32px; line-height:1; font-variant-numeric:tabular-nums; flex:none;
-    min-width:26px; text-align:center; }
-  .tr-phieu .ruot { display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-width:0; }
-  .tr-phieu .avs { display:flex; min-height:30px; align-items:center; }
-  .tr-phieu .avs .tr-av { width:30px; height:30px; font-size:10px; }
+  .tr-phieu .so { font-size:30px; line-height:1; font-variant-numeric:tabular-nums; }
+  .tr-phieu .avs { display:flex; margin-top:6px; min-height:26px; }
   .tr-phieu .ok { background:#dcfce7; color:#15803d; }
   .tr-phieu .ok.minh { background:#16a34a; color:#fff; border-color:#15803d; }
   .tr-phieu .no { background:#fee2e2; color:#b91c1c; }
   .tr-phieu .no.minh { background:#dc2626; color:#fff; border-color:#b91c1c; }
-  /* ⭐ `?v=62` (thầy chốt) — BÊN THUA VỀ ĐEN TRẮNG cho dễ nhìn: số đông chọn GỘP thì ô KHÔNG GỘP
-     xám hẳn, và ngược lại. Xám kể cả khi đó là phiếu của CHÍNH EM (`.minh`).
-     ⛔ Bốn selector chứ không phải hai, và phải kể cả `.minh`: `.tr-phieu .ok.minh` có độ đặc
-        hiệu (0,0,3,1), viết gọn `.tr-phieu button.xam` (0,0,2,1) là THUA, ô của em không xám.
-        Đừng chữa bằng `!important` — cứ kể đủ tổ hợp là xong. */
-  .tr-phieu .ok.xam, .tr-phieu .no.xam,
-  .tr-phieu .ok.minh.xam, .tr-phieu .no.minh.xam {
-    background:#e2e8f0; color:#94a3b8; border-color:transparent; }
-  .tr-phieu .xam .tr-av { filter:grayscale(1); opacity:.65; }
   /* Pop-up chọn cụm: ⛔ ô con phải flex:none — thân là flex-column có max-height nên ô bị co,
      cộng overflow:hidden là NÚT BÊN TRONG BỊ CẮT CỤT (đã cắn ở bản mẫu, thầy chụp lại được). */
   .tpc-o { border:2px solid #dbeafe; border-radius:16px; overflow:hidden; flex:none; }
@@ -200,24 +184,23 @@ tailwind.config = {
   /* ⛔⛔ `:not(.hidden)` là BẮT BUỘC ở mọi luật đặt `display` bằng selector có #id: selector
      một ID (0,1,0,0) **ăn đứt** `.hidden{display:none}` (0,0,1,0) của Tailwind. Đúng cái bẫy
      đã làm nút CONFLICT hiện ra dù bằng 0 ở `?v=59`, và ô trắng trống ở `?v=44`. */
-  /* ⭐ `?v=62` (thầy chốt) — dải ② nay LUÔN XẾP DỌC ở MỌI cỡ màn, và mọi nút TRẢI HẾT bề ngang
-     cột. Trước đó máy tính xếp ngang (nút trái, dải đếm dạt phải) — thầy chốt bỏ, cho hai màn
-     giống hệt nhau ở mọi cỡ màn. Dải đếm rời `#trDem` đã BỎ HẲN: con số nhét luôn vào tên nút
-     ("ALL MISTAKES: 8" · "GROUPS: 1"), đỡ một hàng chữ trên màn điện thoại vốn đã chật. */
-  #trBar:not(.hidden){ display:flex; flex-direction:column; gap:.375rem; flex-shrink:0; }
-  #trTab:not(.hidden), #xnTab:not(.hidden){ display:flex; width:100%; border:1px solid #cbd5e1;
+  #trBar:not(.hidden){ display:flex; align-items:center; gap:.5rem; flex-shrink:0; }
+  #trTab:not(.hidden){ display:flex; flex-shrink:0; border:1px solid #cbd5e1;
     border-radius:.75rem; overflow:hidden; background:#fff; }
-  #trTab button, #xnTab button{ flex:1; min-width:0; padding:.375rem .6rem; min-height:36px;
-    font-size:11px; font-weight:800; letter-spacing:.04em; white-space:nowrap;
-    display:flex; align-items:center; justify-content:center; gap:.35rem; transition:background .15s; }
-  /* Hai ô KẾT QUẢ của màn XÁC NHẬN TRÙNG — chia đôi bề ngang cột, chỉ để NHÌN, không bấm được. */
-  #xnKq:not(.hidden){ display:flex; gap:.375rem; }
-  #xnKq > span{ flex:1; min-width:0; min-height:32px; border-radius:.75rem; font-size:11px;
-    font-weight:800; letter-spacing:.04em; display:inline-flex; align-items:center;
-    justify-content:center; gap:.35rem; white-space:nowrap; }
-  #xnKqGop{ background:#dcfce7; color:#15803d; }
-  #xnKqKhong{ background:#fee2e2; color:#b91c1c; }
+  #trTab button{ padding:.375rem .9rem; min-height:34px; font-size:11px; font-weight:800;
+    letter-spacing:.05em; display:flex; align-items:center; justify-content:center; gap:.35rem; }
+  #trDem{ display:flex; align-items:center; gap:.375rem; margin-left:auto; flex-wrap:wrap;
+    justify-content:flex-end; min-width:0; }
+  #trDem > span{ min-height:34px; display:inline-flex; align-items:center; justify-content:center; }
   #trDaiTieng{ flex-shrink:0; }
+  @media (max-width:1023.98px){
+    /* Điện thoại: hai nút HÀNG TRÊN trải hết bề ngang, dải đếm HÀNG DƯỚI căn giữa —
+       cùng khuôn với `#pbBar` của màn phản biện. */
+    #trBar:not(.hidden){ flex-direction:column; align-items:stretch; gap:.375rem; }
+    #trTab:not(.hidden){ width:100%; }
+    #trTab button{ flex:1; }
+    #trDem{ margin-left:0; justify-content:center; }
+  }
   /* Tầng ④ — PHẦN DUY NHẤT CUỘN. Ba lớp chặn vuốt ngang y như `#khoiNhap` của màn chấm
      (`?v=56`, thầy bắt lỗi trên iPhone): khoá tràn ngang · bảo iOS chỉ nhận cử chỉ dọc ·
      ép chữ dài (IPA, link…) tự ngắt — thủ phạm là chuỗi dài KHÔNG CÓ CHỖ NGẮT. */
@@ -1111,25 +1094,14 @@ tailwind.config = {
   </header>
 
   <main class="w-full px-3 sm:px-4">
-    <!-- ② DẢI NÚT — khác nhau theo từng màn, cùng một chỗ ngồi.
-         ⭐ `?v=62` (thầy chốt): con số nhét THẲNG vào tên nút, bỏ hẳn dải đếm rời `#trDem`.
-         Mọi nút TRẢI HẾT bề ngang cột ở CẢ máy tính lẫn điện thoại. -->
+    <!-- ② DẢI NÚT + DẢI ĐẾM. ⛔ Hai con số LUÔN hiện, kể cả khi đang xem bảng GROUPS
+         (thầy chốt) — em phải biết còn bao nhiêu lỗi chưa gộp mà không cần bấm qua lại. -->
     <div id="trBar" class="hidden">
-      <!-- KIỂM TRA TRÙNG: chọn bảng nào đang hiện -->
-      <div id="trTab" class="hidden">
-        <button data-trcot="trai" class="bg-slate-900 text-white">ALL MISTAKES:&nbsp;<span id="trSoLoi">0</span></button>
-        <button data-trcot="phai" class="bg-white text-slate-500">GROUPS:&nbsp;<span id="trSoCum">0</span></button>
+      <div id="trTab">
+        <button data-trcot="trai" class="bg-slate-900 text-white">MISTAKES</button>
+        <button data-trcot="phai" class="bg-white text-slate-500">GROUPS</button>
       </div>
-      <!-- XÁC NHẬN TRÙNG: lọc danh sách cụm -->
-      <div id="xnTab" class="hidden">
-        <button data-xnloc="all" class="bg-slate-900 text-white">YÊU CẦU XEM XÉT:&nbsp;<span id="xnSoAll">0</span></button>
-        <button data-xnloc="can" class="bg-white text-slate-500">CẦN BỎ PHIẾU:&nbsp;<span id="xnSoCan">0</span></button>
-      </div>
-      <!-- XÁC NHẬN TRÙNG: kết quả phiếu của CẢ ĐỘI — chỉ để nhìn, không bấm được -->
-      <div id="xnKq" class="hidden">
-        <span id="xnKqGop">ĐỒNG Ý GỘP:&nbsp;<span id="xnSoGop">0</span></span>
-        <span id="xnKqKhong">KHÔNG GỘP:&nbsp;<span id="xnSoKhong">0</span></span>
-      </div>
+      <div id="trDem"></div>
     </div>
 
     <!-- ③ THANH TIẾNG — ⛔ KHÔNG BAO GIỜ CÓ HÌNH (thầy chốt): khung `#trungVideo` giữ 1px ẩn,
@@ -1219,6 +1191,6 @@ tailwind.config = {
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
 <script src="js/trung.js?v=7"></script>
-<script src="js/app.js?v=62"></script>
+<script src="js/app.js?v=61"></script>
 </body>
 </html>

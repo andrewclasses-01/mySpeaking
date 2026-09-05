@@ -2,8 +2,8 @@
 
 > # 🗺 VIỆC CÒN LẠI — ĐỌC KHỐI NÀY KHI TIẾP TỤC (chốt 05/09/2026)
 >
-> Xếp theo **thứ tự thầy muốn làm**. ✅ Việc ① đã build (`?v=55`); ✅ việc ④ **màn KIỂM TRA TRÙNG**
-> đã build (`?v=61`). ⛔ Việc ②, ③, ⑤ và **màn XÁC NHẬN TRÙNG** chưa được "ok build" — hỏi thầy trước.
+> Xếp theo **thứ tự thầy muốn làm**. ✅ Việc ① đã build (`?v=55`); ✅ **việc ④ XONG CẢ HAI MÀN**
+> (`?v=61` + `?v=62`, kèm `myLesson v1.65.0`). ⛔ Việc ②, ③, ⑤ chưa được "ok build" — hỏi thầy trước.
 >
 > ---
 >
@@ -139,9 +139,23 @@
 > Nợ từ đợt gộp lỗi trùng (`?v=46`). Cố ý để sau vì cần **cụm chốt thật** để đo, không đoán từ code.
 > Nay thầy đã dùng vài buổi ⇒ có dữ liệu thật để làm. Xem `myLesson/app/BAN GIAO.md` mục `0🧩` G.
 >
-> ## ④ ✅ MÀN **KIỂM TRA TRÙNG** — ĐÃ DỰNG LẠI 05/09 (`?v=61`). ⬜ Màn XÁC NHẬN TRÙNG còn.
+> ## ④ ✅ HAI MÀN GỘP LỖI TRÙNG — ĐÃ DỰNG LẠI XONG CẢ HAI (`?v=61` + `?v=62`, 05/09)
 >
-> **Hồ sơ đầy đủ: `GHI CHU DU AN.md` chặng `?v=61`** (6 việc · 8 phép đo · bẫy để lại).
+> **Hồ sơ đầy đủ: `GHI CHU DU AN.md` chặng `?v=61` và `?v=62`.**
+>
+> **`?v=62` — màn XÁC NHẬN TRÙNG nay cùng khuôn với màn kia** (một cột 820px, 4 tầng, dòng
+> Saved/Saving). Tầng ② của nó: `#xnTab` (**YÊU CẦU XEM XÉT: x** / **CẦN BỎ PHIẾU: y**, trải hết
+> cột) + `#xnKq` (2 ô **ĐỒNG Ý GỘP** / **KHÔNG GỘP**). Màn KIỂM TRA TRÙNG bỏ dải đếm rời, con số
+> nhét thẳng vào tên nút (**ALL MISTAKES: x** / **GROUPS: y**).
+> ⭐⭐ **LUẬT "XONG MỘT Ô VOTE" = PHIẾU LỆCH**, không cần cả đội bỏ phiếu (`trKetQuaCum`): hoà —
+> kể cả 0–0 — là chưa phân định. Mở màn đứng ở **YÊU CẦU XEM XÉT** (thầy chốt). Thầy đã duyệt
+> việc cụm rớt NGAY khỏi CẦN BỎ PHIẾU sau lượt bấm đầu tiên.
+> ⛔ Class `.xam` (bên thua về đen trắng) phải kể ĐỦ BỐN tổ hợp có `.minh` — viết gọn
+> `.tr-phieu button.xam` là thua độ đặc hiệu, ô của chính em không xám.
+> ⛔⛔ **BẢN CHÉP LIÊN KHO:** `myLesson/web/lop.html spDemTrung()` ↔ `app.js trKetQuaCum()` —
+> hai nơi phải hiểu "chưa phân định" giống hệt nhau. Nút KIỂM TRA TRÙNG bên myLesson nay đếm
+> **số cụm đội em đã gộp** với ô **XANH LÁ** (công thức cũ `!c.daGui` đã chết từ `?v=61`); nút
+> XÁC NHẬN TRÙNG đếm **theo CẢ ĐỘI** (`voterTeam`), không còn theo từng em.
 > Thầy giao 6 việc, đã làm đủ: vá bố cục iPhone · bỏ nút SAVE · dòng Saved/Saving · **một cột 4 tầng
 > ở MỌI cỡ màn** · cho gộp cả khi cùng người chấm · thanh player đồng bộ (không bao giờ có hình).
 >

@@ -3680,7 +3680,6 @@
        khoá nữa vì bước công bố đã bỏ. */
     doi: '',         // 'TEAM n' — đội đang xét (bị chấm)
     cot: 'trai',     // đang xem bảng nào: 'trai' = MISTAKES · 'phai' = GROUPS (mọi cỡ màn)
-    locXn: 'all',    // màn XÁC NHẬN TRÙNG lọc gì: 'all' = mọi cụm · 'can' = cụm còn hoà phiếu
     xoa: null,       // [cumId, errId] đang chờ xác nhận bỏ khỏi cụm
     nghe: [],        // các hàm huỷ onSnapshot
     videoSan: false,
@@ -3810,17 +3809,14 @@
     datAvatarTrung();
     $('ktWrap').classList.toggle('hidden', !kt);
     $('xnWrap').classList.toggle('hidden', kt);
-    /* ⭐ `?v=62` — tầng ② nay CẢ HAI MÀN đều có, chỉ khác ruột:
-         KIỂM TRA TRÙNG → `#trTab` (ALL MISTAKES / GROUPS)
-         XÁC NHẬN TRÙNG → `#xnTab` (YÊU CẦU XEM XÉT / CẦN BỎ PHIẾU) + `#xnKq` (2 ô kết quả) */
-    $('trBar').classList.remove('hidden');
-    $('trTab').classList.toggle('hidden', !kt);
-    $('xnTab').classList.toggle('hidden', kt);
-    $('xnKq').classList.toggle('hidden', kt);
-    if (kt) trDatCot('trai'); else trDatLocXn('all');   // thầy chốt: XN mở ra đứng ở TẤT CẢ
-    /* ⭐ `?v=62` — dòng trạng thái Saved/Saving nay bật cho CẢ HAI màn (thầy chốt): màn
-       XÁC NHẬN TRÙNG cũng ghi kho (mỗi lượt bỏ phiếu là một tài liệu `cumPhieu`). */
-    trLuuBat(true);
+    /* ⭐ `?v=61` — tầng ② (hai nút + dải đếm) CHỈ có ở màn KIỂM TRA TRÙNG. Màn XÁC NHẬN TRÙNG
+       vốn đã có dải số riêng bên trong `#xnWrap`, thêm nữa là đếm hai lần. */
+    $('trBar').classList.toggle('hidden', !kt);
+    if (kt) trDatCot('trai');
+    /* ⭐ `?v=61` — dòng trạng thái Saved/Saving: bật cho màn KIỂM TRA TRÙNG (đội bị chấm ghi
+       cụm), TẮT ở màn XÁC NHẬN TRÙNG — thầy chốt đợt này chỉ làm màn KIỂM TRA TRÙNG.
+       ⛔ `trLuuBat(false)` cũng dọn hàng đợi + hẹn thử lại của lượt trước. */
+    trLuuBat(kt);
     trVideo();
     batAvatarKho();
     refreshIcons();
@@ -4015,11 +4011,13 @@
        bước công bố đã bỏ (thầy chốt) nên mọi cụm đều sửa được. */
     $('ktThem').style.display = tr.cum.length ? '' : 'none';
     $('ktSoTich').textContent = nTich;
-    /* ⭐ `?v=62` (thầy chốt) — HAI CON SỐ NẰM LUÔN TRONG TÊN NÚT, dải đếm rời đã bỏ.
-       ⛔ Chỉ đặt `textContent` của hai <span> con: `trDatCot()` viết lại `className` của NÚT
-          nên phần chữ bên trong phải nằm ở thẻ riêng, đừng gán `innerHTML` cho cả nút. */
-    $('trSoLoi').textContent = conLai.length;
-    $('trSoCum').textContent = tr.cum.length;
+    /* ⭐ `?v=61` (thầy chốt) — DẢI ĐẾM NẰM Ở TẦNG ②, LUÔN HIỆN dù đang xem bảng nào.
+       Đúng hai con số thầy nêu: còn bao nhiêu lỗi chưa gộp · đã gộp được bao nhiêu cụm. */
+    $('trDem').innerHTML =
+      '<span class="bg-slate-900 text-white text-[11px] font-extrabold rounded-full px-2.5 py-1">' +
+        conLai.length + ' lỗi chưa gộp</span>' +
+      '<span class="bg-blue-600 text-white text-[11px] font-extrabold rounded-full px-2.5 py-1">' +
+        tr.cum.length + ' cụm đã gộp</span>';
   }
 
   /* Một khung cụm. `voteMode` = màn XÁC NHẬN TRÙNG (có hai nút phiếu, không có nút bỏ dòng). */
@@ -4076,64 +4074,29 @@
      ⛔ Không kèm dòng hướng dẫn nào (thầy chốt: các em tự bấm, tự thấy số đổi, tự hiểu). */
   function trHaiNutPhieu(c) {
     const ok = trPhieuCua(c._id, 'gop'), no = trPhieuCua(c._id, 'khong'), toi = trPhieuToi(c._id);
-    /* ⭐ `?v=62` (thầy chốt) — BÊN THUA VỀ ĐEN TRẮNG cho dễ nhìn. Hoà phiếu (kể cả 0–0) thì
-       KHÔNG bên nào xám: chưa phân định thì đừng vẽ như đã phân định. */
-    const kq = trKetQuaCum(c);
-    const mot = (loai, nhan, ai) =>
-      '<button class="' + loai + (toi === loai2y(loai) ? ' minh' : '') +
-        (kq !== 'hoa' && kq !== loai2y(loai) ? ' xam' : '') +
-        '" data-trvote="' + loai2y(loai) + '" data-trcum="' + escapeHtml(c._id) + '">' +
-        '<span class="so">' + ai.length + '</span>' +
-        '<span class="ruot"><span class="nhan">' + nhan + '</span>' +
-        '<span class="avs">' + ai.map(trAv).join('') + '</span></span></button>';
     return '<div class="tr-phieu">' +
-      mot('ok', 'ĐỒNG Ý GỘP', ok) + mot('no', 'KHÔNG GỘP', no) + '</div>';
-  }
-  /* Tên class trên nút (`ok`/`no`) ↔ giá trị phiếu ghi vào kho (`gop`/`khong`). Hai bộ tên này
-     đã lệch nhau từ 03/09; giữ nguyên để khỏi phải đụng dữ liệu cũ trên kho. */
-  function loai2y(loai) { return loai === 'ok' ? 'gop' : 'khong'; }
-
-  /* ⭐⭐ `?v=62` (thầy chốt) — KẾT QUẢ MỘT CỤM, tính theo CẢ ĐỘI chứ không theo từng em:
-       'gop'   = số đông đồng ý gộp
-       'khong' = số đông không gộp
-       'hoa'   = **CHƯA PHÂN ĐỊNH** (bằng phiếu, kể cả 0–0) ⇒ đây là "CẦN BỎ PHIẾU"
-     ⛔ Thầy chốt: **chỉ cần MỘT phiếu lệch là xong một ô**, không cần cả đội bỏ phiếu.
-        Vì thế mọi thành viên trong đội thấy CÙNG một con số, và em vừa bỏ phiếu đầu tiên
-        (1–0) là cụm đó rớt khỏi danh sách CẦN BỎ PHIẾU ngay — thầy đã duyệt cách này. */
-  function trKetQuaCum(c) {
-    const ok = trPhieuCua(c._id, 'gop').length, no = trPhieuCua(c._id, 'khong').length;
-    return ok > no ? 'gop' : no > ok ? 'khong' : 'hoa';
-  }
-
-  /* Đổi giữa hai nút lọc của màn XÁC NHẬN TRÙNG. Cùng khuôn `trDatCot()` của màn kia. */
-  function trDatLocXn(loc) {
-    tr.locXn = loc === 'can' ? 'can' : 'all';
-    Array.prototype.forEach.call($('xnTab').children, (x) => {
-      const on = x.dataset.xnloc === tr.locXn;
-      x.className = on ? 'bg-slate-900 text-white' : 'bg-white text-slate-500';
-    });
-    trVeXn();
+      '<button class="ok' + (toi === 'gop' ? ' minh' : '') + '" data-trvote="gop" data-trcum="' + escapeHtml(c._id) + '">' +
+        '<span class="so">' + ok.length + '</span>ĐỒNG Ý GỘP<span class="avs">' + ok.map(trAv).join('') + '</span></button>' +
+      '<button class="no' + (toi === 'khong' ? ' minh' : '') + '" data-trvote="khong" data-trcum="' + escapeHtml(c._id) + '">' +
+        '<span class="so">' + no.length + '</span>KHÔNG GỘP<span class="avs">' + no.map(trAv).join('') + '</span></button>' +
+    '</div>';
   }
 
   function trVeXn() {
-    /* Đội chấm CHỈ thấy cụm đã GỬI — cụm đang soạn là việc riêng của đội kia.
-       (Từ `?v=61` mọi cụm mới đều `daGui:true`; chốt này giữ để buổi CŨ còn cụm nháp
-       `daGui:false` thì vẫn không lòi sang đội chấm.) */
+    /* Đội chấm CHỈ thấy cụm đã GỬI — cụm đang soạn là việc riêng của đội kia. */
     const ds = tr.cum.filter((c) => c.daGui);
-    const kq = ds.map(trKetQuaCum);
-    const can = ds.filter((c, i) => kq[i] === 'hoa');
-    $('xnSoAll').textContent = ds.length;
-    $('xnSoCan').textContent = can.length;
-    $('xnSoGop').textContent = kq.filter((k) => k === 'gop').length;
-    $('xnSoKhong').textContent = kq.filter((k) => k === 'khong').length;
-    /* Danh sách xếp theo THỜI GIAN TẠO CỤM — `trNoiKho()` đã sort theo `luc` sẵn rồi. */
-    const hien = tr.locXn === 'can' ? can : ds;
-    const trong = tr.locXn === 'can'
-      ? 'Không còn cụm nào chờ phiếu — cả đội xong rồi ✓'
-      : 'Chưa có cụm nào chờ em.';
+    const daBo = ds.filter((c) => trPhieuToi(c._id)).length;
+    /* ⭐ 03/09 (thầy chốt) — dải số nằm **GIỮA cột nội dung**, ngay trên các cụm chờ bỏ phiếu,
+       chứ không dạt sang mép trái nữa. "gửi" đổi thành "yêu cầu xem xét" cho đúng việc. */
     $('xnWrap').innerHTML =
-      '<div class="space-y-3">' + (hien.map((c) => trKhungCum(c, true)).join('') ||
-        '<div class="tr-khung text-center text-sm text-slate-400 py-6">' + trong + '</div>') +
+      '<div class="flex items-center justify-center gap-2 flex-wrap mb-3">' +
+        '<span class="bg-slate-900 text-white text-xs font-extrabold rounded-full px-2.5 py-1">' +
+          ds.length + ' cụm ' + escapeHtml(tr.doi) + ' yêu cầu xem xét</span>' +
+        '<span class="bg-emerald-100 text-emerald-700 text-xs font-extrabold rounded-full px-2.5 py-1">' +
+          daBo + '/' + ds.length + ' cụm em đã bỏ phiếu</span>' +
+      '</div>' +
+      '<div class="space-y-3">' + (ds.map((c) => trKhungCum(c, true)).join('') ||
+        '<div class="tr-khung text-center text-sm text-slate-400 py-6">Chưa có cụm nào chờ em.</div>') +
       '</div>';
   }
 
@@ -4222,14 +4185,14 @@
     trGhiCum(c);
   }
 
-  /* ⭐ `?v=62` — bỏ phiếu nay cũng đi qua HÀNG ĐỢI: em thấy Saving… / Saved y như hai màn kia,
-     và mạng hỏng thì tự thử lại thay vì một cái toast rồi thôi. */
-  function trBoPhieu(cumId, y) {
+  async function trBoPhieu(cumId, y) {
     const cu = trPhieuToi(cumId);
     const moi = cu === y ? '' : y;      // bấm lại đúng nút đang chọn = rút phiếu
-    trXepGhi('cumPhieu', cumId + '__' + slugHs(state.student), {
-      cumId, voter: state.student, voterTeam: state.myTeam, y: moi, luc: Date.now(),
-    });
+    try {
+      await cumPhieuGhi(state.buoiId, cumId + '__' + slugHs(state.student), {
+        cumId, voter: state.student, voterTeam: state.myTeam, y: moi, luc: Date.now(),
+      });
+    } catch (e) { toast(trChuLoi(e), 'err'); }
   }
 
   function trChuLoi(e) {
@@ -4395,10 +4358,6 @@
     $('trTab').addEventListener('click', (ev) => {
       const b = ev.target.closest('[data-trcot]');
       if (b) trDatCot(b.dataset.trcot);
-    });
-    $('xnTab').addEventListener('click', (ev) => {
-      const b = ev.target.closest('[data-xnloc]');
-      if (b) trDatLocXn(b.dataset.xnloc);
     });
   }
   noiTayTrung();

@@ -2889,3 +2889,74 @@ thật trả object mới mỗi lượt `d.data()`. Nhìn số vô lý thì ph�
 - ⬜ **Thầy bấm tay iPhone thật**: cuộn danh sách xem ba tầng trên còn nguyên · gộp thử 2 lỗi ·
   xem dòng Saved đổi · tắt mạng giữa chừng xem dòng đỏ rồi bật lại.
 - ⛔ Luật kho **KHÔNG phải sửa**: `daGui` vẫn là một trong 6 trường `hasOnly`, chỉ đổi giá trị.
+
+---
+
+## CHẶNG — 05/09/2026 (`?v=62`): MÀN **XÁC NHẬN TRÙNG** DỰNG LẠI + CON SỐ TRÊN NÚT (kèm `myLesson v1.65.0`)
+
+Thầy giao tiếp ngay sau `?v=61`. **Hai kho cùng đổi trong một đợt** — sửa một bên phải sửa bên kia.
+
+### A. Màn KIỂM TRA TRÙNG — bỏ dải đếm rời
+Hai con số nhét THẲNG vào tên nút: **"ALL MISTAKES: 8"** · **"GROUPS: 1"**. Dải `#trDem` bỏ hẳn.
+Mọi nút TRẢI HẾT bề ngang cột ở **cả máy tính lẫn điện thoại** (trước máy tính xếp ngang).
+
+### B. Màn XÁC NHẬN TRÙNG — nay cùng một khuôn với màn kia
+- Dùng chung tầng ② `#trBar`: **`#xnTab`** (2 nút lọc, trải hết cột) + **`#xnKq`** (2 ô kết quả).
+- `#xnWrap` nay CHỈ còn danh sách cụm; dải số cũ nằm trong nó đã bỏ.
+- **Dòng Saved/Saving bật cho cả màn này** (`trLuuBat(true)` cho cả hai chế độ); `trBoPhieu()`
+  đi qua hàng đợi `trXepGhi('cumPhieu', …)` nên mạng hỏng là tự thử lại, không còn toast rồi thôi.
+- Thanh đầu trang vốn đã bó 820px từ `?v=61` (dùng chung `#trungScreen`) — không phải làm gì thêm.
+
+### C. ⭐⭐ LUẬT MỚI: "XONG MỘT Ô VOTE" = **PHIẾU LỆCH**, không cần cả đội bỏ phiếu
+`trKetQuaCum(c)` → `'gop'` (ok > no) · `'khong'` (no > ok) · `'hoa'` (bằng nhau, **kể cả 0–0**).
+- Nút **YÊU CẦU XEM XÉT: x** = mọi cụm đã gửi, xếp theo thời gian tạo.
+- Nút **CẦN BỎ PHIẾU: y** = chỉ cụm `'hoa'`.
+- Hai ô **ĐỒNG Ý GỘP / KHÔNG GỘP** = số cụm đã chốt về mỗi bên.
+- ⛔ Thầy chốt **mặc định mở ở YÊU CẦU XEM XÉT** (không phải CẦN BỎ PHIẾU).
+- ⛔ Thầy đã duyệt hệ quả: em bỏ phiếu ĐẦU TIÊN cho một cụm (0–0 → 1–0 = đã lệch) thì cụm đó
+  **rớt NGAY** khỏi danh sách CẦN BỎ PHIẾU. Đo thật: 2 cụm → 1 cụm ngay sau lượt bấm.
+
+### D. Ô vote dựng lại + bên thua về đen trắng
+Nằm NGANG: số to sát mép trái (chỗ đó chỉ có số) · bên phải hai dòng: chữ trên, avatar dưới.
+Avatar 26px → **30px** (cả đội chỉ 4–5 em, thừa chỗ).
+⛔ **Bốn selector cho class `.xam`, không phải hai**: `.tr-phieu .ok.minh` có độ đặc hiệu
+(0,0,3,1), viết gọn `.tr-phieu button.xam` (0,0,2,1) là THUA ⇒ ô của chính em không chịu xám.
+Kể đủ tổ hợp `.ok.xam / .no.xam / .ok.minh.xam / .no.minh.xam` là xong — đừng chữa bằng `!important`.
+⛔ Hoà phiếu thì **KHÔNG bên nào xám**: chưa phân định thì đừng vẽ như đã phân định.
+
+### E. ⛔⛔ HAI CON SỐ BÊN `myLesson/web/lop.html` — ĐỔI HẲN Ý NGHĨA (`v1.65.0`)
+
+**① Nút KIỂM TRA TRÙNG đã HỎNG từ `?v=61`, nay mới phát hiện.** Nó đếm cụm **chưa gửi**
+(`!c.daGui`); `?v=61` bỏ bước công bố nên mọi cụm đều `daGui:true` ⇒ **0 vĩnh viễn**.
+👉 Nay đếm **số cụm đội em đã gộp**, và ô đổi sang **XANH LÁ** (`.sp-bad.xanh`, `--m-la`): ô đỏ
+nghĩa là "còn việc phải làm cho xong", mà số cụm đã gộp là thành quả, treo đỏ là doạ các em vô cớ.
+
+**② Nút XÁC NHẬN TRÙNG: từ CÁ NHÂN sang CẢ ĐỘI.** Trước lọc `cumPhieu where voter == tenEm`
+("em chưa bỏ phiếu") nên mỗi em một số. Nay lọc `where voterTeam == đội em`, đếm cụm còn **hoà
+phiếu** ⇒ mọi thành viên thấy **cùng một con số**, khớp đúng nút "CẦN BỎ PHIẾU" bên mySpeaking.
+⛔ Vẫn phải LỌC chứ đừng đọc cả kho `cumPhieu` (LUẬT 8️⃣ tính tiền theo SỐ TÀI LIỆU);
+`voterTeam` là tập vừa đủ, cỡ (số cụm × 4–5 em).
+
+**⛔ BẢN CHÉP — sửa một bên phải sửa bên kia:** `lop.html spDemTrung()` ↔ `app.js trKetQuaCum()`.
+Hai nơi phải hiểu "chưa phân định" giống hệt nhau, không thì con số trên nút lệch số ô em nhìn thấy.
+
+### Đã kiểm những gì
+Bàn thử cách ly như chặng `?v=61` (importmap + shim, **đã xoá sạch**), seed 4 cụm 4 trạng thái:
+2–0 · 0–0 · 1–2 · 1–1.
+
+| Phép thử | Kết quả đo được |
+|---|---|
+| Bốn con số trên dải | YÊU CẦU XEM XÉT **4** · CẦN BỎ PHIẾU **2** · ĐỒNG Ý GỘP **1** · KHÔNG GỘP **1** ✅ |
+| Bên thua về đen trắng | 2–0 → ô KHÔNG GỘP xám · 1–2 → ô ĐỒNG Ý GỘP xám (avatar cũng xám) · hoà → không bên nào xám ✅ |
+| Bấm CẦN BỎ PHIẾU | 4 cụm → **2 cụm**, đúng hai cụm hoà (0–0 và 1–1) ✅ |
+| Bỏ phiếu GỘP cho cụm 0–0 | cụm rớt ngay (2→1) · CẦN BỎ PHIẾU 2→1 · ĐỒNG Ý GỘP 1→2 · ghi `cumPhieu/zc2__nam` ✅ |
+| Máy tính 1549px | cột **820px, left=365** (căn giữa); header/bar/player/cuộn thẳng mép 788px ✅ |
+| Điện thoại 375×812, cuộn xuống đáy | `#trBar` `68..144` · player `154..202` · `#trCuon` `212..804` — **không xê dịch 1px**; `pageYOffset=0`, `body.scrollHeight=812=innerHeight` ✅ |
+| `spDemTrung()` bên myLesson | rút ĐÚNG hàm thật từ `lop.html` chạy với 6 cụm + 8 phiếu giả (có cụm giải tán · cụm nháp cũ · phiếu đã rút) → `{kt:2, xn:2}` đúng như mong đợi ✅ |
+| Ô xanh lá | `.sp-bad.xanh` nền `rgb(24,169,87)` = `--m-la`; nút XN vẫn `rgb(224,87,91)` đỏ ✅ |
+| Cú pháp | `node --check` · `tsc --checkJs` lọc TS2304/TS2552 → 0 lỗi · 2/2 khối `<script>` của `lop.html` biên dịch OK |
+
+### ⬜ CÒN LẠI
+- ⬜ **Thầy bấm tay**: mở màn XÁC NHẬN TRÙNG trên iPhone thật; kiểm con số ô tròn trên hai nút
+  nhỏ trong pop-up SP CHECK có khớp với số trong màn không.
+- ⛔ Luật kho **KHÔNG phải sửa** — chỉ đổi cách ĐỌC, không thêm trường nào.
