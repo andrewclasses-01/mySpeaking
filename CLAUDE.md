@@ -139,12 +139,28 @@
 > Nợ từ đợt gộp lỗi trùng (`?v=46`). Cố ý để sau vì cần **cụm chốt thật** để đo, không đoán từ code.
 > Nay thầy đã dùng vài buổi ⇒ có dữ liệu thật để làm. Xem `myLesson/app/BAN GIAO.md` mục `0🧩` G.
 >
-> ## ④ ⚠️ HAI MÀN GỘP LỖI TRÙNG CHƯA ĐƯỢC VÁ BỐ CỤC ĐIỆN THOẠI
-> **Phát hiện 05/09 khi rà cuối đợt:** `#trungScreen` (KIỂM TRA TRÙNG / XÁC NHẬN TRÙNG) vẫn dùng
-> `min-h-screen` + dải player `sticky top-0` — **ĐÚNG Y cách vừa hỏng ở màn chấm**, chỉ là chưa ai
-> mở nó bằng iPhone để phát hiện. Gần như chắc chắn cũng trôi mất dải trên khi cuộn / khi bàn phím bật.
-> 👉 Chép nguyên cách chữa của `#appScreen`: khoá khung + một vùng cuộn + `theoKhungNhin()`
-> (`position:fixed` + `top = visualViewport.offsetTop`). Xem khối `?v=54` bên dưới.
+> ## ④ ⚠️⚠️ HAI MÀN GỘP LỖI TRÙNG — **VIỆC LỚN NHẤT CÒN LẠI** (khảo sát lại 05/09 cuối phiên)
+>
+> **① Bố cục điện thoại CHƯA VÁ — nguy cơ thật, đã biết trước.** `#trungScreen` vẫn là
+> `min-h-screen flex flex-col` + dải tiếng `sticky top-0 z-30` — **ĐÚNG Y cách đã hỏng ở màn chấm**
+> (thầy bắt lỗi bằng ảnh iPhone, phải vá 4 lượt `?v=51`→`?v=54`). Chưa ai mở màn này bằng iPhone nên
+> chưa lộ. Gần như chắc chắn cuộn xuống là trôi mất dải trên, bàn phím bật là đẩy cả trang.
+> 👉 Chép nguyên cách chữa của `#appScreen`: khoá khung `100dvh` + MỘT vùng cuộn + `theoKhungNhin()`
+> (`position:fixed` + `top = visualViewport.offsetTop`). Xem khối `?v=54`. ⛔ ĐỪNG dùng lại `sticky`.
+>
+> **② Dữ liệu thì ĐÃ TỰ LƯU RỒI — đừng đi "thêm tự lưu" cho nó.** Đã mổ code cuối phiên 05/09:
+> `trGhiCum()` được gọi ở **4 chỗ**, trong đó 3 chỗ là thao tác thường (tạo cụm · thêm dòng vào cụm ·
+> gỡ dòng khỏi cụm) — nghĩa là **cụm lên kho ngay khi em thao tác**, kể cả lúc còn `daGui:false`.
+> Màn XÁC NHẬN TRÙNG cũng vậy: `trBoPhieu()` ghi `cumPhieu` ngay lúc bấm.
+> ⛔⛔ **Nút SAVE (`btnTrGui` → `trGuiDeNghi`) KHÔNG phải nút "lưu" — nó là nút CÔNG BỐ**: đặt
+> `daGui:true` để đội chấm bắt đầu bỏ phiếu, và khoá cụm lại không cho sửa nữa. **Đừng bỏ nó đi như
+> đã bỏ nút SUBMIT ở hai màn kia** — bỏ là mất hẳn một bước nghiệp vụ thầy đã chốt 03/09.
+>
+> **③ Cái THẬT SỰ còn thiếu:** hai màn này **không có dòng trạng thái Saved/Saving** như `#hdLuu`,
+> nên em không biết thao tác đã lên kho hay chưa; ghi hỏng chỉ hiện một cái toast rồi biến mất.
+> 👉 Nên chép `#hdLuu` + khối `tl` sang (chỉ phần hiển thị trạng thái + thử lại, KHÔNG đụng luồng ghi).
+>
+> **④ Chưa dựng lại một cột** như màn phản biện — thầy chưa yêu cầu, hỏi trước khi làm.
 >
 > ## ⑤ Tab **KẾT QUẢ** của app mySpeaking chưa theo luật CHÍNH CHỦ QUYẾT
 > Cố ý từ 02/09 (thầy sẽ dựng lại tab đó) — số của nó lệch số học sinh thấy là **biết trước**,

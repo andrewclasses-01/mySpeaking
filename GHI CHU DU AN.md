@@ -2745,3 +2745,49 @@ trải hết màn. Ruột dùng chung `px-4` với `<main>` nên mép thẳng kh
 "ZTEST phan bien".
 **Không đụng chỗ khác:** màn CHẤM ruột thanh vẫn **1280px** = đúng bề ngang `<main>` của nó; điện
 thoại ruột vẫn full 375px (`max-width` không chạm tới) và `#hdTopic` vẫn ẩn như cũ.
+
+---
+
+# 🏁 TỔNG KẾT PHIÊN 05/09/2026 — TỰ LƯU + DỰNG LẠI MÀN PHẢN BIỆN (`?v=54` → `?v=60`)
+
+> Phiên này đi từ **khảo sát → thầy chốt → build → thầy bấm thử thật → vá** cho **6 bản liên tiếp**.
+> Kho `mySpeaking/web` nhánh **master**, sạch, đã push hết. Bản đang LIVE: **`?v=60`** (`b0d551e`).
+
+## Sáu bản đã ra
+| Bản | Việc | Commit |
+|---|---|---|
+| `?v=55` | **TỰ LƯU màn CHẤM** — bỏ hẳn nút SUBMIT, `onSnapshot` 1 tài liệu, keepalive, bỏ nháp máy | `c3062ee` |
+| `?v=56` | Dòng trạng thái **"Saved HH:MM"/"Saving…"** icon cố định; khoá vuốt ngang cột LIST trên iPhone | `0acc6a3` |
+| `?v=57` | **TỰ LƯU màn PHẢN BIỆN** + vá lỗi cũ nút MINE bị cắt trên điện thoại | `ae41ff4` |
+| `?v=58` | Khung video **căn giữa** (cả hai màn) | `b4571ca` |
+| `?v=59` | Màn phản biện dựng lại **1 CỘT, 4 TẦNG**, ghim 3 tầng trên | `fdd9fc2` |
+| `?v=60` | Ruột thanh đầu trang bó theo cột; **bỏ chữ "REBUTTAL ·"** | `b0d551e` |
+
+## Bốn bài học đắt nhất của phiên (đã vào bộ nhớ)
+1. **Cờ `daNop` không trang nào đọc** — mọi bảng của thầy coi "có tài liệu `tongLoi` = đã nộp". Nhờ
+   thế mới bỏ được nút SUBMIT mà không làm lệch số ở đâu. ⛔ Tài liệu cũ ghi ngược, đã sửa.
+2. **`margin:auto` không căn giữa được khối mà chiều rộng do `aspect-ratio` suy ra** — phải nêu
+   `max-width` tường minh (chặng `?v=58`).
+3. **Luật CSS 2 ID ăn đứt `.hidden` của Tailwind** — nút CONFLICT hiện ra dù bằng 0. Mọi luật đặt
+   `display` trong `#pbBar` phải kèm `:not(.hidden)` (chặng `?v=59`).
+4. **Đẩy xong web KHÔNG lên ngay** — Pages build thất thường (37 giây → 11 phút rưỡi) và
+   `index.html` còn cache 10 phút; `?v=NN` không cứu được. Phải chờ trang thật lên rồi mới báo thầy.
+
+## ⬜ VIỆC CÒN LẠI — thứ tự thầy đã chốt (chi tiết ở `CLAUDE.md` khối `🗺 VIỆC CÒN LẠI`)
+1. **`nguoncham.js` suy giờ nói từ mốc các lỗi** (app máy tính) — nợ từ đợt bỏ 4 ô giờ nói.
+2. **Điểm theo cụm + "cụm treo chờ thầy"** ở `sp-chitiet.html`.
+3. ⚠️⚠️ **HAI MÀN GỘP LỖI TRÙNG** — xem mục ④ trong CLAUDE.md, đã khảo sát lại cuối phiên này:
+   - **Bố cục điện thoại CHƯA VÁ**: `#trungScreen` vẫn `min-h-screen` + `sticky top-0`, đúng y cách
+     đã hỏng ở màn chấm. Việc nguy nhất trong ba việc còn lại.
+   - **Dữ liệu thì ĐÃ tự lưu sẵn**: `trGhiCum()` gọi ở 4 chỗ, cụm lên kho ngay khi thao tác
+     (kể cả `daGui:false`); `trBoPhieu()` ghi phiếu ngay lúc bấm.
+   - ⛔⛔ **Nút SAVE ở màn KIỂM TRA TRÙNG là nút CÔNG BỐ, không phải nút lưu** — nó đặt `daGui:true`
+     để đội chấm bắt đầu bỏ phiếu rồi khoá cụm. **Đừng bỏ nó như đã bỏ nút SUBMIT.**
+   - Thiếu thật: **không có dòng trạng thái Saved/Saving**; và **chưa dựng lại một cột** (thầy chưa yêu cầu).
+4. Tab **KẾT QUẢ** app mySpeaking chưa theo luật CHÍNH CHỦ QUYẾT (cố ý từ 02/09).
+
+## ⬜ THẦY CẦN BẤM TAY (gom cả phiên)
+- **iPhone thật, màn chấm:** thêm câu → bấm Home NGAY → mở lại → câu còn không.
+- **iPhone thật, màn phản biện:** bấm AGREE vài câu · bấm DISAGREE rồi **thoát ngay khi chưa gõ lý do**
+  (phiếu đó phải mất, đúng thiết kế) · gõ lý do xem video có co về 0 không · hai máy cùng lúc.
+- **Một buổi thật:** xem số lượt ghi/ngày trên Firebase Console (ước ~500–700 lượt/lớp/buổi).
