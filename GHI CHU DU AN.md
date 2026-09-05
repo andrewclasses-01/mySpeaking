@@ -2791,3 +2791,101 @@ thoại ruột vẫn full 375px (`max-width` không chạm tới) và `#hdTopic`
 - **iPhone thật, màn phản biện:** bấm AGREE vài câu · bấm DISAGREE rồi **thoát ngay khi chưa gõ lý do**
   (phiếu đó phải mất, đúng thiết kế) · gõ lý do xem video có co về 0 không · hai máy cùng lúc.
 - **Một buổi thật:** xem số lượt ghi/ngày trên Firebase Console (ước ~500–700 lượt/lớp/buổi).
+
+---
+
+## CHẶNG — 05/09/2026 (`?v=61`): ⭐⭐⭐ MÀN **KIỂM TRA TRÙNG** DỰNG LẠI — MỘT CỘT · BỎ NÚT SAVE · CHO GỘP CÙNG NGƯỜI CHẤM
+
+Thầy giao: *"Điều chỉnh phần KIỂM TRA TRÙNG trước"* rồi liệt kê 6 việc, và trả lời hai câu hỏi
+chốt trước khi build (xem mục "Hai điều đã hỏi lại" bên dưới). Thầy nói **"ok build"**.
+
+### Sáu việc thầy giao — đã làm đủ cả sáu
+
+| # | Việc | Làm thế nào |
+|---|---|---|
+| ① | Vá bố cục iPhone | `#trungScreen` khoá `100dvh` + `overflow:hidden`; dưới 1024px `position:fixed` + `top` do `theoKhungNhin()` đặt theo `visualViewport.offsetTop` |
+| ② | Bỏ nút SAVE, tự lưu như hai màn kia | Gỡ hẳn `#btnTrGui`; cụm ghi `daGui:true` ngay khi tạo |
+| ③ | Hiện Saving / Saved ở giữa thanh đầu trang | Thêm `#trLuu` (dùng chung bộ CSS `.hdLuu`) + hàng đợi ghi `trXepGhi`/`trChayGhi` |
+| ④ | Một cột 4 tầng, style như màn PHẢN BIỆN, **cả máy tính lẫn điện thoại** | Bỏ hẳn lưới 2 cột `#ktWrap`; `<main>` bó 820px căn giữa, 4 tầng, chỉ `#trCuon` cuộn |
+| ⑤ | Cho gộp cả khi hai lỗi cùng một **người chấm** | Gỡ 2 chốt trong `trTaoCum`/`trThemVaoCum` + gỡ điều kiện ở `trung.js xetDuoc` |
+| ⑥ | Thanh player đồng bộ, không bao giờ hiện video | Chép khuôn `#videoCtrl`: ↺30px · play tím 34px · ↻30px · giờ mono 11px; `#trungVideo` vẫn 1px ẩn |
+
+### Bốn tầng của màn (nhớ đúng thứ tự khi sửa)
+① `<header>` (ruột bó 820px, `#trLuu` ở GIỮA) · ② `#trBar` = `#trTab` (MISTAKES/GROUPS) + `#trDem`
+(hai con số, **LUÔN hiện dù đang xem bảng nào** — thầy chốt) · ③ `#trDaiTieng` player ·
+④ `#trCuon` **phần duy nhất cuộn**, chứa `#ktWrap` (một trong hai bảng) hoặc `#xnWrap`.
+
+### ⛔⛔ HAI QUYẾT ĐỊNH LỚN CỦA THẦY — ĐỪNG TỰ DỰNG LẠI
+
+**① BỎ HẲN BƯỚC CÔNG BỐ.** Nút SAVE cũ **không phải nút lưu**, nó là nút CÔNG BỐ: đặt
+`daGui:true` cho đội chấm bắt đầu bỏ phiếu rồi KHOÁ cụm. Thầy chốt bỏ hẳn ⇒ đội chấm thấy cụm
+**ngay khi vừa tạo**, và cụm **không bao giờ bị khoá**. Kéo theo: gỡ nút bút mở khoá (`tr.moKhoa`),
+gỡ dấu mũi tên "đã gửi" (`TR_IC_UP`), nút ✕ luôn hiện, khung cụm luôn xanh dương ở màn này.
+⚠️ Thầy ĐÃ BIẾT VÀ CHẤP NHẬN: đội chấm có thể vote trên bản cũ trong lúc đội kia còn sửa.
+
+**② BỎ LUẬT 21/07 — CHỈ Ở WEB HỌC SINH.** Luật cũ: *một cụm không chứa hai dòng của cùng một
+NGƯỜI CHẤM* (hai dòng giống nhau ở hai mốc giờ = người nói sai HAI LẦN, phải đếm 2).
+Thầy chốt cho gộp, và chốt luôn **máy gợi ý cả hai loại**.
+⚠️ Hệ quả thầy đã biết: số lỗi trừ của đội bị chấm **giảm thêm** so với đo hồi 03/09.
+⛔⛔ **`mySpeaking/app/tools/danhgia.py cung_mot_loi_duoc` GIỮ NGUYÊN LUẬT** — thầy chỉ nói web.
+
+### Hai điều đã hỏi lại trước khi gõ code (và vì sao phải hỏi)
+- *"Cùng một người"* mập mờ thật: một dòng lỗi có **người CHẤM** (`cham`) và **người NÓI** (`who`).
+  Code chỉ cấm cùng người CHẤM; cùng người NÓI vốn đã cho gộp. Hai cách hiểu ⇒ hai việc khác hẳn.
+- *Bỏ nút SAVE thì đội chấm thấy cụm lúc nào?* — không có mặc định hợp lý nào để tự đoán.
+
+### ⛔ Vá kèm một LỖI CŨ (có từ `?v=44`)
+Đóng tab ở màn trùng **luôn** hiện hộp *"Rời trang? Thay đổi có thể không được lưu"* dù chẳng có
+gì chờ ghi: hai màn này cũng là `moHinh === 2` nhưng không đụng `m2`/`state.errors`, nên dòng cuối
+`m2ChupCham() !== m2.serverBan` luôn đúng. Nay `m2CoSuaChuaGui()` có nhánh riêng cho hai màn này:
+"còn thứ chưa gửi" = **hàng đợi ghi còn món**. Đo thật: yên → `false`, còn món chờ → `true`.
+
+### Hàng đợi ghi `trLuu` — nó KHÔNG phải "thêm tự lưu"
+Màn này **vốn đã tự lưu** (`trGhiCum` gọi ở 4 chỗ, cụm lên kho ngay khi thao tác). Thiếu duy nhất
+là *em không biết đã lên kho chưa*. Khối `trLuu` chỉ lo ba việc: **xếp hàng · BÁO · THỬ LẠI**.
+- Dồn theo ĐÍCH (`cum/<id>`): bấm liên tiếp cùng một cụm thì lượt sau đè lượt trước còn đang chờ
+  ⇒ chỉ ghi một lần bản mới nhất (LUẬT 8️⃣ hạn mức).
+- Hỏng: dòng đỏ *"Not saved — retrying…"* + **trả món về ĐẦU hàng đợi** + thử lại 5s / 15s / 30s.
+- ⛔ Mọi lượt ghi cụm PHẢI đi qua `trXepGhi`, đừng gọi thẳng `cumGhi` — gọi thẳng là em không thấy gì.
+
+### ⛔ Ba bẫy cascade đã chốt sẵn trong bản này
+1. **Mọi luật đặt `display` bằng selector có #id PHẢI kèm `:not(.hidden)`** — một ID (0,1,0,0) ăn
+   đứt `.hidden` (0,0,1,0) của Tailwind. Đã áp cho `#trBar` · `#trTab` · `#trungScreen` · `#ktWrap`.
+   Cùng họ bẫy đã làm nút CONFLICT hiện dù bằng 0 (`?v=59`) và ô trắng trống (`?v=44`).
+2. **`.tr-khung` cũng đổi thành `.tr-khung:not(.hidden){display:flex}`** — `.tr-khung` và `.hidden`
+   cùng độ đặc hiệu, mà Tailwind là CDN nạp riêng nên thứ tự không nắm chắc được. Nay hai bảng
+   bật/tắt liên tục theo nút nên phải chốt.
+3. **`trVideo()` bỏ lối trèo `$('trPlay').closest('div').parentNode`** — lối đó đếm đúng số tầng của
+   bố cục CŨ; đổi bố cục là nó ẩn nhầm khối khác. Nay gọi thẳng `#trDaiTieng`.
+
+### Đã kiểm những gì (bàn thử CÁCH LY — không một byte nào ra kho thật)
+Bàn thử: `ZTEST-trung.html` sinh từ `index.html` THẬT (không chép `app.js`), chèn **importmap** đổi
+hai URL Firebase SDK sang `ZTEST-kho-gia.js` (kho RAM + onSnapshot giả) và `ZTEST-shim.js` chặn mọi
+`fetch` tới Firestore. **Đã xoá sạch sau khi kiểm, `git status` chỉ còn 3 file sửa.**
+⭐ Cách này gọn hơn cách 03/09 (chép cả `app.js` ra `ZTEST-app.js` rồi sửa `import`): importmap
+nhận cả URL tuyệt đối, và `import()` trong script thường vẫn tra import map của trang.
+
+| Phép thử | Kết quả đo được |
+|---|---|
+| Gộp 2 dòng **cùng người chấm THU** (t1+t2) | ✅ gộp được — trước `?v=61` là bị chặn |
+| Tầng gợi ý với cặp cùng người chấm | ✅ cả hai dòng đều có nhãn "THẦY ANDREW GỢI Ý" |
+| Gói ghi lên kho | ✅ đủ 6 trường, `daGui:true` ngay lượt đầu |
+| Dòng trạng thái | ✅ `Saved` → `Saving…` → `✓ Saved 12:33` (xanh lá) |
+| Ép lượt ghi hỏng (`ZHONG=1`) | ✅ đỏ *"Not saved — retrying…"*, 5s sau tự ghi lại THÀNH CÔNG |
+| Cụm còn 1 dòng | ✅ ghi `ids:[]` (giải tán), KHÔNG xoá tài liệu — đúng luật kho |
+| **Cuộn danh sách xuống đáy (375×812)** | ✅ header `0` · `#trBar` `68..144` · player `154..202` · `#trCuon` `212..804` — **không xê dịch 1px**; `pageYOffset=0`, `body.scrollHeight=812=innerHeight` ⇒ cả trang KHÔNG cuộn |
+| Máy tính 1440×820 | ✅ header/main/bar/player/cuon đều rộng **820px, left=310** (căn giữa), nội dung 788px thẳng mép; `inlineTop`/`inlineH` **rỗng** (đúng luật máy tính không đụng inline style) |
+| Màn XÁC NHẬN TRÙNG | ✅ không vỡ lây: `#trBar` ẩn, 2 cụm + hai nút phiếu hiện đúng, bỏ phiếu ghi được `cumPhieu/zc1__nam` |
+| `beforeunload` | ✅ yên → không hỏi · còn món chờ ghi → có hỏi |
+| Cú pháp | `node --check` 2 file OK · `tsc --allowJs --checkJs` lọc TS2304/TS2552 → **0 lỗi** · console 0 lỗi JS |
+
+⛔ **Bẫy của chính bàn thử (không phải lỗi app):** shim lưu CÙNG MỘT object vào `ZPATCH`, `ZKHO` và
+snapshot ⇒ nhật ký ghi bị mutate ngược (`ZPATCH[0].o.ids` từ `['t1','t2']` thành `[]`). Firestore
+thật trả object mới mỗi lượt `d.data()`. Nhìn số vô lý thì phải ngờ bàn thử trước khi ngờ app.
+
+### ⬜ CÒN LẠI ở hai màn này
+- **Màn XÁC NHẬN TRÙNG chưa dựng lại một cột** — thầy chốt làm KIỂM TRA TRÙNG trước. Nó đã được
+  hưởng khung khoá `100dvh` + player mới (dùng chung `#trungScreen`), chỉ chưa đổi bố cục ruột.
+- ⬜ **Thầy bấm tay iPhone thật**: cuộn danh sách xem ba tầng trên còn nguyên · gộp thử 2 lỗi ·
+  xem dòng Saved đổi · tắt mạng giữa chừng xem dòng đỏ rồi bật lại.
+- ⛔ Luật kho **KHÔNG phải sửa**: `daGui` vẫn là một trong 6 trường `hasOnly`, chỉ đổi giá trị.

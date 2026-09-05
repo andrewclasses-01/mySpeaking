@@ -946,15 +946,6 @@
   }
   function m2CoSuaChuaGui() {
     if (state.moHinh !== 2) return false;
-    /* ⛔⛔ `?v=61` — VÁ LỖI CŨ (có từ `?v=44`, chưa ai bắt được vì ít người đóng tab ở đây):
-       hai màn TRÙNG cũng là mô hình 2 nhưng KHÔNG đụng gì tới `m2`/`state.errors`, nên dòng
-       cuối `m2ChupCham() !== m2.serverBan` LUÔN đúng ⇒ đóng tab là trình duyệt hiện hộp
-       "Rời trang? Thay đổi có thể không được lưu" dù chẳng có gì chờ ghi. Nói sai sự thật, mà
-       lại đúng lúc ta vừa hứa với các em là mọi thứ tự lưu.
-       ⇒ Ở hai màn này, "còn thứ chưa gửi" = HÀNG ĐỢI GHI còn món, chứ không đo bằng `m2`. */
-    if (state.cheDo === 'kiemtratrung' || state.cheDo === 'xacnhantrung') {
-      return !!(trLuu.cho.length || trLuu.dangGhi);
-    }
     if (tl.bat) return tl.can || tl.dangGhi;   // ⭐ 05/09/2026 — tự lưu: "chưa gửi" = còn lượt ghi chưa xong
     if (state.cheDo === 'phanbien') return JSON.stringify(m2.votes) !== m2.votesServer;
     return m2ChupCham() !== m2.serverBan;
@@ -1656,19 +1647,10 @@
   //    quy chiếu mới, mọi pop-up `position:fixed` bên trong (submitModal, khoHongModal…) sẽ
   //    neo nhầm vào #appScreen thay vì màn hình — đúng cái bẫy "fixed trong khối có transform".
   // ⛔ CHỈ áp dụng dưới 1024px; máy tính trả `height` về cho CSS lo, không đụng inline style.
-  // ⭐ `?v=61` — dùng CHUNG cho HAI khung màn: `#appScreen` (chấm + phản biện) và `#trungScreen`
-  // (KIỂM TRA TRÙNG / XÁC NHẬN TRÙNG). Cùng một bệnh thì cùng một thuốc — trước `?v=61` màn
-  // trùng vẫn là `min-h-screen` + `sticky`, đúng y cách đã hỏng ở màn chấm.
-  // ⛔ Nắn CẢ HAI mỗi lượt: màn đang ẩn cũng phải được TRẢ inline style về rỗng, kẻo lần sau
-  //    mở ra nó còn giữ `top`/`height` đo được lúc bàn phím đang bật.
   function theoKhungNhin() {
     const vv = window.visualViewport;
-    if (!vv) return;
-    theoKhungNhinMot($('appScreen'), vv);
-    theoKhungNhinMot($('trungScreen'), vv);
-  }
-  function theoKhungNhinMot(ap, vv) {
-    if (!ap) return;
+    const ap = $('appScreen');
+    if (!vv || !ap) return;
     if (window.innerWidth >= 1024) { ap.style.height = ''; ap.style.top = ''; return; }
     ap.style.height = Math.round(vv.height) + 'px';
     // ⛔⛔ DÒNG SỐNG CÒN (05/09 lần 3): Safari **đẩy cả trang lên** khi bàn phím hiện — visual
@@ -3676,10 +3658,10 @@
     tich: {},        // {errId:1} — các ô đang tích ở cột trái (chỉ trong máy em)
     goiY: {},        // {errId:true} — thầy Andrew gợi ý là trùng
     nhomGoiY: {},    // {errId: số nhóm} — để kẻ vạch ngăn hai nhóm gợi ý nằm liền nhau
-    /* ⛔ `?v=61` — bỏ `moKhoa` (cụm đã gửi mà em bấm bút để sửa lại): không còn cụm nào bị
-       khoá nữa vì bước công bố đã bỏ. */
+    moKhoa: {},      // {cumId:1} — cụm ĐÃ GỬI mà em vừa bấm bút để sửa lại. CHỈ trong máy em,
+                     // không ghi kho: đây là ý định sửa, chưa phải thay đổi thật.
     doi: '',         // 'TEAM n' — đội đang xét (bị chấm)
-    cot: 'trai',     // đang xem bảng nào: 'trai' = MISTAKES · 'phai' = GROUPS (mọi cỡ màn)
+    cot: 'trai',     // màn hẹp đang xem cột nào
     xoa: null,       // [cumId, errId] đang chờ xác nhận bỏ khỏi cụm
     nghe: [],        // các hàm huỷ onSnapshot
     videoSan: false,
@@ -3689,104 +3671,6 @@
   const cumPhieuGhi = (buoiId, id, d) => fsPatch('/spBuoi/' + encodeURIComponent(buoiId) + '/cumPhieu/' + encodeURIComponent(id), d);
   function taoCumId() {
     return 'c' + Date.now().toString(36) + '-' + Math.floor(Math.random() * 1296).toString(36);
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════════════════════════
-     ⭐⭐⭐ `?v=61` (thầy chốt "ok build" 05/09) — DÒNG TRẠNG THÁI SAVED/SAVING CHO MÀN TRÙNG
-     ═══════════════════════════════════════════════════════════════════════════════════════
-     ⛔⛔ ĐÂY KHÔNG PHẢI "thêm tự lưu". Đã mổ code 05/09: màn này VỐN ĐÃ tự lưu — `trGhiCum()`
-     được gọi ở 4 chỗ, cụm lên kho NGAY khi em thao tác. Cái thật sự thiếu là **em không biết
-     thao tác đã lên kho hay chưa**: ghi hỏng chỉ hiện một cái toast rồi biến mất.
-     ⇒ Khối này CHỈ lo ba việc: xếp hàng · BÁO trạng thái · THỬ LẠI khi hỏng. Không đổi lúc nào
-       ghi, không đổi ghi cái gì.
-
-     Cách chạy: mọi lượt ghi đi qua `trXepGhi(duong, id, d)` → hàng đợi MỘT LÀN `trChayGhi()`.
-     ⭐ Hàng đợi dồn theo ĐÍCH (`duong/id`): bấm liên tiếp vào cùng một cụm thì lượt sau ĐÈ lên
-       lượt trước còn đang chờ, chỉ ghi một lần bản mới nhất — khỏi đốt lượt ghi (LUẬT 8️⃣).
-     ⛔ Hỏng thì KHÔNG nuốt: dòng đỏ "Not saved — retrying…" + thử lại 5s / 15s / 30s, và món
-       hỏng được TRẢ LẠI đầu hàng đợi. Đúng nếp [[bay-bao-ok-gia]] — đừng bao giờ để em thấy
-       "Saved" trong khi kho chưa nhận. */
-  const trLuu = {
-    bat: false,      // đang ở màn KIỂM TRA TRÙNG (màn xác nhận không bật dòng này)
-    cho: [],         // [{khoa, duong, id, d}] — hàng đợi, dồn theo `khoa` = duong + '/' + id
-    dangGhi: false,
-    hong: false,
-    lanThu: 0,
-    hen: null,
-    luuLuc: 0,       // mốc lần ghi THÀNH CÔNG gần nhất
-  };
-
-  function trLuuBat(on) {
-    trLuu.bat = !!on;
-    clearTimeout(trLuu.hen); trLuu.hen = null;
-    trLuu.cho = []; trLuu.dangGhi = false; trLuu.hong = false; trLuu.lanThu = 0; trLuu.luuLuc = 0;
-    if (!trLuu.bat) { $('trLuu').classList.add('hidden'); return; }
-    trTrangThai();
-  }
-
-  function trTrangThai() {
-    if (!trLuu.bat) return;
-    const o = $('trLuu'), c = $('trLuuChu');
-    if (!o) return;
-    let kieu = 'san', chu = 'Saved';
-    if (trLuu.dangGhi || trLuu.cho.length) {
-      kieu = trLuu.hong ? 'hong' : 'dang';
-      chu = trLuu.hong ? 'Not saved — retrying…' : 'Saving…';
-    } else if (trLuu.luuLuc) {
-      kieu = 'xong'; chu = 'Saved ' + gioNgan(trLuu.luuLuc);
-    }
-    o.dataset.kieu = kieu;
-    if (c) c.textContent = chu;
-    o.classList.remove('hidden');
-  }
-
-  /* Cửa DUY NHẤT mọi lượt ghi của màn trùng đi vào. */
-  function trXepGhi(duong, id, d) {
-    const khoa = duong + '/' + id;
-    const cu = trLuu.cho.filter((x) => x.khoa === khoa)[0];
-    if (cu) cu.d = d; else trLuu.cho.push({ khoa, duong, id, d });
-    trTrangThai();
-    trChayGhi();
-  }
-
-  async function trChayGhi() {
-    if (trLuu.dangGhi || !trLuu.cho.length) return;
-    clearTimeout(trLuu.hen); trLuu.hen = null;
-    trLuu.dangGhi = true;
-    trTrangThai();
-    const m = trLuu.cho.shift();
-    try {
-      if (m.duong === 'cumPhieu') await cumPhieuGhi(state.buoiId, m.id, m.d);
-      else await cumGhi(state.buoiId, m.id, m.d);
-      trLuu.hong = false; trLuu.lanThu = 0; trLuu.luuLuc = Date.now();
-      trLuu.dangGhi = false;
-      trTrangThai();
-      trChayGhi();
-    } catch (e) {
-      /* ⛔ TRẢ MÓN HỎNG VỀ ĐẦU hàng đợi — bỏ đi là mất thao tác của em trong im lặng.
-         Nếu trong lúc chờ em lại sửa đúng cụm đó thì bản mới đã nằm trong hàng, giữ bản mới. */
-      if (!trLuu.cho.some((x) => x.khoa === m.khoa)) trLuu.cho.unshift(m);
-      trLuu.hong = true;
-      trLuu.dangGhi = false;
-      trLuu.lanThu++;
-      trTrangThai();
-      const cho = trLuu.lanThu === 1 ? 5000 : trLuu.lanThu === 2 ? 15000 : 30000;
-      clearTimeout(trLuu.hen);
-      trLuu.hen = setTimeout(trChayGhi, cho);
-    }
-  }
-
-  /* Chuyển giữa hai bảng MISTAKES / GROUPS (tầng ②). ⭐ `?v=61`: nay là đường DUY NHẤT đổi
-     bảng, ở MỌI cỡ màn — lưới 2 cột của máy tính đã bỏ hẳn (thầy chốt "luôn là dạng 1 cột"). */
-  function trDatCot(cot) {
-    tr.cot = cot === 'phai' ? 'phai' : 'trai';
-    const trai = tr.cot === 'trai';
-    $('ktTrai').classList.toggle('hidden', !trai);
-    $('ktPhai').classList.toggle('hidden', trai);
-    Array.prototype.forEach.call($('trTab').children, (x) => {
-      const on = x.dataset.trcot === tr.cot;
-      x.className = on ? 'bg-slate-900 text-white' : 'bg-white text-slate-500';
-    });
   }
 
   /* Vào màn. Hai chế độ khác nhau ở CHỖ ĐỨNG NHÌN, còn dữ liệu là một:
@@ -3809,20 +3693,12 @@
     datAvatarTrung();
     $('ktWrap').classList.toggle('hidden', !kt);
     $('xnWrap').classList.toggle('hidden', kt);
-    /* ⭐ `?v=61` — tầng ② (hai nút + dải đếm) CHỈ có ở màn KIỂM TRA TRÙNG. Màn XÁC NHẬN TRÙNG
-       vốn đã có dải số riêng bên trong `#xnWrap`, thêm nữa là đếm hai lần. */
-    $('trBar').classList.toggle('hidden', !kt);
-    if (kt) trDatCot('trai');
-    /* ⭐ `?v=61` — dòng trạng thái Saved/Saving: bật cho màn KIỂM TRA TRÙNG (đội bị chấm ghi
-       cụm), TẮT ở màn XÁC NHẬN TRÙNG — thầy chốt đợt này chỉ làm màn KIỂM TRA TRÙNG.
-       ⛔ `trLuuBat(false)` cũng dọn hàng đợi + hẹn thử lại của lượt trước. */
-    trLuuBat(kt);
+    $('trTab').classList.toggle('hidden', !kt);
+    $('btnTrGui').classList.toggle('hidden', !kt);
+    if (kt) $('btnTrGui').classList.add('flex');
     trVideo();
     batAvatarKho();
     refreshIcons();
-    /* Đo khung nhìn NGAY khi màn vừa hiện: lúc `noiTayTrung()` chạy thì #trungScreen còn ẩn,
-       đo được cũng vô nghĩa. Cùng nếp `datCheDoDs()` của màn chấm. */
-    theoKhungNhin();
 
     loadingHien(kt ? 'Loading the mistakes on your team…' : 'Loading the groups to vote on…');
     try {
@@ -3961,10 +3837,10 @@
     const st = TYPE_STYLE[t] || { badge: 'bg-slate-100 text-slate-600' };
     return '<span class="text-[10.5px] font-bold rounded-full px-2 py-0.5 ' + st.badge + '">' + typeLabel(t) + '</span>';
   }
+  const TR_IC_UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="9.3"/><path d="M12 16.5V8"/><path d="M8.4 11.4L12 7.8l3.6 3.6"/></svg>';
   const TR_IC_TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-  /* ⛔ `?v=61` — ba icon TR_IC_UP (dấu đã gửi) · TR_IC_BUT (nút bút) · TR_IC_KHOA đã GỠ cùng
-     bước công bố. Luật CSS `.tr-up` / `.tr-but` / `.tr-cum.moKhoa` / `.tr-cum.daGui` trong
-     index.html nay không còn phần tử nào mang — để lại cũng vô hại, nhưng đừng tưởng còn dùng. */
+  const TR_IC_BUT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>';
+  const TR_IC_KHOA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
   function trVe() {
     if (state.cheDo === 'kiemtratrung') { trVeKt(); } else { trVeXn(); }
@@ -4007,17 +3883,19 @@
     $('ktViec').classList.toggle('hidden', nTich === 0);
     $('ktViec').classList.toggle('flex', nTich > 0);
     $('ktTao').style.display = nTich >= 2 ? '' : 'none';
-    /* ⭐ `?v=61` — có cụm nào là thêm vào được. Trước đây chỉ liệt kê cụm CHƯA GỬI, nhưng nay
-       bước công bố đã bỏ (thầy chốt) nên mọi cụm đều sửa được. */
-    $('ktThem').style.display = tr.cum.length ? '' : 'none';
+    $('ktThem').style.display = tr.cum.some((c) => !c.daGui) ? '' : 'none';
     $('ktSoTich').textContent = nTich;
-    /* ⭐ `?v=61` (thầy chốt) — DẢI ĐẾM NẰM Ở TẦNG ②, LUÔN HIỆN dù đang xem bảng nào.
-       Đúng hai con số thầy nêu: còn bao nhiêu lỗi chưa gộp · đã gộp được bao nhiêu cụm. */
-    $('trDem').innerHTML =
-      '<span class="bg-slate-900 text-white text-[11px] font-extrabold rounded-full px-2.5 py-1">' +
-        conLai.length + ' lỗi chưa gộp</span>' +
-      '<span class="bg-blue-600 text-white text-[11px] font-extrabold rounded-full px-2.5 py-1">' +
-        tr.cum.length + ' cụm đã gộp</span>';
+    const chuaGui = tr.cum.filter((c) => !c.daGui).length;
+    $('btnTrGui').classList.toggle('opacity-40', chuaGui === 0);
+    /* SAVE khi còn cụm chưa gửi · SAVED khi mọi cụm đã gửi (thầy chốt đổi từ SEND). */
+    const chuNut = $('trGuiChu');
+    if (chuNut) chuNut.textContent = chuaGui ? 'SAVE' : 'SAVED';
+    /* Dải số nằm NGAY TRONG khung MISTAKES, dưới tiêu đề — không còn dòng chữ "TEAM x bị bắt"
+       (thầy chốt bỏ mọi chữ hướng dẫn, chỉ giữ con số bắt buộc phải biết). */
+    trDaiSo('ktTrai',
+      '<span class="bg-slate-900 text-white text-xs font-extrabold rounded-full px-2.5 py-1">' + tr.ds.length + ' dòng</span>' +
+      '<span class="bg-blue-600 text-white text-xs font-extrabold rounded-full px-2.5 py-1">' + tr.cum.length + ' cụm gộp</span>' +
+      '<span class="text-slate-400 text-xs font-bold">' + conLai.length + ' lỗi chưa gộp</span>');
   }
 
   /* Một khung cụm. `voteMode` = màn XÁC NHẬN TRÙNG (có hai nút phiếu, không có nút bỏ dòng). */
@@ -4026,19 +3904,17 @@
       const A = trLoi(a), B = trLoi(b);
       return ((A && A.stt) || 0) - ((B && B.stt) || 0);
     });
-    /* ⭐⭐ `?v=61` (thầy chốt) — MÀN KIỂM TRA TRÙNG KHÔNG CÒN BƯỚC CÔNG BỐ.
-       Trước đây khung cụm mang ba trạng thái: xanh dương = đang soạn · xanh lá = đã gửi ·
-       cam = mở khoá sửa lại. Nay bỏ hẳn nút SAVE nên cụm nào cũng lên kho ngay và ai cũng sửa
-       được ⇒ khung LUÔN xanh dương, KHÔNG dấu mũi tên gửi, KHÔNG nút bút, nút ✕ luôn hiện.
-       ⛔ Ba màu xanh lá / xám / cam CHỈ còn nghĩa ở màn XÁC NHẬN TRÙNG (kết quả bỏ phiếu). */
-    let vo = '', dau = '';
+    const moKhoa = !voteMode && !!tr.moKhoa[c._id];
+    let vo = (c.daGui ? 'daGui' : '') + (moKhoa ? ' moKhoa' : ''), dau = '';
     if (voteMode) {
       const ok = trPhieuCua(c._id, 'gop'), no = trPhieuCua(c._id, 'khong');
       vo = ok.length > no.length ? 'chot' : no.length > ok.length ? 'khong' : (ok.length ? 'hoa' : '');
       dau = vo === 'chot' ? 'SỐ ĐÔNG GỘP' : vo === 'khong' ? 'SỐ ĐÔNG KHÔNG GỘP'
         : vo === 'hoa' ? 'HOÀ PHIẾU · ĐANG TREO' : escapeHtml(tr.doi) + ' xin gộp · ' + ids.length + ' dòng';
     } else {
-      dau = ids.length + ' dòng = 1 lỗi';
+      dau = '<span class="tr-up' + (c.daGui && !moKhoa ? ' xanh' : '') + '" title="' +
+        (moKhoa ? 'Đang sửa — bấm SAVE để gửi lại' : c.daGui ? 'Đã gửi cho đội chấm' : 'Chưa gửi') +
+        '">' + TR_IC_UP + '</span>' + ids.length + ' dòng = 1 lỗi';
     }
     return '<div class="tr-cum ' + vo + '">' +
       '<div class="tr-cum-dau"><span class="trai">' + dau + '</span>' +
@@ -4054,12 +3930,18 @@
             ' <span class="font-bold">' + escapeHtml(x.cham) + '</span> chấm' +
             (x.cham === state.student ? ' <span class="text-amber-600 font-extrabold">· của em</span>' : '') + '</div>' +
             trChi(x) + '</div>' +
-          /* ⭐ `?v=61` — nút ✕ LUÔN hiện ở màn KIỂM TRA TRÙNG (cụm không còn bị khoá). */
-          (voteMode ? '' : '<button class="bo" data-trbo="' + escapeHtml(c._id) + '|' + escapeHtml(id) + '" title="Bỏ khỏi cụm">' +
+          (voteMode || (c.daGui && !moKhoa) ? '' : '<button class="bo" data-trbo="' + escapeHtml(c._id) + '|' + escapeHtml(id) + '" title="Bỏ khỏi cụm">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" class="w-3 h-3"><path d="M6 6l12 12M18 6L6 18"/></svg></button>') +
         '</div>';
       }).join('') +
       (voteMode ? trHaiNutPhieu(c) : '') +
+      /* ⭐ 03/09 (thầy chốt lần 2) — cụm ĐÃ GỬI vẫn sửa lại được: nút bút tròn nổi ở góc dưới
+         bên phải, bấm là hiện lại các nút ✕ y như lúc chưa gửi. */
+      (!voteMode && c.daGui
+        ? '<button class="tr-but" data-trmokhoa="' + escapeHtml(c._id) + '" title="' +
+          (moKhoa ? 'Xong, khoá lại' : 'Sửa lại cụm này') + '">' +
+          (moKhoa ? TR_IC_KHOA : TR_IC_BUT) + '</button>'
+        : '') +
     '</div>';
   }
 
@@ -4100,17 +3982,28 @@
       '</div>';
   }
 
+  /* Dải số đặt NGAY TRONG khung (dưới tiêu đề MISTAKES), căn giữa. Dựng một lần rồi tái dùng
+     — vẽ lại liên tục nên phải tìm đúng ô cũ, đừng chèn thêm mỗi lượt. */
+  function trDaiSo(idKhung, html) {
+    const khung = $(idKhung);
+    if (!khung) return;
+    let o = khung.querySelector('.tr-dai');
+    if (!o) {
+      o = document.createElement('div');
+      o.className = 'tr-dai flex items-center justify-center gap-2 flex-wrap mb-3';
+      const tieu = khung.querySelector('.tr-tieu');
+      tieu.parentNode.insertBefore(o, tieu.nextSibling);
+    }
+    o.innerHTML = html;
+  }
+
   /* ── Thao tác ───────────────────────────────────────────────────────────────────── */
   function trGhiCum(c) {
     /* ⛔ LUẬT 9️⃣ — ghi ĐỦ MỌI TRƯỜNG. `fsPatch` không có updateMask nên nó ghi đè cả tài
-       liệu; thiếu một trường là trường đó bay mất, mà chẳng có gì báo.
-       ⭐⭐ `?v=61` (thầy chốt) — `daGui` LUÔN ghi `true`: bước công bố đã bỏ, đội chấm thấy
-       cụm NGAY khi đội bị chấm vừa tạo. Trường vẫn phải gửi vì luật kho đòi đủ 6 trường.
-       ⛔ Ghi nay đi qua HÀNG ĐỢI `trXepGhi` (dồn theo cụm, thử lại khi hỏng, có dòng trạng
-          thái) — đừng gọi thẳng `cumGhi` nữa, gọi thẳng là em không thấy Saving/Saved. */
-    trXepGhi('cum', c._id, {
+       liệu; thiếu một trường là trường đó bay mất, mà chẳng có gì báo. */
+    return cumGhi(state.buoiId, c._id, {
       doiBiCham: tr.doi, ids: c.ids || [], ten: c.ten || '',
-      ai: c.ai || [], daGui: true, luc: c.luc || Date.now(),
+      ai: c.ai || [], daGui: !!c.daGui, luc: c.luc || Date.now(),
     });
   }
   function trThemToi(c) {
@@ -4124,17 +4017,11 @@
     return chu.length > 60 ? chu.slice(0, 57) + '…' : chu;
   }
 
-  /* ⛔⛔⛔ LUẬT 21/07/2026 ĐÃ ĐƯỢC THẦY GỠ **RIÊNG CHO WEB HỌC SINH** (05/09, `?v=61`).
-     Luật cũ: *một cụm không được chứa hai dòng của CÙNG MỘT NGƯỜI CHẤM* — một em không ghi
-     lại cùng một lỗi hai lần, hai dòng giống nhau ở hai mốc giờ nghĩa là NGƯỜI NÓI SAI HAI
-     LẦN, phải đếm 2 (bản gốc `tools/danhgia.py cung_mot_loi_duoc`, từng nuốt mất 13 dòng).
-     Thầy chốt: ở màn KIỂM TRA TRÙNG các em **được gộp cả loại đó**, và tầng gợi ý cũng
-     **gợi ý cả hai loại** (đã gỡ điều kiện tương ứng ở `js/trung.js xetDuoc`).
-     ⛔⛔ HỆ QUẢ THẦY ĐÃ BIẾT VÀ CHẤP NHẬN: hai lần nói sai do cùng một bạn bắt nay có thể
-        thành MỘT lỗi ⇒ số lỗi trừ của đội bị chấm giảm thêm so với hồi 03/09.
-     ⛔⛔ APP MÁY TÍNH GIỮ NGUYÊN LUẬT — thầy chỉ nói web học sinh. Đừng đem thay đổi này sang
-        `mySpeaking/app/tools/danhgia.py`.
-     Hàm dưới GIỮ LẠI làm lịch sử, hiện KHÔNG còn ai gọi. */
+  /* ⛔⛔ LUẬT NGHIỆP VỤ 21/07/2026 — MỘT CỤM KHÔNG ĐƯỢC CHỨA HAI DÒNG CỦA CÙNG MỘT NGƯỜI
+     CHẤM. Một em không ghi lại cùng một lỗi hai lần; em ấy ghi hai dòng giống nhau ở hai
+     mốc giờ nghĩa là NGƯỜI NÓI SAI HAI LẦN, phải đếm 2. Bản gốc của luật nằm ở app máy
+     tính (`tools/danhgia.py cung_mot_loi_duoc`), nơi nó từng nuốt mất 13 dòng thật.
+     ⇒ Chặn NGAY LÚC GỘP, và nói rõ vì sao — chứ không im lặng bỏ qua. */
   function trTrungNguoiCham(ids) {
     const gap = {};
     for (let i = 0; i < ids.length; i++) {
@@ -4146,43 +4033,69 @@
     return '';
   }
 
-  function trTaoCum() {
+  async function trTaoCum() {
     const ids = Object.keys(tr.tich);
     if (ids.length < 2) return;
-    /* ⭐ `?v=61` — `daGui: true` ngay từ lúc tạo: bỏ hẳn bước công bố (thầy chốt). */
-    const c = { _id: taoCumId(), ids, ten: trDatTen(ids), ai: [state.student], daGui: true, luc: Date.now() };
+    const trung = trTrungNguoiCham(ids);
+    if (trung) {
+      toast('Hai dòng này đều do ' + trung + ' ghi ⇒ là HAI lần nói sai, không gộp được.', 'err');
+      return;
+    }
+    const c = { _id: taoCumId(), ids, ten: trDatTen(ids), ai: [state.student], daGui: false, luc: Date.now() };
     tr.tich = {};
-    /* ⛔ Ghi KHÔNG còn `await`: hàng đợi `trXepGhi` lo phần lên kho và báo Saving/Saved.
-       Hỏng thì dòng trạng thái đỏ + tự thử lại, KHÔNG nuốt lặng. */
-    trGhiCum(c);
+    try { await trGhiCum(c); } catch (e) { toast(trChuLoi(e), 'err'); return; }
     toast('Đã gộp ' + ids.length + ' lỗi thành 1 cụm ✓', 'ok');
   }
 
-  function trThemVaoCum(cumId) {
+  async function trThemVaoCum(cumId) {
     const c = tr.cum.filter((x) => x._id === cumId)[0];
-    if (!c) return;   // ⭐ `?v=61` — bỏ chốt `c.daGui`: cụm nào cũng thêm vào được
+    if (!c || c.daGui) return;
     const ids = Object.keys(tr.tich);
+    /* Luật 21/07 xét trên CẢ NHÓM SAU KHI GỘP, không chỉ trên mấy dòng vừa tích —
+       union-find bên app máy tính từng gộp bắc cầu MAI ↔ DUNG ↔ MAI và mất một lỗi. */
+    const trung = trTrungNguoiCham((c.ids || []).concat(ids));
+    if (trung) {
+      toast('Cụm này đã có dòng của ' + trung + ' rồi ⇒ là HAI lần nói sai, không gộp chung được.', 'err');
+      return;
+    }
     ids.forEach((i) => { if ((c.ids || []).indexOf(i) < 0) c.ids.push(i); });
     trThemToi(c);
     c.ten = c.ten || trDatTen(c.ids);
     tr.tich = {};
     $('trPopCum').classList.add('hidden'); $('trPopCum').classList.remove('flex');
-    trGhiCum(c);
+    try { await trGhiCum(c); } catch (e) { toast(trChuLoi(e), 'err'); }
   }
 
-  function trBoKhoiCum(cumId, errId) {
+  async function trBoKhoiCum(cumId, errId) {
     const c = tr.cum.filter((x) => x._id === cumId)[0];
     if (!c) return;
-    /* ⭐ `?v=61` — bỏ chốt "chưa mở khoá thì không cho đụng" và bỏ luôn việc trả cụm về
-       CHƯA GỬI: không còn trạng thái gửi/chưa gửi nữa, cụm luôn sửa được.
-       ⚠️ Đội chấm có thể đang bỏ phiếu trên bản cũ — thầy đã biết và chấp nhận khi chốt
-          "bỏ hẳn bước công bố". Đừng tự dựng lại cơ chế khoá. */
+    if (c.daGui && !tr.moKhoa[cumId]) return;   // chưa mở khoá thì không cho đụng
     c.ids = (c.ids || []).filter((i) => i !== errId);
     trThemToi(c);
+    /* ⛔ Nội dung cụm ĐÃ ĐỔI ⇒ trả cụm về trạng thái CHƯA GỬI. Nếu cứ để `daGui` thì đội chấm
+       vẫn đang bỏ phiếu trên cái cụm cũ — họ vote một đằng, cụm một nẻo, mà không ai biết.
+       Em sửa xong bấm SAVE là gửi lại, đội kia thấy bản mới. */
+    if (c.daGui) { c.daGui = false; delete tr.moKhoa[cumId]; }
     /* Còn dưới 2 dòng thì cụm tự giải tán — ghi `ids` RỖNG chứ KHÔNG xoá tài liệu
        (luật kho cấm xoá; cùng nếp `lessonNghi` bên myLesson). */
     if (c.ids.length < 2) c.ids = [];
-    trGhiCum(c);
+    try { await trGhiCum(c); } catch (e) { toast(trChuLoi(e), 'err'); }
+  }
+
+  async function trGuiDeNghi() {
+    const ds = tr.cum.filter((c) => !c.daGui);
+    if (!ds.length) { toast('Không có cụm nào đang chờ lưu.', 'info'); return; }
+    loadingHien('Saving…');
+    try {
+      for (let i = 0; i < ds.length; i++) {
+        ds[i].daGui = true;
+        delete tr.moKhoa[ds[i]._id];   // lưu xong thì khoá lại, khỏi lỡ tay sửa tiếp
+        trThemToi(ds[i]);
+        await trGhiCum(ds[i]);
+      }
+      toast('Đã lưu ' + ds.length + ' cụm, đội chấm xem được rồi ✓', 'ok');
+    } catch (e) { toast(trChuLoi(e), 'err'); }
+    loadingAn();
   }
 
   async function trBoPhieu(cumId, y) {
@@ -4201,10 +4114,10 @@
       : 'Chưa gửi được, em thử lại (' + s + ')';
   }
 
-  /* Pop-up chọn cụm. ⭐ `?v=61` — liệt kê MỌI cụm (trước chỉ liệt kê cụm chưa gửi): bước
-     công bố đã bỏ nên không còn cụm nào bị khoá. */
+  /* Pop-up chọn cụm — chỉ liệt kê cụm CHƯA GỬI (cụm đã gửi thì đội chấm đang bỏ phiếu
+     trên đúng nội dung đó, thêm dòng vào là họ vote hụt). */
   function trMoPopCum() {
-    const ds = tr.cum;
+    const ds = tr.cum.filter((c) => !c.daGui);
     $('tpcSo').textContent = Object.keys(tr.tich).length;
     $('tpcDs').innerHTML = ds.length ? ds.map((c) => {
       const ids = (c.ids || []).slice().sort((a, b) => ((trLoi(a) || {}).stt || 0) - ((trLoi(b) || {}).stt || 0));
@@ -4228,10 +4141,8 @@
   function trVideo() {
     const p = parseVideoUrl(state.videoUrl);
     /* Không phải YouTube (buổi cũ dùng Drive) ⇒ ẩn CẢ dải thanh tiếng.
-       ⭐ `?v=61` — gọi thẳng `#trDaiTieng` thay cho lối trèo `closest('div').parentNode` cũ:
-          lối trèo đó đếm đúng số tầng của bố cục CŨ, đổi bố cục là nó ẩn nhầm khối khác. */
-    if (!p || p.type !== 'youtube') { $('trDaiTieng').classList.add('hidden'); return; }
-    $('trDaiTieng').classList.remove('hidden');
+       ⛔ Phải trèo 2 cấp: khung trong `max-w-7xl` nằm trong dải trắng `sticky` bọc ngoài. */
+    if (!p || p.type !== 'youtube') { $('trPlay').closest('div').parentNode.classList.add('hidden'); return; }
     $('trungVideo').innerHTML = '<div id="trYt"></div>';
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
@@ -4248,10 +4159,8 @@
      Nhịp này chạy 400ms/lần và gán `innerHTML`; thẻ `data-lucide` chỉ thành hình khi có ai gọi
      `lucide.createIcons()`, mà gọi lại mỗi 400ms thì phí. Bản trước để `data-lucide` nên nút
      hiện ra là một vòng tròn TRỐNG TRƠN — thầy chụp lại được. Vẽ thẳng SVG là hết chuyện. */
-  /* ⭐ `?v=61` — về `w-4 h-4` cho khớp nút 34px của `#videoCtrl` bên màn chấm (trước là nút
-     40px viền tím nên icon 20px). */
-  const TR_IC_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 pointer-events-none" style="margin-left:2px"><path d="M7 4.5v15l12-7.5z"/></svg>';
-  const TR_IC_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 pointer-events-none"><rect x="6.5" y="4.5" width="4" height="15" rx="1"/><rect x="13.5" y="4.5" width="4" height="15" rx="1"/></svg>';
+  const TR_IC_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 pointer-events-none" style="margin-left:2px"><path d="M7 4.5v15l12-7.5z"/></svg>';
+  const TR_IC_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 pointer-events-none"><rect x="6.5" y="4.5" width="4" height="15" rx="1"/><rect x="13.5" y="4.5" width="4" height="15" rx="1"/></svg>';
 
   function trNhipVideo() {
     let phatCu = null;
@@ -4307,8 +4216,13 @@
     $('ktCum').addEventListener('click', (ev) => {
       const nutGio = ev.target.closest('[data-trseek]');
       if (nutGio) { trToiGiay(+nutGio.dataset.trseek); return; }
-      /* ⛔ `?v=61` — tay bắt `[data-trmokhoa]` (nút bút mở khoá cụm) đã GỠ cùng nút bút:
-         không còn cụm nào bị khoá nữa. */
+      const mo = ev.target.closest('[data-trmokhoa]');
+      if (mo) {
+        const id = mo.dataset.trmokhoa;
+        if (tr.moKhoa[id]) delete tr.moKhoa[id]; else tr.moKhoa[id] = 1;
+        trVe();
+        return;
+      }
       const bo = ev.target.closest('[data-trbo]');
       if (!bo) return;
       tr.xoa = bo.dataset.trbo.split('|');
@@ -4322,9 +4236,7 @@
     });
     $('ktTao').addEventListener('click', trTaoCum);
     $('ktThem').addEventListener('click', trMoPopCum);
-    /* ⛔ `?v=61` — nút SAVE (`#btnTrGui` → `trGuiDeNghi`) ĐÃ GỠ HẲN khỏi HTML lẫn tay bắt.
-       Nó vốn KHÔNG phải nút lưu mà là nút CÔNG BỐ (`daGui:true` + khoá cụm); thầy chốt 05/09
-       bỏ hẳn bước đó, cụm lên kho và hiện cho đội chấm ngay khi vừa tạo. */
+    $('btnTrGui').addEventListener('click', trGuiDeNghi);
     $('tpcDong').addEventListener('click', () => {
       $('trPopCum').classList.add('hidden'); $('trPopCum').classList.remove('flex');
     });
@@ -4357,7 +4269,14 @@
     });
     $('trTab').addEventListener('click', (ev) => {
       const b = ev.target.closest('[data-trcot]');
-      if (b) trDatCot(b.dataset.trcot);
+      if (!b) return;
+      const trai = b.dataset.trcot === 'trai';
+      $('ktTrai').classList.toggle('hidden', !trai);
+      $('ktPhai').classList.toggle('hidden', trai);
+      Array.prototype.forEach.call($('trTab').children, (x) => {
+        const on = x === b;
+        x.className = 'px-3 py-1.5 ' + (on ? 'bg-slate-900 text-white' : 'bg-white text-slate-500');
+      });
     });
   }
   noiTayTrung();

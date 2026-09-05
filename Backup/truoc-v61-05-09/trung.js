@@ -12,14 +12,10 @@
       nó chỉ thêm được +5/116 và +4/137 dòng mà tốn 20–25 giây. Xem khối ghi chú giữa file
       và `DA THU VA BO — GEMINI.md` trước khi nghĩ tới chuyện dựng lại.
 
-   ⭐⭐ 05/09/2026 (`?v=61`) — LUẬT 21/07 ĐÃ ĐƯỢC THẦY GỠ **RIÊNG CHO WEB HỌC SINH**.
-   Luật cũ: *hai dòng của CÙNG MỘT NGƯỜI CHẤM không bao giờ là một lỗi* (một em không ghi lại
-   cùng một lỗi hai lần; hai dòng giống chữ ở hai mốc giờ nghĩa là NGƯỜI NÓI SAI HAI LẦN, phải
-   đếm 2 — đã trả giá 13 dòng bị nuốt hồi 21/07/2026).
-   Nay thầy chốt: ở màn KIỂM TRA TRÙNG học sinh **được gộp cả hai dòng cùng người chấm**, và
-   tầng gợi ý cũng **gợi ý cả hai loại** (xem `xetDuoc`).
-   ⛔⛔ BẢN GỐC CỦA LUẬT VẪN SỐNG Ở APP MÁY TÍNH: `mySpeaking/app/tools/danhgia.py`
-   `cung_mot_loi_duoc` — thầy CHỈ nói web học sinh, **đừng đem thay đổi này sang bên đó**.
+   ⛔⛔ LUẬT NGHIỆP VỤ BẤT DI BẤT DỊCH (thầy chốt 21/07/2026, đã trả giá 13 dòng bị nuốt):
+   HAI DÒNG CỦA CÙNG MỘT NGƯỜI CHẤM KHÔNG BAO GIỜ LÀ MỘT LỖI. Một em không ghi lại cùng
+   một lỗi hai lần; em ấy ghi hai dòng giống chữ ở hai mốc giờ nghĩa là NGƯỜI NÓI SAI HAI
+   LẦN, phải đếm 2. Bản gốc: mySpeaking/app/tools/danhgia.py `cung_mot_loi_duoc`.
 
    ⛔ HỌC SINH KHÔNG BAO GIỜ THẤY CHỮ "MÁY" HAY "AI" (thầy chốt 03/09) — mọi nhãn trên màn
    đều là "THẦY ANDREW GỢI Ý". File này chỉ lo phần tính, chữ nằm ở app.js.
@@ -101,13 +97,9 @@
   }
 
   /* Hai dòng CÓ ĐƯỢC PHÉP xét là một lỗi không (chưa xét nội dung).
-     ⭐⭐ 05/09/2026 (`?v=61`, thầy chốt) — ĐÃ GỠ điều kiện `a.cham !== b.cham`. Trước đây tầng
-     gợi ý bỏ qua mọi cặp do CÙNG MỘT EM ghi (luật 21/07 nói ở đầu file). Thầy chốt cho gộp cả
-     loại đó ở màn KIỂM TRA TRÙNG, và chốt luôn: máy **gợi ý cả hai loại**.
-     ⛔ Luật 21/07 vẫn SỐNG ở app máy tính (`mySpeaking/app/tools/danhgia.py cung_mot_loi_duoc`)
-        — ĐỪNG đem thay đổi này sang bên đó. */
+     ⛔ Điều kiện `a.cham !== b.cham` là LUẬT 21/07 nói ở đầu file — đừng gỡ. */
   function xetDuoc(a, b) {
-    if (!a.cham || !b.cham) return false;
+    if (!a.cham || !b.cham || a.cham === b.cham) return false;
     if (a.type !== b.type) return false;
     if (a.who && b.who && a.who !== b.who) return false;   // hai người nói khác nhau
     return Math.abs(a.t - b.t) <= LECH_GIAY;

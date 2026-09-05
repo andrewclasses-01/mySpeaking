@@ -2,8 +2,8 @@
 
 > # 🗺 VIỆC CÒN LẠI — ĐỌC KHỐI NÀY KHI TIẾP TỤC (chốt 05/09/2026)
 >
-> Xếp theo **thứ tự thầy muốn làm**. ✅ Việc ① đã build 05/09 (`?v=55`). ⛔ Việc ②→⑤ chưa được
-> "ok build" — phải hỏi thầy trước.
+> Xếp theo **thứ tự thầy muốn làm**. ✅ Việc ① đã build (`?v=55`); ✅ việc ④ **màn KIỂM TRA TRÙNG**
+> đã build (`?v=61`). ⛔ Việc ②, ③, ⑤ và **màn XÁC NHẬN TRÙNG** chưa được "ok build" — hỏi thầy trước.
 >
 > ---
 >
@@ -139,28 +139,36 @@
 > Nợ từ đợt gộp lỗi trùng (`?v=46`). Cố ý để sau vì cần **cụm chốt thật** để đo, không đoán từ code.
 > Nay thầy đã dùng vài buổi ⇒ có dữ liệu thật để làm. Xem `myLesson/app/BAN GIAO.md` mục `0🧩` G.
 >
-> ## ④ ⚠️⚠️ HAI MÀN GỘP LỖI TRÙNG — **VIỆC LỚN NHẤT CÒN LẠI** (khảo sát lại 05/09 cuối phiên)
+> ## ④ ✅ MÀN **KIỂM TRA TRÙNG** — ĐÃ DỰNG LẠI 05/09 (`?v=61`). ⬜ Màn XÁC NHẬN TRÙNG còn.
 >
-> **① Bố cục điện thoại CHƯA VÁ — nguy cơ thật, đã biết trước.** `#trungScreen` vẫn là
-> `min-h-screen flex flex-col` + dải tiếng `sticky top-0 z-30` — **ĐÚNG Y cách đã hỏng ở màn chấm**
-> (thầy bắt lỗi bằng ảnh iPhone, phải vá 4 lượt `?v=51`→`?v=54`). Chưa ai mở màn này bằng iPhone nên
-> chưa lộ. Gần như chắc chắn cuộn xuống là trôi mất dải trên, bàn phím bật là đẩy cả trang.
-> 👉 Chép nguyên cách chữa của `#appScreen`: khoá khung `100dvh` + MỘT vùng cuộn + `theoKhungNhin()`
-> (`position:fixed` + `top = visualViewport.offsetTop`). Xem khối `?v=54`. ⛔ ĐỪNG dùng lại `sticky`.
+> **Hồ sơ đầy đủ: `GHI CHU DU AN.md` chặng `?v=61`** (6 việc · 8 phép đo · bẫy để lại).
+> Thầy giao 6 việc, đã làm đủ: vá bố cục iPhone · bỏ nút SAVE · dòng Saved/Saving · **một cột 4 tầng
+> ở MỌI cỡ màn** · cho gộp cả khi cùng người chấm · thanh player đồng bộ (không bao giờ có hình).
 >
-> **② Dữ liệu thì ĐÃ TỰ LƯU RỒI — đừng đi "thêm tự lưu" cho nó.** Đã mổ code cuối phiên 05/09:
-> `trGhiCum()` được gọi ở **4 chỗ**, trong đó 3 chỗ là thao tác thường (tạo cụm · thêm dòng vào cụm ·
-> gỡ dòng khỏi cụm) — nghĩa là **cụm lên kho ngay khi em thao tác**, kể cả lúc còn `daGui:false`.
-> Màn XÁC NHẬN TRÙNG cũng vậy: `trBoPhieu()` ghi `cumPhieu` ngay lúc bấm.
-> ⛔⛔ **Nút SAVE (`btnTrGui` → `trGuiDeNghi`) KHÔNG phải nút "lưu" — nó là nút CÔNG BỐ**: đặt
-> `daGui:true` để đội chấm bắt đầu bỏ phiếu, và khoá cụm lại không cho sửa nữa. **Đừng bỏ nó đi như
-> đã bỏ nút SUBMIT ở hai màn kia** — bỏ là mất hẳn một bước nghiệp vụ thầy đã chốt 03/09.
+> **Bốn tầng (nhớ đúng thứ tự):** ① `<header>` ruột 820px, `#trLuu` ở GIỮA · ② `#trBar` =
+> `#trTab` (MISTAKES/GROUPS) + `#trDem` (hai con số, **LUÔN hiện dù đang xem bảng nào**) ·
+> ③ `#trDaiTieng` player · ④ `#trCuon` **phần duy nhất cuộn**.
+> ⛔⛔ Mọi luật đặt `display` bằng selector có #id PHẢI kèm `:not(.hidden)` (`#trBar`, `#trTab`,
+> `#trungScreen`, `#ktWrap`, cả `.tr-khung`) — cùng họ bẫy cascade đã cắn ở `?v=59` và `?v=44`.
 >
-> **③ Cái THẬT SỰ còn thiếu:** hai màn này **không có dòng trạng thái Saved/Saving** như `#hdLuu`,
-> nên em không biết thao tác đã lên kho hay chưa; ghi hỏng chỉ hiện một cái toast rồi biến mất.
-> 👉 Nên chép `#hdLuu` + khối `tl` sang (chỉ phần hiển thị trạng thái + thử lại, KHÔNG đụng luồng ghi).
+> **⛔⛔ HAI QUYẾT ĐỊNH CỦA THẦY — ĐỪNG TỰ DỰNG LẠI:**
+> ① **Bỏ hẳn bước CÔNG BỐ.** Nút SAVE cũ không phải nút lưu mà là nút công bố (`daGui:true` + khoá
+> cụm). Nay cụm ghi `daGui:true` ngay khi tạo, đội chấm thấy liền, cụm **không bao giờ bị khoá** ⇒
+> đã gỡ nút bút (`tr.moKhoa`), dấu mũi tên gửi, nút ✕ luôn hiện. Thầy ĐÃ BIẾT hệ quả: đội chấm có
+> thể vote trên bản cũ trong lúc đội kia còn sửa.
+> ② **Bỏ luật 21/07 — CHỈ Ở WEB HỌC SINH.** Cho gộp hai dòng cùng NGƯỜI CHẤM, và máy **gợi ý cả hai
+> loại** (`trung.js xetDuoc`). Hệ quả thầy đã biết: số lỗi trừ của đội bị chấm giảm thêm.
+> ⛔⛔ `mySpeaking/app/tools/danhgia.py cung_mot_loi_duoc` **GIỮ NGUYÊN LUẬT** — thầy chỉ nói web.
 >
-> **④ Chưa dựng lại một cột** như màn phản biện — thầy chưa yêu cầu, hỏi trước khi làm.
+> **⛔ Luồng ghi KHÔNG đổi** — màn này vốn đã tự lưu (`trGhiCum` gọi ở 3 chỗ thao tác thường).
+> Khối `trLuu` mới chỉ lo **xếp hàng · BÁO · THỬ LẠI** (dồn theo `cum/<id>`, hỏng thì trả món về đầu
+> hàng + thử lại 5s/15s/30s). ⛔ Mọi lượt ghi cụm phải qua `trXepGhi`, đừng gọi thẳng `cumGhi`.
+>
+> **⬜ CÒN LẠI: màn XÁC NHẬN TRÙNG chưa dựng lại một cột** — thầy chốt làm KIỂM TRA TRÙNG trước.
+> Nó đã được hưởng khung khoá `100dvh` + player mới (dùng chung `#trungScreen`), chỉ chưa đổi bố cục
+> ruột (`#xnWrap`). Hỏi thầy trước khi làm.
+> **⬜ Thầy bấm tay iPhone thật:** cuộn xem ba tầng trên còn nguyên · gộp thử 2 lỗi · xem dòng Saved
+> đổi · tắt mạng giữa chừng xem dòng đỏ rồi bật lại.
 >
 > ## ⑤ Tab **KẾT QUẢ** của app mySpeaking chưa theo luật CHÍNH CHỦ QUYẾT
 > Cố ý từ 02/09 (thầy sẽ dựng lại tab đó) — số của nó lệch số học sinh thấy là **biết trước**,
