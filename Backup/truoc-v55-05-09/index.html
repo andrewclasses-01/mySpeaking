@@ -285,19 +285,6 @@ tailwind.config = {
   @media (min-width:1024px){ #dsTab{ display:none; } }
   /* Tên bài dưới tên site: điện thoại ẩn cho thanh đầu cao tối thiểu, máy tính vẫn hiện */
   @media (max-width:1023.98px){ #hdTopic{ display:none; } }
-  /* ⭐ 05/09/2026 (thầy chốt) — TỰ LƯU: màn chấm mô hình 2 BỎ HẲN nút Submit, thay bằng dòng trạng thái
-     #hdLuu nằm GIỮA thanh đầu trang (nhỏ, xanh lá khi đã lưu). `.tu-luu` do `tlBat()` đặt trên #appScreen.
-     ⛔ #hdLuu KHÔNG đặt `display` ở đây để class `.hidden` của Tailwind vẫn ẩn được nó (mô hình 1/phản biện). */
-  #appScreen.tu-luu #btnSubmit{ display:none; }
-  #appScreen.tu-luu #btnHome{ margin-right:0; }   /* bỏ mr-auto để #hdLuu (mx-auto) đứng đúng giữa khoảng trống */
-  #hdLuu{ margin-left:auto; margin-right:auto; flex-shrink:0; white-space:nowrap; font-size:11px; font-weight:800;
-          line-height:1.2; padding:.2rem .6rem; border-radius:9999px; transition:color .2s, background .2s; }
-  @media (min-width:640px){ #hdLuu{ font-size:12px; } }
-  #hdLuu[data-kieu="san"]{ color:rgba(255,255,255,.7); }
-  #hdLuu[data-kieu="dang"]{ color:rgba(255,255,255,.9); }
-  #hdLuu[data-kieu="xong"]{ color:#86efac; }                       /* emerald-300 — xanh lá trên nền tím */
-  #hdLuu[data-kieu="hong"]{ color:#fff; background:#e11d48; animation:hdLuuNhay 1.1s ease-in-out infinite; }
-  @keyframes hdLuuNhay{ 0%,100%{ opacity:1; } 50%{ opacity:.55; } }
   #appScreen.pb-mode #dsTab{ display:none; }   /* màn phản biện không có form ⇒ hai nút vô nghĩa */
   .dsBtn{ flex:1; padding:.375rem 0; font-size:12px; font-weight:800; display:flex; align-items:center;
           justify-content:center; gap:.375rem; transition:background .15s, color .15s; }
@@ -484,9 +471,6 @@ tailwind.config = {
           <div id="hdTopic" class="text-[11px] sm:text-xs text-indigo-100 truncate"></div>
         </div>
       </button>
-      <!-- ⭐ 05/09/2026 — dòng trạng thái TỰ LƯU ("Saving…" / "✓ Auto saved 20:14" / "Not saved — retrying…"),
-           chỉ hiện ở màn chấm mô hình 2 (`tlBat()` gỡ .hidden). CSS ở khối "#hdLuu" trong <style>. -->
-      <span id="hdLuu" class="hidden" data-kieu="san"></span>
       <span id="hdStudent" class="shrink-0 bg-white/15 rounded-xl px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-bold tabular-nums whitespace-nowrap"></span>
       <button id="btnSubmit" title="Submit" class="shrink-0 bg-emerald-500 hover:bg-emerald-400 transition rounded-xl px-2.5 sm:px-4 py-2 text-sm font-bold flex items-center gap-1.5 shadow">
         <i data-lucide="send" class="w-4 h-4 shrink-0"></i><span class="hidden sm:inline">Submit</span>
@@ -844,9 +828,33 @@ tailwind.config = {
   </div>
 </div>
 
-<!-- ⛔ 05/09/2026 (thầy chốt "ok build" tự lưu) — POP-UP "Two versions found" (#draftModal) ĐÃ GỠ HẲN:
-     màn chấm mô hình 2 không còn nháp trong máy, kho là gốc duy nhất (xem khối `tl` trong app.js).
-     Bản cũ ở Backup/truoc-v55-05-09/index.html. -->
+<!-- ══════════ (Đợt B) NHÁP TRÊN MÁY ≠ BẢN TRÊN KHO — hỏi em, không âm thầm đè ══════════
+     ⛔ 04/09/2026 — SỬA SAU SỰ CỐ MẤT BÀI (em TIẾN B1AH 23 câu · em KHÁNH NGÂN A2B 32 câu).
+     Bản cũ chỉ nói "hai bản khác nhau" mà KHÔNG nói bên nào bao nhiêu câu, lại để nút nguy hiểm
+     "My draft" làm nút CHÍNH màu xanh, nút an toàn "Server copy" xám mờ ⇒ bấm mò vào nháp cũ.
+     Nay: hiện SỐ CÂU + GIỜ LƯU mỗi bên · "Server copy" là nút chính · cảnh báo đỏ khi nháp ÍT
+     câu hơn. ⛔ Đổi mã `draftSvInfo`/`draftLcInfo`/`draftCanhBao` thì sửa cả `startM2` bên app.js. -->
+<div id="draftModal" class="fixed inset-0 z-[65] bg-black/50 hidden items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 pop">
+    <h3 class="font-extrabold text-lg mb-2 flex items-center gap-2"><i data-lucide="git-compare" class="w-5 h-5 text-amber-500"></i> Two versions found</h3>
+    <p class="text-sm text-slate-600 mb-3">This device has an <b>unsubmitted draft</b> that is different from your <b>saved check on the server</b>. Which one do you want to open?</p>
+    <div class="space-y-2 mb-3">
+      <div class="rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2">
+        <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wide">Server copy</div>
+        <div id="draftSvInfo" class="text-sm font-semibold text-slate-700">—</div>
+      </div>
+      <div class="rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">
+        <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">My draft (this device)</div>
+        <div id="draftLcInfo" class="text-sm font-semibold text-slate-700">—</div>
+      </div>
+    </div>
+    <p id="draftCanhBao" class="hidden text-xs text-rose-600 font-semibold mb-3">⚠ Your draft has fewer mistakes than the server copy. Open the <b>server copy</b> unless you are sure.</p>
+    <div class="flex gap-2">
+      <button id="btnDraftServer" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 font-bold text-sm">Server copy</button>
+      <button id="btnDraftLocal" class="flex-1 bg-slate-200 hover:bg-slate-300 rounded-xl py-2.5 font-bold text-sm">My draft</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════ ⛔ 04/09/2026 — KHÔNG ĐỌC ĐƯỢC BÀI TRÊN KHO ══════════
      Trước đây `startM2` nuốt lỗi này và coi như "chưa có bài trên kho" ⇒ lấy nháp máy làm bản
@@ -999,6 +1007,6 @@ tailwind.config = {
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
 <script src="js/trung.js?v=6"></script>
-<script src="js/app.js?v=55"></script>
+<script src="js/app.js?v=54"></script>
 </body>
 </html>

@@ -2,26 +2,34 @@
 
 > # 🗺 VIỆC CÒN LẠI — ĐỌC KHỐI NÀY KHI TIẾP TỤC (chốt 05/09/2026)
 >
-> Xếp theo **thứ tự thầy muốn làm**. ⛔ Chưa việc nào được "ok build" — phải hỏi thầy trước.
+> Xếp theo **thứ tự thầy muốn làm**. ✅ Việc ① đã build 05/09 (`?v=55`). ⛔ Việc ②→⑤ chưa được
+> "ok build" — phải hỏi thầy trước.
 >
 > ---
 >
-> ## ① ⭐⭐⭐ TỰ LƯU LIÊN TỤC, KHÔNG CẦN BẤM SUBMIT — **VIỆC ĐẦU TIÊN**
+> ## ① ✅ TỰ LƯU LIÊN TỤC, KHÔNG CẦN BẤM SUBMIT — **ĐÃ BUILD 05/09/2026 sáng, web HS `?v=55`**
 >
-> ⭐⭐ **05/09/2026 TỐI — ĐÃ KHẢO SÁT + THẦY ĐÃ CHỐT 4 ĐIỂM, CHƯA BUILD (chờ "ok build").**
-> Hồ sơ phương án đầy đủ: `E:\LAP TRINH APP\DU LIEU TONG HOP\PHUONG AN TU LUU SP CHECK — 05-09-2026.md`
-> (3 phương án đã cân, chọn **B** = lưu theo sự kiện + nghe kho trực tiếp `onSnapshot` trên đúng
-> 1 tài liệu của em; mục 5 là bẫy phải nhớ khi build; mục 7 là cách đo).
-> **Bốn điểm thầy chốt:** (1) **BỎ HẲN nút SUBMIT**, thay bằng dòng trạng thái *Saving… / Saved ✓
-> 20:14 / Not saved — retrying*; gói ghi **không gửi `daNop`** · (2) quay lại app (chuyển app / Home
-> iPhone) = **đọc kho lại, GIỮ chữ đang gõ** trong form · (3) **không thêm nút ↻** · (4) nháp cũ
-> localStorage **gom một lần vào kho (chỉ thêm) rồi xoá**, không hỏi.
-> ⛔ **Phát hiện khi mổ code (sửa lại hiểu biết cũ bên dưới):** cờ `daNop` **KHÔNG trang nào đọc**
-> — `sp-chitiet.html` · `dashboard.html` · `bai-sp.html` · app mySpeaking (`renderer/js/app.js`
-> `kqTongQuanHtml`) đều coi **"có tài liệu `tongLoi` = đã nộp"** và cộng số lỗi sống trực tiếp.
-> Điểm ① "nguy hiểm nhất" bên dưới vì thế **không còn là vấn đề**; điểm ② thầy chốt không lo chi phí.
-> Không cần sửa luật Firestore. Không đụng mô hình 1, màn PHẢN BIỆN, hai màn TRÙNG.
+> ⭐⭐⭐ Thầy "ok build" + thêm yêu cầu *dòng "Auto saved HH:MM" cỡ nhỏ, xanh lá, giữa thanh đầu trang*.
+> **Hồ sơ đầy đủ: `GHI CHU DU AN.md` chặng `?v=55`** (đã làm gì · 8 phép thử với kho thật · bẫy để lại).
+> Khảo sát + 3 phương án: `DU LIEU TONG HOP\PHUONG AN TU LUU SP CHECK — 05-09-2026.md` (chọn **B**).
+> **Bốn điểm thầy chốt (đã làm đúng vậy):** (1) **BỎ HẲN nút SUBMIT** ở màn chấm mô hình 2, thay
+> bằng `#hdLuu` *Saving… / ✓ Auto saved 20:14 / Not saved — retrying…*; gói ghi **không gửi `daNop`**
+> · (2) quay lại app (chuyển app / Home iPhone) = **đọc kho lại, GIỮ chữ đang gõ** · (3) **không có
+> nút ↻** · (4) nháp cũ localStorage **gom một lần (chỉ thêm) rồi xoá khoá**, không hỏi.
+> **Cách chạy (khối `tl` trong `js/app.js`, ngay sau `m2BaoNhanLai`):** 5 sự kiện Add / Save changes /
+> Delete / Keep / Accept → `luuNgay()` → hàng đợi một làn `tlChay()` → `tongLoiGhiAnToan()`; mở bài
+> là `tlNoiKho()` nghe `onSnapshot` đúng 1 tài liệu `tongLoi/{em}` (kho đổi ⇒ bảng đổi ~1 giây, kể cả
+> từ máy khác); ẩn tab ⇒ `tlDayVoi()` PATCH `keepalive`; hiện lại ⇒ `tlDocLai()` GET kho.
+> ⛔ **Luật mới khi sửa màn chấm:** mọi thay đổi dữ liệu PHẢI gọi `luuNgay()` (đừng gọi `autosave()`
+> rồi tưởng đã lên kho — `autosave()` nay KHÔNG ghi localStorage khi `tl.bat`). Mỗi lỗi có `suaLuc`;
+> `gopLoi()` lấy bản mới hơn — sửa lỗi mà quên đóng `suaLuc = Date.now()` là máy kia thắng oan.
+> ⛔ `#draftModal` + `moTaBanCham()` đã GỠ HẲN. `submitM2`/`guiNgamKetLuan` còn trong file nhưng không
+> còn đường gọi ở màn chấm (phản biện vẫn dùng nút Submit gửi phiếu — không đụng).
+> ⛔ Cờ `daNop` **không trang nào đọc** (đã grep 4 nơi) — mọi bảng thầy coi "có tài liệu = đã nộp".
+> ⬜ **Thầy cần bấm tay trên iPhone thật**: thêm câu → bấm Home ngay → mở lại → câu còn.
 >
+> *(Bên dưới là hồ sơ khảo sát TRƯỚC khi build — giữ để hiểu vì sao; "5 điểm phải hỏi" đã được
+> 4 quyết định trên thay thế.)*
 > Thầy giao 05/09: *"cải tiến quá trình ghi nhận dữ liệu chấm bài mà không cần bấm submit —
 > soạn đến đâu, lưu đến đó, tương tự auto save trong Google Docs hoặc Google Sheet."*
 >

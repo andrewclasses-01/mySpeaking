@@ -2459,3 +2459,81 @@ vào `#appScreen` thay vì màn hình. `position:fixed` thì **không** tạo kh
 trong ảnh 01:29 và 01:36 mà hai đợt vá trước không để ý, nên đi chữa nhầm hai lần (đo lại trễ,
 bóp đệm). Cái mất tích ở MỘT đầu và cái thừa ra ở ĐẦU KIA, bằng nhau — đó là dấu hiệu của một
 phép **dịch chuyển**, không phải sai số đo.
+
+## CHẶNG — 05/09/2026 (`?v=55`): ⭐⭐⭐ TỰ LƯU LIÊN TỤC, BỎ HẲN NÚT SUBMIT (màn chấm mô hình 2)
+
+### Thầy giao / thầy chốt
+*"Soạn đến đâu lưu đến đó, kiểu Google Docs — không phải canh bấm SUBMIT, không hiện pop-up Two
+versions found, không lưu tạm trong máy nữa; thoát ra vào lại là lấy bản tươi trên kho."* Thầy nói
+**không lo chi phí Firestore**. Sau khảo sát (hồ sơ: `DU LIEU TONG HOP\PHUONG AN TU LUU SP CHECK —
+05-09-2026.md`, 3 phương án, chọn **B**), thầy chốt 4 điểm rồi "ok build":
+1. **Bỏ hẳn nút SUBMIT** ở màn chấm mô hình 2, thay bằng dòng trạng thái **giữa thanh đầu trang**:
+   *Saving… · ✓ Auto saved 20:14 (xanh lá, cỡ nhỏ) · Not saved — retrying… (đỏ nhấp nháy)*.
+2. Quay lại app (chuyển app / bấm Home iPhone) = **đọc kho lại, GIỮ chữ đang gõ** trong form.
+3. **Không thêm nút ↻** — nghe kho trực tiếp + tự đọc lại là đủ.
+4. Nháp cũ còn trong localStorage: **gom MỘT LẦN lên kho (chỉ thêm) rồi xoá khoá**, không hỏi.
+
+### Phát hiện khi mổ code — sửa lại hiểu biết cũ
+- **Cờ `daNop` KHÔNG trang nào đọc.** `sp-chitiet.html` · `dashboard.html` · `bai-sp.html` · app
+  mySpeaking (`kqTongQuanHtml`) đều coi **"có tài liệu `tongLoi` = đã nộp"** và cộng số lỗi sống
+  trực tiếp ⇒ gói tự lưu **không gửi `daNop`**, không bảng nào đếm sai. (CLAUDE.md từng ghi
+  "sp-chitiet đếm theo daNop" — sai.)
+- SDK Firestore `onSnapshot` **đã có sẵn trong trang** (màn trùng `trNoiKho`) — dùng lại được.
+- **Không cần sửa luật kho**: gói ghi vẫn nằm trong `hasOnly` 04/09; mảng vẫn chỉ dài ra; mốc
+  `suaLuc` nằm **bên trong** từng lỗi nên luật (chỉ kiểm tên trường tầng ngoài) không đụng.
+
+### Đã làm (`js/app.js` — khối `tl` ngay sau `m2BaoNhanLai`; `index.html`)
+- **Khối `tl`** (trạng thái tự lưu) + `luuNgay()` — cửa duy nhất 5 sự kiện gọi vào: `addOrUpdateError`
+  (Add / Save changes), `xoaLoiDangSua` (Delete), `datKetLuan` (Keep / Accept). `tlChay()` = hàng
+  đợi MỘT LÀN: đang ghi thì lượt sau chờ, tới lượt gửi trạng thái mới nhất. Hỏng ⇒ thử lại
+  5s/15s/30s, toast một lần, dòng trạng thái đỏ; `beforeunload` vẫn hỏi khi còn thứ chưa ghi.
+- **`tlNoiKho()`** nghe `spBuoi/{buổi}/tongLoi/{em}` (đúng 1 tài liệu). Snapshot về ⇒ `tlNhanKho` ⇒
+  `tlApDung` gộp vào bảng (so dấu vân tay `vanTayLoi`, không đổi thì im — snapshot dội lại sau
+  chính lượt ghi của mình không gây toast). Có bộ nghe sống thì `tongLoiGhiAnToan` **không đọc kho
+  trước khi ghi** (`tl.ngheSong` ⇒ bản đệm coi như luôn tươi); bộ nghe chết ⇒ về luật 04/09.
+- **`gopLoi(uuTien, kia)`** thay khối gộp cũ trong `tongLoiGhiAnToan`: mã có ở cả hai bên ⇒ bản có
+  **`suaLuc` mới hơn thắng** (trước: máy ghi sau thắng nguyên mảng); mã chỉ kho có ⇒ thêm lại như cũ.
+  `chuanLoi` giữ `suaLuc` (bản cũ = 0). `addOrUpdateError` / `xoaLoiDangSua` / `datKetLuan` đóng mốc.
+- **`tlDayVoi()`** (`visibilitychange`→hidden + `pagehide`): còn thứ chưa ghi thì bắn PATCH
+  **`keepalive:true`** (`fsPatch` nhận `tuyChon`), chỉ khi bản đệm còn tươi và gói < 55 KB.
+  **`tlDocLai()`** (→visible): GET kho lại + nối lại bộ nghe nếu chết + ghi nốt phần chờ.
+- **`startM2` viết lại**: kho là gốc; nháp cũ `myspeaking_<em>_<video>` gom một lần (`nhapThem` =
+  mã kho chưa có) ⇒ `luuNgay()` ⇒ xoá khoá **sau khi ghi thành công** (`tl.xoaNhapKhi`); không có
+  gì để gom thì xoá ngay. `autosave()` **không ghi localStorage** khi `tl.bat`.
+- **`m2GhiNhanKho(kho)`** ghi nhận icon ✓ theo bản KHO (`m2.serverIds`); `m2LoiDaDongBo` so bằng
+  `vanTayLoi` (chuẩn hoá thứ tự khoá — object form dựng và object kho khác thứ tự dù nội dung y hệt).
+  `m2CoSuaChuaGui()` khi `tl.bat` = `tl.can || tl.dangGhi`. `capNhatNutSubmit()` khi `tl.bat` chỉ
+  cập nhật dòng trạng thái.
+- `index.html`: `#hdLuu` (mx-auto, `.tu-luu` bỏ `mr-auto` của `#btnHome` để đứng đúng giữa khoảng
+  trống) + CSS theo `data-kieu` san/dang/xong/hong; `#appScreen.tu-luu #btnSubmit{display:none}`;
+  **gỡ hẳn `#draftModal`** + `moTaBanCham()`; icon ô lỗi "Not submitted yet" → "Not saved yet";
+  `app.js?v=55`. Toast Keep/Accept bỏ câu "remember to press UPDATE".
+- Không đụng: mô hình 1 (Sheets) · màn PHẢN BIỆN (`startPb`, vẫn nút Submit gửi phiếu) · hai màn
+  TRÙNG · `submitM2`/`guiNgamKetLuan` còn trong file nhưng **không còn đường nào gọi** ở màn chấm.
+
+### Đã kiểm — 8 phép trên bàn thử `localhost:8123`, **kho Firestore THẬT** (buổi `ZTEST_TULUU`)
+`node --check` xanh · `tsc --checkJs` chỉ còn YT/XLSX/lucide (global ngoài). Bàn thử qua gói `?goi=`
+tự dựng (`classCode:'ZTEST', lesson:'TULUU', kho:'fs', mh:2`), hai tab cùng một em:
+| Phép | Kết quả |
+|---|---|
+| Thêm 1 lỗi | dòng "✓ Auto saved 09:45" xanh, Submit `display:none`; kho có 1 lỗi kèm `suaLuc`, **không có `daNop`** |
+| Tab 2 thêm lỗi | tab 1 lên 2 dòng trong ~3 giây + toast "Synced 1 change from your other device ✓" |
+| Tab 1 sửa câu #1 | tab 2 thấy chữ mới (bản `suaLuc` mới hơn thắng) |
+| Giả mất mạng (chặn `fetch`) rồi thêm lỗi | "Not saved — retrying…" đỏ + toast; mở mạng ⇒ ~5 giây sau "✓ Auto saved", tab kia nhận câu |
+| Nháp cũ trong localStorage (1 câu lạ + 1 bản CŨ của câu đã có) → tải lại | 4 dòng: câu lạ được thêm, **bản cũ KHÔNG đè** bản kho, khoá localStorage bị xoá sau khi ghi |
+| Bấm Keep Issue (phiếu `phanHoi` thử) | KEPT hiện ở cả hai tab; kho `ketLuan:'keep'` |
+| Giả ẩn tab (`visibilityState`→hidden) lúc còn thứ chưa ghi | PATCH `keepalive:true` bắn ra; hiện lại ⇒ GET kho |
+| Xoá mềm câu | kho vẫn 5 phần tử, một `trangThai:'an'`; tab kia ẩn câu đó |
+Dọn: xoá 2 tài liệu ZTEST bằng khoá quản trị (`don_ztest.py`, venv myStudent), rà 4 kho con = 0.
+
+### ⬜ Thầy cần bấm tay
+- **iPhone thật**: thêm câu → bấm Home NGAY → mở lại → câu còn (keepalive trên Safari chưa thử được).
+- Một buổi thật: số lượt ghi/ngày trên Firebase Console (ước ~1 lượt/lần bấm, ~500–700/lớp/buổi).
+
+### ⛔ Bẫy để lại
+- `suaLuc` là `Date.now()` trần (web không có `nowChuan`) — máy sai giờ nhiều ngày sẽ "thắng oan"
+  khi hai máy sửa cùng câu. Chấp nhận (hai máy thường của cùng một em).
+- keepalive chỉ nhận ≤ ~64 KB — bài rất dài (≥ ~180 lỗi) thì `tlDayVoi` bỏ qua; lượt thường đã ghi
+  ngay lúc bấm nên hiếm khi còn gì chờ.
+- `tl` khai báo SAU `tongLoiGhiAnToan`/`autosave` nhưng chỉ được đọc lúc chạy (sau khi IIFE dựng
+  xong) — đừng chuyển thành gọi ngay lúc nạp.
