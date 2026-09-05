@@ -2960,3 +2960,53 @@ Bàn thử cách ly như chặng `?v=61` (importmap + shim, **đã xoá sạch**
 - ⬜ **Thầy bấm tay**: mở màn XÁC NHẬN TRÙNG trên iPhone thật; kiểm con số ô tròn trên hai nút
   nhỏ trong pop-up SP CHECK có khớp với số trong màn không.
 - ⛔ Luật kho **KHÔNG phải sửa** — chỉ đổi cách ĐỌC, không thêm trường nào.
+
+---
+
+# 🏁 TỔNG KẾT PHIÊN 05/09/2026 CHIỀU — DỰNG LẠI CẢ HAI MÀN GỘP LỖI TRÙNG (`?v=61` → `?v=62`)
+
+## Ba bản đã ra (đều đã LIVE, kiểm bằng HTTP thật trên tên miền thật)
+
+| Bản | Việc | Commit |
+|---|---|---|
+| mySpeaking `?v=61` | Màn KIỂM TRA TRÙNG: 1 cột 4 tầng · vá iPhone · bỏ nút SAVE · dòng Saved/Saving · cho gộp cùng người chấm · player đồng bộ | `3c3e4f8` |
+| mySpeaking `?v=62` | Màn XÁC NHẬN TRÙNG dựng lại cùng khuôn · con số nằm trong tên nút · ô vote nằm ngang · bên thua đen trắng | `3cc2aad` |
+| myLesson `v1.65.0` | Hai con số ô tròn ở pop-up SP CHECK đổi hẳn nghĩa | `c243232` |
+
+## Bốn bài học đắt nhất của phiên
+
+1. ⛔⛔ **Bỏ một trường trạng thái thì phải đi tìm MỌI NƠI ĐANG ĐỌC NÓ.** `?v=61` bỏ bước công bố
+   (`daGui` luôn `true`) mà quên `myLesson/web/lop.html` đang đếm `!c.daGui` ⇒ con số trên nút
+   KIỂM TRA TRÙNG **chết câm, luôn bằng 0**, mãi tới đợt sau mới lộ. Hai kho khác nhau nên
+   `grep` trong một kho không thấy. **Đổi nghĩa một trường ⇒ grep CẢ CỤM, không chỉ kho đang sửa.**
+2. ⛔ **Độ đặc hiệu CSS: đếm cho đủ tổ hợp, đừng viết gọn.** `.tr-phieu button.xam` (0,0,2,1) thua
+   `.tr-phieu .ok.minh` (0,0,3,1) ⇒ ô của chính em không chịu xám. Phải kể đủ bốn tổ hợp có
+   `.minh`. Cùng họ với bẫy "selector 2 ID ăn đứt `.hidden`" đã cắn ở `?v=59`.
+3. ⭐ **Bàn thử bằng `importmap` gọn hơn hẳn cách chép file.** Không phải chép `app.js` ra rồi sửa
+   `import` như 03/9: sinh trang thử từ `index.html` THẬT + import map đổi URL Firebase SDK sang
+   kho giả. Chạy đúng code sắp đẩy, không một byte ra kho thật.
+4. ⛔ **Bẫy của chính bàn thử.** Shim lưu CÙNG MỘT object vào nhật ký + kho + snapshot ⇒ nhật ký
+   bị mutate ngược, đọc ra số vô lý. Firestore thật trả object mới mỗi `d.data()`.
+   **Số vô lý thì ngờ bàn thử trước khi ngờ app** — cùng nếp "nhìn số đo có hợp lý không".
+
+## ⬜ THẦY CẦN BẤM TAY (chưa làm, gom cả phiên)
+- **iPhone thật, cả hai màn trùng:** cuộn danh sách — ba tầng trên phải đứng yên · gộp thử 2 lỗi ·
+  xem dòng Saved đổi · tắt mạng giữa chừng xem dòng đỏ "Not saved — retrying…" rồi bật lại.
+- **Pop-up SP CHECK:** ô tròn nút KIỂM TRA TRÙNG phải **XANH LÁ**, nút XÁC NHẬN TRÙNG vẫn đỏ; con
+  số đỏ đó phải bằng đúng số ở nút "CẦN BỎ PHIẾU" khi vào màn.
+- **Hai máy cùng đội** mở XÁC NHẬN TRÙNG: phải thấy **CÙNG một con số**.
+
+## ⬜⬜ VIỆC PHIÊN SAU — THẦY ĐÃ CHỐT
+> **"Hiển thị dữ liệu trên dashboard myLesson và app mySpeaking."**
+
+Tức chuyển từ phần **HỌC SINH LÀM** (nay đã xong cả 4 màn) sang phần **THẦY XEM**. Gồm:
+- **Điểm theo cụm + "cụm treo chờ thầy"** ở `sp-chitiet.html` — nợ từ 03/9, cố ý đợi có cụm chốt
+  thật để đo; nay đã có dữ liệu thật.
+  ⛔ **HỎI THẦY TRƯỚC:** "cụm treo" nay có NGHĨA MỚI. Luật cũ là "hoà phiếu thì TREO chờ thầy";
+  luật mới `?v=62` coi hoà = **CẦN BỎ PHIẾU** (việc của học sinh, chỉ cần một phiếu lệch là xong).
+  Vậy cái gì mới thật sự "treo chờ thầy"? Phải chốt lại trước khi tính điểm.
+- **Bảng/số liệu bên app mySpeaking** (tab KẾT QUẢ hiện chưa theo luật CHÍNH CHỦ QUYẾT — cố ý từ
+  02/09; dựng lại thì chép bộ ba `tenBang` / `chinhChuDaNhan` / `tranhChapThat`).
+- ⛔ **LUẬT 8️⃣ hạn mức:** đừng đưa phép đọc `cum`/`cumPhieu` vào đường CHẠY TỰ ĐỘNG lúc mở trang
+  dashboard/lop. `spDemTrung()` an toàn vì chỉ chạy khi em bấm mở pop-up.
+- ⛔ **`nguoncham.js` suy giờ nói** vẫn còn nợ (nợ từ `?v=50`), thầy chưa xếp lịch.

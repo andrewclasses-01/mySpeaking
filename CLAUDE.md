@@ -1,6 +1,19 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
-> # 🗺 VIỆC CÒN LẠI — ĐỌC KHỐI NÀY KHI TIẾP TỤC (chốt 05/09/2026)
+> # 🗺 VIỆC CÒN LẠI — ĐỌC KHỐI NÀY KHI TIẾP TỤC (chốt 05/09/2026 chiều)
+>
+> ## ⬜⬜ PHIÊN SAU LÀM GÌ — THẦY ĐÃ CHỐT CUỐI PHIÊN 05/9
+> > **"Hiển thị dữ liệu trên dashboard myLesson và app mySpeaking."**
+>
+> Phần **HỌC SINH LÀM đã xong cả 4 màn**; nay chuyển sang phần **THẦY XEM**. Gồm việc ③ bên dưới
+> (điểm theo cụm ở `sp-chitiet.html`) + bảng số liệu bên app mySpeaking (việc ⑤).
+> ⛔ **HỎI THẦY TRƯỚC KHI TÍNH ĐIỂM:** "cụm treo chờ thầy" nay có NGHĨA MỚI. Luật cũ 03/9 là
+> *hoà phiếu thì TREO chờ thầy*; luật mới `?v=62` coi hoà = **CẦN BỎ PHIẾU** (việc của học sinh,
+> một phiếu lệch là xong). Vậy cái gì mới thật sự "treo chờ thầy"? Phải chốt lại trước.
+> ⛔ **LUẬT 8️⃣ hạn mức:** đừng đưa phép đọc `cum`/`cumPhieu` vào đường chạy tự động lúc MỞ TRANG
+> dashboard/lop. `spDemTrung()` bên myLesson an toàn vì chỉ chạy khi em bấm mở pop-up SP CHECK.
+>
+> ---
 >
 > Xếp theo **thứ tự thầy muốn làm**. ✅ Việc ① đã build (`?v=55`); ✅ **việc ④ XONG CẢ HAI MÀN**
 > (`?v=61` + `?v=62`, kèm `myLesson v1.65.0`). ⛔ Việc ②, ③, ⑤ chưa được "ok build" — hỏi thầy trước.
