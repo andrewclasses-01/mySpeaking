@@ -197,9 +197,14 @@
 > **⬜ Thầy bấm tay iPhone thật:** cuộn xem ba tầng trên còn nguyên · gộp thử 2 lỗi · xem dòng Saved
 > đổi · tắt mạng giữa chừng xem dòng đỏ rồi bật lại.
 >
-> ## ⑤ Tab **KẾT QUẢ** của app mySpeaking chưa theo luật CHÍNH CHỦ QUYẾT
-> Cố ý từ 02/09 (thầy sẽ dựng lại tab đó) — số của nó lệch số học sinh thấy là **biết trước**,
-> không phải lỗi. Khi dựng lại thì chép bộ ba `tenBang` / `chinhChuDaNhan` / `tranhChapThat`.
+> ## ⑤ ~~Tab **KẾT QUẢ** của app mySpeaking chưa theo luật CHÍNH CHỦ QUYẾT~~ — ĐÃ LẠC HẬU
+> ⛔ Ghi chú cũ (02/09) không còn đúng: từ **app v1.25.0 (04/09)** tab KẾT QUẢ dựng lại từ đầu và là
+> **bản chép thứ tư** của luật (`kqTenBang` / `kqChinhChuDaNhan` / `kqTranhChap` trong
+> `app/src/renderer/js/app.js`). Đổi luật là đổi CẢ BỐN nơi (web HS · `sp-chitiet.html` · app
+> `chotloi.js` · app tab KẾT QUẢ). Phát hiện 05/09 khi đối chiếu hồ sơ với mã.
+> ⭐ 05/09 chiều-tối: phần "THẦY XEM ai còn việc" đã có ở myLesson web v1.66.0 (`sp-chitiet.html`
+> khung AI CÒN VIỆC + BẢNG CHỐT — học sinh lên bảng tự bấm, bảng ghi `phanHoi`/`tongLoi`/`cum`/
+> `cumPhieu` thay em, đúng khuôn tài liệu của app.js này). Xem `myLesson/BAN GIAO.md` mục `0🧭`.
 >
 > ---
 
