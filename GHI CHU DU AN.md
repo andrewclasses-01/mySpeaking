@@ -3054,3 +3054,47 @@ Hậu quả bên app: câu là dòng CHÍNH cụm này nhưng dòng PHỤ `boQua
 
 ⬜ Thầy bấm tay: màn KIỂM TRA TRÙNG tích 2 câu trong đó 1 câu đã có cụm → phải thấy toast bỏ qua + chỉ gộp câu còn lại.
 Backup: `Backup/truoc-v63-06-09/`.
+
+
+## CHẶNG "CSS TĨNH" — 06/09/2026 sáng — BỎ HẲN 2 CDN CÒN LẠI: Tailwind biên dịch sẵn + Lucide tự lưu (việc 2 rà soát)
+
+**Thầy chốt (AskUserQuestion):** *"Tailwind tĩnh + Lucide tự lưu"*. Nằm trong đợt 5 việc sau rà soát toàn hệ đêm 05→06/9
+(`DU LIEU TONG HOP\RA SOAT TOAN HE — DEM 06-09-2026.md`, mục M).
+
+### Vì sao
+Trang học sinh nạp `cdn.tailwindcss.com` (120 KB gzip, **biên dịch CSS trong trình duyệt MỖI LẦN mở**, console cảnh báo
+"should not be used in production") + `unpkg.com/lucide` (78 KB) — hai điểm chết đơn ngoài nhà, chặn hiển thị trên iPhone.
+`?v=63` đã bỏ SheetJS; chặng này bỏ nốt hai cái còn lại. Chỉ còn Google Fonts (không chặn, có `preconnect`).
+
+### Đã làm
+- `tailwind.config.js` (MỚI) — `content` = index.html · teacher.html · js/app.js · js/trung.js; `theme.extend` chép NGUYÊN VĂN
+  khối `<script>tailwind.config = …</script>` cũ (font Be Vietnam Pro + màu `brand`). `tailwind.in.css` (MỚI) = 3 dòng
+  `@tailwind base/components/utilities` (bản CDN cũng có preflight nên giữ `base`).
+- Lệnh sinh (ghi ngay đầu `tailwind.config.js` và chú thích trong index.html):
+  `npx tailwindcss@3 -c tailwind.config.js -i tailwind.in.css -o css/tailwind.css --minify` → **`css/tailwind.css` 30 KB
+  (6 KB gzip)**, 435 class. ⛔ Thêm class Tailwind mới là phải chạy lại + tăng `?v=` của `css/tailwind.css`.
+- `vendor/lucide-0.454.0.min.js` (MỚI, chép nguyên bản UMD từ unpkg, cùng phiên bản 0.454.0).
+- `index.html` + `teacher.html`: thay 2 thẻ script CDN + khối config inline bằng `<link href="css/tailwind.css?v=1">` và
+  `<script src="vendor/lucide-0.454.0.min.js">`. `teacher.html` vẫn giữ qrcodejs từ cdnjs (trang thầy, ít dùng).
+  `app.js` KHÔNG đổi (vẫn `?v=63`).
+
+### Đã test — bằng số, không bằng mắt
+1. **Phủ class:** bàn thử `kiem-tailwind2.js` (scratchpad phiên) rút MỌI token class từ `class="…"` của 2 trang HTML và mọi
+   chuỗi trong `app.js`: 497 token; đối chiếu 435 class trong CSS sinh ra + 71 class trong `<style>` riêng ⇒ 68 token "thiếu"
+   đều là **báo giả** (khoá object `ai:`/`luc:`, URL, tên icon lucide `arrow-up`/`trash-2`, chuỗi style inline, `pv-av` là
+   class móc không có luật, `lg:grid-rows-[…]` có trong CSS nhưng bộ đọc không giải mã được `\2c`). **Không thiếu class thật nào.**
+2. **So computed style trước/sau trên cùng DOM** (`_thu-cdn.html` = bản CDN ↔ `index.html` = bản tĩnh, cùng server 8142):
+   **482 phần tử × 27 thuộc tính** (display, màu, nền, cỡ chữ, font, padding, margin, radius, viền, width/height, gap, opacity,
+   shadow, align, overflow…) ⇒ **481/482 giống hệt**; 1 khác duy nhất là `.pop` `opacity 1 ↔ 0` = hoạt ảnh vào 0,18 s đóng
+   băng ở khung 0 vì tab preview đang ẨN (`document.hidden = true`, animation `running t=0`) — **bẫy F1 của môi trường thử,
+   không phải lỗi CSS**.
+3. `teacher.html`: font đúng Be Vietnam Pro, 5 icon lucide vẽ, `window.tailwind` không còn, QRCode còn, 0 lỗi console.
+4. Trang học sinh: 0 lỗi console (hết cả cảnh báo Tailwind CDN).
+
+### Bẫy / lưu ý
+- Tab preview ẩn làm mọi phép đo `opacity`/`transform` của hoạt ảnh sai — so state/class, đừng so số (đã ghi ở
+  `bay-da-can.md` F1). Lần này nhờ dump 482 phần tử mới khoanh được đúng 1 chỗ và giải thích được.
+- Máy 2 kéo về là chạy, không cần cài gì (file tĩnh nằm trong kho). Chỉ ai SỬA giao diện mới cần `npx tailwindcss`.
+
+⬜ Thầy mở iPhone thật: trang mở nhanh hơn, không thấy nháy trắng lúc CSS biên dịch; giao diện y hệt.
+Backup: chưa cần thư mục riêng (đổi 2 file HTML, `git show 7abe2f4:index.html` là bản trước).

@@ -7,6 +7,10 @@
 > chỉ nạp khi bấm Export Excel** (`napXLSX()`), không còn chặn ở `<head>`; **③ `trung.js?v=8`**
 > (file đổi ở `?v=61` mà quên tăng). Chi tiết: GHI CHU chặng `?v=63`. App đi cặp: mySpeaking **v1.32.0**
 > (`gopBuoi` cho câu thuộc cụm sớm nhất).
+> ⭐ **Chặng "CSS TĨNH" (06/09 sáng, sau `?v=63`)** — trang KHÔNG còn CDN Tailwind/Lucide: `css/tailwind.css` biên dịch sẵn
+> (30 KB; sinh bằng `npx tailwindcss@3 -c tailwind.config.js -i tailwind.in.css -o css/tailwind.css --minify` — ⛔ **thêm class
+> Tailwind mới là PHẢI chạy lại + tăng `?v=` của file css**) + `vendor/lucide-0.454.0.min.js`. Đã so 482 phần tử × 27 thuộc
+> tính trước/sau: giống hệt. Chi tiết GHI CHU chặng "CSS TĨNH".
 
 > # 🗺 VIỆC CÒN LẠI — ĐỌC KHỐI NÀY KHI TIẾP TỤC (chốt 05/09/2026 chiều)
 >

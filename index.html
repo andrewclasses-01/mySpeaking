@@ -8,22 +8,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      fontFamily: { sans: ['"Be Vietnam Pro"', 'sans-serif'] },
-      colors: {
-        brand: { 50:'#eef2ff',100:'#e0e7ff',500:'#6366f1',600:'#4f46e5',700:'#4338ca' }
-      }
-    }
-  }
-}
-</script>
+<!-- `?v=64` (06/09/2026, rà soát toàn hệ): Tailwind KHÔNG còn nạp từ cdn.tailwindcss.com (bản đó biên dịch CSS
+     trong trình duyệt MỖI LẦN mở trang, +120 KB, và là một điểm chết đơn). Nay là file tĩnh biên dịch sẵn trên
+     máy (30 KB, 6 KB gzip) từ `tailwind.config.js` (theme.extend chép nguyên văn khối cũ) + `tailwind.in.css`:
+       npx tailwindcss@3 -c tailwind.config.js -i tailwind.in.css -o css/tailwind.css --minify
+     ⛔ Thêm class Tailwind MỚI vào index.html / js/app.js / teacher.html là phải chạy lại lệnh trên và tăng ?v=. -->
+<link rel="stylesheet" href="css/tailwind.css?v=1">
 <!-- `?v=63` (06/09/2026): SheetJS (xlsx, 325 KB gzip) KHÔNG còn nạp sẵn ở đây — app.js `napXLSX()`
      tải nó đúng lúc bấm Export Excel (việc của thầy). Trang học sinh nhẹ đi 325 KB, bớt một điểm chết CDN. -->
-<script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
+<!-- `?v=64`: Lucide tự lưu trong kho (`vendor/`), không còn gọi unpkg.com — bớt điểm chết CDN thứ ba. -->
+<script src="vendor/lucide-0.454.0.min.js"></script>
 <style>
   html { scroll-behavior: smooth; }
   body { font-family: 'Be Vietnam Pro', sans-serif; }
