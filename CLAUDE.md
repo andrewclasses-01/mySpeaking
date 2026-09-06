@@ -1,5 +1,13 @@
 # mySpeaking — SPEAKING TEAM CHECK
 
+> ⭐ **`?v=63` (06/09/2026 sáng, LIVE)** — ba việc từ rà soát toàn hệ đêm 05→06/9 (báo cáo
+> `DU LIEU TONG HOP\RA SOAT TOAN HE — DEM 06-09-2026.md`): **① một câu chỉ được nằm trong MỘT cụm
+> sống** (`trIdsRanh()` lọc trước khi tạo/thêm cụm + chống bấm đúp 400 ms — đo thật kho có 6 câu
+> nằm trong 2 cụm ở B2A/A2B, làm app đếm dư và CHỐT KẾT QUẢ có thể gỡ oan); **② SheetJS 325 KB
+> chỉ nạp khi bấm Export Excel** (`napXLSX()`), không còn chặn ở `<head>`; **③ `trung.js?v=8`**
+> (file đổi ở `?v=61` mà quên tăng). Chi tiết: GHI CHU chặng `?v=63`. App đi cặp: mySpeaking **v1.32.0**
+> (`gopBuoi` cho câu thuộc cụm sớm nhất).
+
 > # 🗺 VIỆC CÒN LẠI — ĐỌC KHỐI NÀY KHI TIẾP TỤC (chốt 05/09/2026 chiều)
 >
 > ## ⬜⬜ PHIÊN SAU LÀM GÌ — THẦY ĐÃ CHỐT CUỐI PHIÊN 05/9

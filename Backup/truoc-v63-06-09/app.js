@@ -2006,27 +2006,7 @@
   // 2 sheet khớp mẫu mới của thầy:
   //   TIMER: STUDENT | MIN START | SEC START | MIN END | SEC END
   //   FORM : NO | MIN | SEC | STUDENT | TYPE | SENTENCE | MISTAKE | EXPLANATION | CHECKER
-  /* ⭐ `?v=63` (06/09/2026, rà soát đêm) — THƯ VIỆN EXCEL NẠP KHI BẤM, KHÔNG NẠP SẴN.
-     `xlsx.full.min.js` nặng 325 KB (đã gzip) và từng nằm CHẶN trong <head> của index.html, trong
-     khi cả trang chỉ dùng nó ở đúng hàm này — việc của thầy, học sinh trên iPhone không bao giờ
-     bấm. Nay tải lúc cần; tải hỏng thì báo rõ, không nuốt. */
-  const XLSX_URL = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
-  let napXlsxP = null;
-  function napXLSX() {
-    if (window.XLSX) return Promise.resolve();
-    if (!napXlsxP) {
-      napXlsxP = new Promise((ok, hong) => {
-        const s = document.createElement('script');
-        s.src = XLSX_URL;
-        s.onload = () => ok();
-        s.onerror = () => { napXlsxP = null; hong(new Error('Could not load the Excel library')); };
-        document.head.appendChild(s);
-      });
-    }
-    return napXlsxP;
-  }
-  async function exportExcel() {
-    try { await napXLSX(); } catch (e) { toast(e.message + ' — check your internet and try again', 'err'); return; }
+  function exportExcel() {
     const wb = XLSX.utils.book_new();
 
     // Sheet TIMER (thời gian nói)
@@ -4203,39 +4183,9 @@
     return '';
   }
 
-  /* ⭐⭐ `?v=63` (06/09/2026, rà soát đêm) — MỘT CÂU CHỈ ĐƯỢC NẰM TRONG MỘT CỤM SỐNG.
-     Đo thật trên kho: B2A_MOLDY FOOD có 2 câu, A2B_BEAVERS AND DAMS có 4 câu nằm trong HAI cụm
-     được gộp cùng lúc (cùng một em tạo hai cụm cách nhau ~17 giây; một ca cách 0,2 giây = bấm
-     đúp). Hậu quả bên app: `chotloi.js::gopBuoi()` đếm câu đó hai lần (bộ thử đỏ 878≠876), và
-     câu là DÒNG CHÍNH của cụm này nhưng là DÒNG PHỤ `boQua` của cụm kia ⇒ CHỐT KẾT QUẢ ghi
-     `trangThai:'go'` gỡ oan. Gốc: hai hàm dưới lấy nguyên các ô đang tích mà không hỏi "câu này
-     đã có cụm chưa" (`trCumCua()` có sẵn từ lâu nhưng chưa ai dùng ở đây); từ `?v=61` cụm không
-     khoá nữa nên càng dễ trùng. Nay: câu đã thuộc một cụm còn sống (≥ 2 câu) thì BỎ QUA và báo
-     em biết; kèm chống bấm đúp 400 ms (bẫy E8). Cụm đã trùng sẵn trên kho thì app tự lo khi CHỐT
-     (v1.32.0: một câu chỉ thuộc cụm tạo sớm nhất). */
-  function trIdsRanh(ids) {
-    return ids.filter((id) => {
-      const c = trCumCua(id);
-      return !(c && (c.ids || []).length > 1);
-    });
-  }
-  let trMocBam = 0;   // mốc cú bấm tạo/thêm cụm gần nhất — cú thứ hai trong 400 ms bị nuốt
-  function trBamDon() {
-    const t = Date.now();
-    if (t - trMocBam < 400) return false;
-    trMocBam = t;
-    return true;
-  }
-  function trBaoBoQua(soBo) {
-    if (soBo > 0) toast(soBo + ' lỗi đã nằm trong cụm khác — bỏ qua, không gộp lại', 'info');
-  }
-
   function trTaoCum() {
-    if (!trBamDon()) return;
-    const tatCa = Object.keys(tr.tich);
-    const ids = trIdsRanh(tatCa);
-    trBaoBoQua(tatCa.length - ids.length);
-    if (ids.length < 2) { tr.tich = {}; trVe(); return; }
+    const ids = Object.keys(tr.tich);
+    if (ids.length < 2) return;
     /* ⭐ `?v=61` — `daGui: true` ngay từ lúc tạo: bỏ hẳn bước công bố (thầy chốt). */
     const c = { _id: taoCumId(), ids, ten: trDatTen(ids), ai: [state.student], daGui: true, luc: Date.now() };
     tr.tich = {};
@@ -4246,20 +4196,9 @@
   }
 
   function trThemVaoCum(cumId) {
-    if (!trBamDon()) return;
     const c = tr.cum.filter((x) => x._id === cumId)[0];
     if (!c) return;   // ⭐ `?v=61` — bỏ chốt `c.daGui`: cụm nào cũng thêm vào được
-    /* `?v=63`: câu đã ở trong CHÍNH cụm này thì không tính là "cụm khác"; câu đang ở cụm khác
-       còn sống thì bỏ qua + báo (xem chú thích trên `trIdsRanh`). */
-    const moi = Object.keys(tr.tich).filter((i) => (c.ids || []).indexOf(i) < 0);
-    const ids = trIdsRanh(moi);
-    trBaoBoQua(moi.length - ids.length);
-    if (!ids.length) {
-      tr.tich = {};
-      $('trPopCum').classList.add('hidden'); $('trPopCum').classList.remove('flex');
-      trVe();
-      return;
-    }
+    const ids = Object.keys(tr.tich);
     ids.forEach((i) => { if ((c.ids || []).indexOf(i) < 0) c.ids.push(i); });
     trThemToi(c);
     c.ten = c.ten || trDatTen(c.ids);

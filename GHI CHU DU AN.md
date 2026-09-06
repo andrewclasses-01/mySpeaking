@@ -3010,3 +3010,47 @@ Tức chuyển từ phần **HỌC SINH LÀM** (nay đã xong cả 4 màn) sang 
 - ⛔ **LUẬT 8️⃣ hạn mức:** đừng đưa phép đọc `cum`/`cumPhieu` vào đường CHẠY TỰ ĐỘNG lúc mở trang
   dashboard/lop. `spDemTrung()` an toàn vì chỉ chạy khi em bấm mở pop-up.
 - ⛔ **`nguoncham.js` suy giờ nói** vẫn còn nợ (nợ từ `?v=50`), thầy chưa xếp lịch.
+
+
+## CHẶNG `?v=63` — 06/09/2026 sáng — MỘT CÂU CHỈ Ở MỘT CỤM + NẠP SHEETJS KHI CẦN + TĂNG `trung.js?v=`
+
+### Bối cảnh
+Đêm 05→06/9 chạy rà soát toàn hệ (báo cáo `DU LIEU TONG HOP\RA SOAT TOAN HE — DEM 06-09-2026.md`, mục A · F · M).
+Thầy đọc sáng 06/9 rồi chốt qua AskUserQuestion: *"Vá cả hai đầu"* (web + app), *"Làm hết + push thẳng main"*.
+
+### Gốc lỗi A — đo thật trên kho, KHÔNG đoán
+`mySpeaking/app/tools/thu-chotloi.js` phần dữ liệu thật đỏ 2/44: *"khong cau nao bi mat khi gop — thay 878, doi 876"*
+(B2A) và *851 ≠ 847* (A2B). Soi kho (chỉ đọc) bằng `soi-cum-trung.js`:
+
+| Buổi | Cụm được gộp | Câu nằm trong >1 cụm | Ai / cách nhau |
+|---|---:|---:|---|
+| B2A_MOLDY FOOD | 182 | 2 (`mthdjlnl64`, `mtmsmgzntb`) | HUYỀN tạo 2 cụm cách ~17 s |
+| A2B_BEAVERS AND DAMS | 154 | 4 | MAI HOA+KIM NGÂN cách ~18 s; PHONG+KIM NGÂN ↔ KIM NGÂN cách **0,2 s** (bấm đúp) |
+
+`trTaoCum()` / `trThemVaoCum()` lấy nguyên các ô đang tích (`Object.keys(tr.tich)`) mà không hỏi câu đã có cụm chưa —
+`trCumCua(id)` có sẵn từ lâu nhưng chưa ai dùng ở đây. Từ `?v=61` cụm không khoá nữa nên càng dễ trùng.
+Hậu quả bên app: câu là dòng CHÍNH cụm này nhưng dòng PHỤ `boQua` cụm kia ⇒ CHỐT KẾT QUẢ ghi `trangThai:'go'` gỡ oan.
+
+### Đã làm (`js/app.js`, `index.html`)
+1. **`trIdsRanh(ids)`** — bỏ câu đang thuộc một cụm còn sống (`ids.length > 1`; cụm đã giải tán `ids` rỗng/1 câu không chặn).
+   `trTaoCum` và `trThemVaoCum` đều đi qua nó; câu bị bỏ thì toast *"N lỗi đã nằm trong cụm khác — bỏ qua"*.
+   Thêm vào cụm: câu đã ở CHÍNH cụm đó không tính là "khác". Không còn câu hợp lệ ⇒ không ghi, xoá tích, vẽ lại.
+2. **Chống bấm đúp 400 ms** (`trBamDon`, bẫy E8) cho cả hai nút.
+3. **SheetJS (325 KB gzip) không nạp sẵn ở `<head>`** — `napXLSX()` tải đúng lúc bấm Export Excel (việc của thầy; `exportExcel`
+   thành `async`). Tải hỏng ⇒ toast đỏ, không nuốt. Trang học sinh nhẹ 325 KB, bớt một điểm chết CDN (F/M của báo cáo).
+4. Tăng `trung.js?v=7 → 8` (file đổi ở `?v=61` mà quên tăng) và `app.js?v=63`.
+
+### Đã test
+- `node --check` + `node --input-type=module --check` sạch; CRLF giữ nguyên (4466/4466).
+- Bàn thử stub rút 6 hàm thật từ `app.js` (`thu-tr-cum.js`, scratchpad phiên): **11/11** — tạo cụm thường · loại câu đã có cụm +
+  toast đúng số · còn 1 câu thì không tạo · cụm giải tán không chặn · bấm đúp 200 ms nuốt, 400 ms cho · thêm vào cụm bỏ đúng câu
+  ở cụm khác, giữ câu đã ở cụm này.
+- Trang local (`localhost:8142`): 0 lỗi console (chỉ cảnh báo Tailwind CDN như cũ), `window.XLSX` **không** có sẵn, nạp động
+  ra `0.20.3`.
+
+### Bẫy / lưu ý
+- Dữ liệu 6 câu đang trùng trên kho GIỮ NGUYÊN — app `chotloi.js` v1.32.0 tự cho câu thuộc cụm sớm nhất khi CHỐT.
+- Bảng chốt của thầy (`myLesson/web/js/sp-bang.js`) đã loại câu có cụm qua `ktConLai()` từ trước — không phải sửa.
+
+⬜ Thầy bấm tay: màn KIỂM TRA TRÙNG tích 2 câu trong đó 1 câu đã có cụm → phải thấy toast bỏ qua + chỉ gộp câu còn lại.
+Backup: `Backup/truoc-v63-06-09/`.

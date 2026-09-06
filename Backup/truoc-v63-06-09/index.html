@@ -21,8 +21,7 @@ tailwind.config = {
   }
 }
 </script>
-<!-- `?v=63` (06/09/2026): SheetJS (xlsx, 325 KB gzip) KHÔNG còn nạp sẵn ở đây — app.js `napXLSX()`
-     tải nó đúng lúc bấm Export Excel (việc của thầy). Trang học sinh nhẹ đi 325 KB, bớt một điểm chết CDN. -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/lucide@0.454.0/dist/umd/lucide.min.js"></script>
 <style>
   html { scroll-behavior: smooth; }
@@ -1219,7 +1218,7 @@ tailwind.config = {
 
 <!-- ?v=… = số phiên bản chống cache: MỖI lần sửa app.js/config.js nhớ tăng số này lên -->
 <script src="config.js?v=28"></script>
-<script src="js/trung.js?v=8"></script>
-<script src="js/app.js?v=63"></script>
+<script src="js/trung.js?v=7"></script>
+<script src="js/app.js?v=62"></script>
 </body>
 </html>
