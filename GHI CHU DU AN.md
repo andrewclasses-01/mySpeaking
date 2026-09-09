@@ -3098,3 +3098,67 @@ Trang học sinh nạp `cdn.tailwindcss.com` (120 KB gzip, **biên dịch CSS tr
 
 ⬜ Thầy mở iPhone thật: trang mở nhanh hơn, không thấy nháy trắng lúc CSS biên dịch; giao diện y hệt.
 Backup: chưa cần thư mục riêng (đổi 2 file HTML, `git show 7abe2f4:index.html` là bản trước).
+
+## CHẶNG `?v=64` — 09/09/2026 — TÊN TẮT TRÙNG NHAU VẪN "MẤT ẢNH" DÙ KHO ĐÃ CÓ (loại trừ theo roster)
+
+### Bối cảnh
+Thầy báo "mySpeaking bị mất ảnh icon", yêu cầu điều tra và fix để mọi em có ảnh (trừ em chưa có
+trong myStudent). Kho `lessonAvatar` **KHÔNG hỏng** — cả 10 lớp vừa được myLesson đẩy lại đúng
+sáng nay (`luc` mọi lớp = 09/09 07:39 UTC). Điều tra bằng cách chạy lại NGUYÊN VĂN thuật toán
+`avTenKhop`/`deAvatarKho` của `app.js` trên dữ liệu THẬT lấy trực tiếp từ Firestore REST (7 buổi
+`spBuoi` đang `active`, đối chiếu từng em trong `teams[].members` với kho lớp tương ứng) — không
+đoán, không suy diễn từ ảnh chụp màn hình.
+
+### Gốc lỗi — đo được, không phải đoán
+Trong 85 lượt tên (7 buổi × các đội), **chỉ 2 tên KHÔNG ra ảnh**:
+- Lớp **A2-B**, buổi *A2B_BEAVERS AND DAMS*, Team 1: `"NHI"` khớp CẢ **LINH NHI** lẫn **THẢO NHI**
+  (cả hai đều học lớp này) ⇒ luật an toàn cũ (③ trong chú thích `avTenKhop`) BỎ, không đoán bừa —
+  đúng thiết kế, nhưng em vẫn ra chữ tắt dù kho đã có ảnh thật của cả hai.
+- Lớp **B2-A**, buổi *B2A_MOLDY FOOD*, Team 4: `"NGỌC"` khớp CẢ **BẢO NGỌC** lẫn **SONG NGỌC**.
+  Nhưng chính buổi đó, **Team 1 đã ghi ĐẦY ĐỦ `"SONG NGỌC"`** — nghĩa là tên `"NGỌC"` ở Team 4
+  KHÔNG THỂ là Song Ngọc nữa (một em không thể vừa là đội viên Team 1 vừa là Team 4 mang tên
+  khác trong CÙNG một buổi) ⇒ suy ra chắc chắn đó là **BẢO NGỌC**, không phải đoán ảnh.
+
+Mọi tên khác (83/85) đã khớp đúng 1 ảnh từ trước — kho và luật cũ vẫn đúng, KHÔNG phải lỗi diện
+rộng. Vá ở đây là bịt đúng lỗ hổng: luật cũ chỉ nhìn TỪNG tên một cách RIÊNG LẺ, không biết rằng
+cùng một buổi/lớp không thể có 2 người trùng tên đầy đủ.
+
+### Đã làm (`js/app.js` — hàm mới `rosterTens()`, viết lại `deAvatarKho()`)
+Thêm **vòng LOẠI TRỪ** dựa trên chính roster của lớp (`CLASSES.classes[].teams[].members`, ưu
+tiên hơn `session.class` vì còn sống sau F5):
+1. **Vòng 1** — mọi tên khớp CHẮC CHẮN (đúng 1 ảnh) nhận ngay, đánh dấu ảnh đó đã bị **CHIẾM**.
+2. **Vòng 2** — tên còn mập mờ thử lại, **loại bỏ ảnh đã CHIẾM** ở vòng 1; nếu sau khi loại chỉ
+   còn đúng 1 ứng viên thì nhận — đây là suy luận từ chính danh sách lớp (không phải đoán ảnh).
+   Vẫn mập mờ (không ai chiếm trước để loại) thì **GIỮ NGUYÊN bỏ qua** như luật cũ — ca `"NGÂN"`
+   (KIM NGÂN/KHÁNH NGÂN gọi tắt, không ai trong buổi gọi đủ tên) vẫn phải an toàn tuyệt đối,
+   KHÔNG được đoán.
+
+Áp dụng **y hệt hai vòng đó** ở `mySpeaking/app` (Electron, `src/main/lib/anhhs.js::anhTheoTen`,
+dùng cho màn ⑥ KẾT QUẢ) — cùng gốc lỗi, cùng thuật toán `avTenKhop`, sửa cả hai đầu như quy ước.
+
+### Đã test
+- `node --check js/app.js`: sạch.
+- `mySpeaking/app/tools/thu-anhhs.js` (chạy thật, có phần B đọc kho Firestore thật): **28/28 OK**
+  (từ 21/21) — 4 ca mới: tên đầy đủ `"SONG NGỌC"` vẫn ra đúng ảnh riêng nó · loại trừ ra đúng
+  `"NGỌC"` → BẢO NGỌC · loại trừ KHÔNG làm hai tên mập mờ hết mập mờ khi không có gì để loại
+  (`"NGÂN"` vẫn bỏ) · tên khác trong cùng lượt gọi vẫn khớp bình thường. Thêm buổi **B2A** thật
+  vào phần B: **16/16 em ra ảnh** (trước vá sẽ là 15/16, đúng dự đoán) — không ảnh nào gán nhầm
+  cho 2 em. Buổi A2B vẫn đúng **14/15** (giữ nguyên, em "NHI" còn mập mờ thật — xem VIỆC CÒN LẠI).
+- Mô phỏng thủ công (Node) chạy `deAvatarKho` mới trên dữ liệu thật của cả 7 buổi `spBuoi` đang
+  mở: chỉ còn đúng 1 tên không ra ảnh (`"NHI"` — A2-B), giống hệt kết quả từ `anhhs.js`.
+
+### VIỆC CÒN LẠI — cần thầy xác nhận, KHÔNG tự đoán
+Em `"NHI"` ở Team 1 buổi *A2B_BEAVERS AND DAMS* (lớp A2-B) là **LINH NHI** hay **THẢO NHI**? Cả
+hai đều có ảnh trong kho, nhưng không có cách nào suy ra từ dữ liệu (không như ca Ngọc, không có
+tên nào khác trong buổi này bị chiếm để loại trừ). Khi thầy xác nhận, việc sửa gồm HAI phần:
+1. **Đổi roster của buổi** (`spBuoi/A2B_BEAVERS AND DAMS`, `teams[0].members`): `"NHI"` →
+   `"LINH NHI"` hoặc `"THẢO NHI"` — chỉ ảnh hưởng LƯỢT ĐĂNG NHẬP MỚI, chưa sửa dữ liệu đã nộp.
+2. Nếu muốn ảnh hiện đúng NGAY cho bài **đã nộp**, phải sửa thêm field `student` trong
+   `spBuoi/.../tongLoi/nhi` (và mọi chỗ em đó được nhắc tới là `who`/`voter` trong lỗi của bạn
+   khác) — đây là SỬA DỮ LIỆU THẬT của học sinh đã nộp, **chưa làm** vì cần thầy xác nhận trước
+   (đúng luật an toàn của cả dự án — xem `HO SO 09-09-2026` mục an toàn dữ liệu buổi/kết quả).
+Không có buổi nào khác đang mở còn dính ca mập mờ chưa giải quyết được (đã quét đủ cả 7 buổi).
+
+⬜ Thầy bấm tay: mở lại màn CHẤM của A2B/B2A trên trình duyệt thật, xem BẢO NGỌC (Team 4, B2A) đã
+ra ảnh thật chưa; xác nhận giúp em "NHI" (A2B Team 1) là Linh Nhi hay Thảo Nhi.
+Backup: `Backup/truoc-v64-09-09/` (app.js, index.html).

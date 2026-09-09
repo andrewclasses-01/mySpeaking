@@ -378,60 +378,21 @@
     return AV_BAY[slug];
   }
 
-  // Mọi tên trong roster LỚP hiện tại (mọi đội, không chỉ đội đang hiện trên màn) — dùng để
-  // LOẠI TRỪ khi một tên tắt mập mờ (mục đích: một em không thể vừa là "SONG NGỌC" đội 1 vừa
-  // là "NGỌC" đội 4 — hai đội viên KHÁC TÊN trong cùng buổi chắc chắn là hai người khác nhau).
-  // Ưu tiên `CLASSES` (nạp lúc mở trang, còn sống cả sau F5) hơn `session.class` (chỉ có ngay
-  // sau lượt đăng nhập kiểu cũ, KHÔNG có khi vào thẳng từ gói myLesson — xem `vaoThangTuGoi`).
-  function rosterTens() {
-    let cls = (CLASSES.classes || []).find((c) => state.classCode &&
-      String(c.classCode || '').toLowerCase() === String(state.classCode).toLowerCase());
-    if (!cls) cls = (CLASSES.classes || []).find((c) => (c.name || c.id) === state.className);
-    if (!cls) cls = session.class;
-    if (!cls || !Array.isArray(cls.teams)) return null;
-    const tens = [];
-    cls.teams.forEach((t) => (t.members || []).forEach((m) => { if (m) tens.push(m); }));
-    return tens.length ? tens : null;
-  }
-
   // Đè ảnh kho lên mọi ô đã vẽ. Ô nào cũng mang `data-av-em`.
   // ⛔ Dấu đặt trên Ô, KHÔNG trên <img>: `onerror="this.remove()"` gỡ hẳn thẻ ảnh khi
   //    thiếu, đánh dấu lên đó là mất manh mối của đúng những em đang cần cứu nhất.
-  // ⭐ (09/09/2026) Tên tắt MẬP MỜ (khớp ≥2 ảnh trong kho — lớp có cả "LINH NHI" lẫn "THẢO
-  // NHI" mà buổi chỉ ghi tắt "NHI") trước đây BỎ LUÔN cho an toàn (đừng đoán bừa gắn nhầm mặt
-  // — bài học từ ca "KIM NGÂN"/"KHÁNH NGÂN"), nên em vẫn ra chữ tắt dù kho đã có ảnh thật. Nay
-  // hai VÒNG: ① tên khớp CHẮC CHẮN (đúng 1 ảnh) nhận trước, đánh dấu ảnh đó đã bị CHIẾM; ② tên
-  // còn mập mờ thử lại, LOẠI những ảnh đã bị CHIẾM — còn đúng 1 thì chắc chắn đúng người (bằng
-  // suy luận roster, không phải đoán ảnh). Vẫn mập mờ sau khi loại thì GIỮ NGUYÊN bỏ qua.
   function deAvatarKho() {
     if (!AV_KHO) return 0;
     const ids = Object.keys(AV_KHO);
     if (!ids.length) return 0;
     const o = document.querySelectorAll('[data-av-em]');
-    if (!o.length) return 0;
-
-    const tenCanTra = {};
-    (rosterTens() || []).forEach((t) => { tenCanTra[t] = 1; });
-    for (let i = 0; i < o.length; i++) {
-      const t = o[i].getAttribute('data-av-em');
-      if (t) tenCanTra[t] = 1;
-    }
-    const dsTen = Object.keys(tenCanTra);
-    const idChiem = {}, tenRaId = {};
-    dsTen.forEach((ten) => {
-      const khop = ids.filter((id) => avTenKhop(AV_KHO[id].t, ten));
-      if (khop.length === 1) { tenRaId[ten] = khop[0]; idChiem[khop[0]] = 1; }
-    });
-    dsTen.forEach((ten) => {
-      if (tenRaId[ten]) return;
-      const khop = ids.filter((id) => avTenKhop(AV_KHO[id].t, ten) && !idChiem[id]);
-      if (khop.length === 1) tenRaId[ten] = khop[0];
-    });
-
     let de = 0;
     for (let i = 0; i < o.length; i++) {
       const el = o[i], ten = el.getAttribute('data-av-em');
-      const id = ten && tenRaId[ten];
+      let id = null;
+      for (let k = 0; k < ids.length; k++) {
+        if (avTenKhop(AV_KHO[ids[k]].t, ten)) { id = ids[k]; break; }
+      }
       if (!id) continue;
       let img = el.tagName === 'IMG' ? el : el.querySelector('img');
       if (!img) {
