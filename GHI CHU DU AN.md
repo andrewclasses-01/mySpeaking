@@ -3147,18 +3147,21 @@ dùng cho màn ⑥ KẾT QUẢ) — cùng gốc lỗi, cùng thuật toán `avTe
 - Mô phỏng thủ công (Node) chạy `deAvatarKho` mới trên dữ liệu thật của cả 7 buổi `spBuoi` đang
   mở: chỉ còn đúng 1 tên không ra ảnh (`"NHI"` — A2-B), giống hệt kết quả từ `anhhs.js`.
 
-### VIỆC CÒN LẠI — cần thầy xác nhận, KHÔNG tự đoán
-Em `"NHI"` ở Team 1 buổi *A2B_BEAVERS AND DAMS* (lớp A2-B) là **LINH NHI** hay **THẢO NHI**? Cả
-hai đều có ảnh trong kho, nhưng không có cách nào suy ra từ dữ liệu (không như ca Ngọc, không có
-tên nào khác trong buổi này bị chiếm để loại trừ). Khi thầy xác nhận, việc sửa gồm HAI phần:
-1. **Đổi roster của buổi** (`spBuoi/A2B_BEAVERS AND DAMS`, `teams[0].members`): `"NHI"` →
-   `"LINH NHI"` hoặc `"THẢO NHI"` — chỉ ảnh hưởng LƯỢT ĐĂNG NHẬP MỚI, chưa sửa dữ liệu đã nộp.
-2. Nếu muốn ảnh hiện đúng NGAY cho bài **đã nộp**, phải sửa thêm field `student` trong
-   `spBuoi/.../tongLoi/nhi` (và mọi chỗ em đó được nhắc tới là `who`/`voter` trong lỗi của bạn
-   khác) — đây là SỬA DỮ LIỆU THẬT của học sinh đã nộp, **chưa làm** vì cần thầy xác nhận trước
-   (đúng luật an toàn của cả dự án — xem `HO SO 09-09-2026` mục an toàn dữ liệu buổi/kết quả).
+### VIỆC CÒN LẠI — em "NHI" (Team 1, A2B_BEAVERS AND DAMS) là THẢO NHI (thầy xác nhận 09/09)
+Thử `PATCH` thẳng field `teams` của `spBuoi/A2B_BEAVERS AND DAMS` bằng REST + apiKey công khai ⇒
+**403 PERMISSION_DENIED** — ĐÚNG THIẾT KẾ (Firestore rules chỉ nhận ghi kèm `Authorization: Bearer`
+do `myLesson/src/main/lib/kho-fs.js::layToken()` cấp, apiKey công khai chỉ đọc). Không có cách ghi
+an toàn nào từ ngoài app — phải qua đúng cửa của myLesson:
+
+**myLesson đã có sẵn tool đúng việc này** — `spquanly.js::doiTenHocSinh()` ("Sửa tên bị gõ nhầm"):
+đổi tên trong `teams[].members` CỦA ĐÚNG BUỔI **VÀ** dọn lại toàn bộ `baiNop`/`tongLoi`/`phanHoi`
+cũ đã nộp dưới tên sai sang tên đúng (kể cả field `who`/`voter` ở lỗi/phiếu của bạn khác) — làm
+đúng những gì cần, không phải chắp vá thêm.
+**Đường vào:** myLesson → dòng SP CHECK của buổi *BEAVERS AND DAMS* (lớp A2-B) → chuột phải lên
+nút 👁 xem thử → **"Quản lý danh sách chấm"** → mục sửa tên → chọn `"NHI"` → gõ `"THẢO NHI"` → Sửa.
 Không có buổi nào khác đang mở còn dính ca mập mờ chưa giải quyết được (đã quét đủ cả 7 buổi).
 
-⬜ Thầy bấm tay: mở lại màn CHẤM của A2B/B2A trên trình duyệt thật, xem BẢO NGỌC (Team 4, B2A) đã
-ra ảnh thật chưa; xác nhận giúp em "NHI" (A2B Team 1) là Linh Nhi hay Thảo Nhi.
-Backup: `Backup/truoc-v64-09-09/` (app.js, index.html).
+⬜ Thầy bấm tay: (1) đổi tên qua myLesson như trên; (2) mở lại màn CHẤM của A2B/B2A trên trình
+duyệt thật, xem BẢO NGỌC (Team 4, B2A) đã ra ảnh thật chưa (đã tự vá qua code, không cần đụng tay).
+Backup: `Backup/truoc-v64-09-09/` (app.js, index.html). Đã **PUSH** commit `d82c45b` (web) +
+`10b33cf` (app, `v2.11.1`) lên GitHub.
