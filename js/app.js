@@ -801,6 +801,7 @@
         app = appMod.initializeApp({
           apiKey: (CFG.FIREBASE || {}).apiKey, projectId: (CFG.FIREBASE || {}).projectId,
           authDomain: ((CFG.FIREBASE || {}).projectId || '') + '.firebaseapp.com',
+          appId: (CFG.FIREBASE || {}).appId, messagingSenderId: (CFG.FIREBASE || {}).messagingSenderId,   // 27/09/2026: cho App Check
         });
       }
       return { fsMod, db: fsMod.getFirestore(app) };
@@ -3954,6 +3955,7 @@
       app = appMod.initializeApp({
         apiKey: (CFG.FIREBASE || {}).apiKey, projectId: (CFG.FIREBASE || {}).projectId,
         authDomain: ((CFG.FIREBASE || {}).projectId || '') + '.firebaseapp.com',
+        appId: (CFG.FIREBASE || {}).appId, messagingSenderId: (CFG.FIREBASE || {}).messagingSenderId,   // 27/09/2026: cho App Check
       });
     }
     const db = fsMod.getFirestore(app);

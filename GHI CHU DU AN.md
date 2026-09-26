@@ -1,5 +1,7 @@
 # GHI CHÚ DỰ ÁN — mySpeaking (SPEAKING TEAM CHECK)
 
+> 🔒 **27/09/2026 — web ?v=65: Firebase App Check (THEO DÕI, chưa ép buộc)** sau tấn công Tr0ngX (cụm bị bơm rác chat/điểm bằng script gọi thẳng Firestore). `js/app-check.js` = BẢN CHÉP myLesson web: bọc fetch gắn `X-Firebase-AppCheck` cho mọi REST `?key=` trong js/app.js + SDK App Check (reCAPTCHA Enterprise, site key cũ đợt Gemini 03/9, tên miền nay có andrewclasses.com + con). config.js thêm appId/messagingSenderId; 2 chỗ initializeApp trong app.js kèm appId. Không đổi luồng học sinh. Hồ sơ: myLesson-app "HO SO BAO MAT.md" mục F. ⬜ App mySpeaking (Electron renderer, file://) CHƯA có — việc của đợt ép buộc.
+
 ## CHẶNG 1 — 18/07/2026: Khởi tạo app từ file mẫu Excel
 
 ### Bối cảnh / yêu cầu

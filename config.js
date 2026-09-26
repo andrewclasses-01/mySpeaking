@@ -28,5 +28,8 @@ window.MYSPEAKING_CONFIG = {
   FIREBASE: {
     projectId: "aword-70dae",
     apiKey: "AIzaSyAV_yoyAQM2fKKdOsJyuAxxf4AN7MsF7XY",
+    // (27/09/2026) appId + messagingSenderId: Firebase App Check gắn theo APP — thiếu appId là không xin được mã.
+    appId: "1:399279049436:web:b9b34dcfb34732aa744219",
+    messagingSenderId: "399279049436",
   },
 };
