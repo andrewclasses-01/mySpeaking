@@ -3167,3 +3167,20 @@ Không có buổi nào khác đang mở còn dính ca mập mờ chưa giải qu
 duyệt thật, xem BẢO NGỌC (Team 4, B2A) đã ra ảnh thật chưa (đã tự vá qua code, không cần đụng tay).
 Backup: `Backup/truoc-v64-09-09/` (app.js, index.html). Đã **PUSH** commit `d82c45b` (web) +
 `10b33cf` (app, `v2.11.1`) lên GitHub.
+## CHẶNG `?v=66` — 27/09/2026 tối — RÀ XSS SAU TẤN CÔNG Tr0ngX: escape `type` lỗi của HS khác + chặn `javascript:` ở nút Open video
+
+**Bối cảnh:** myLesson `HO SO BAO MAT.md` mục 8 (bản đồ tấn công) + 8.5 (agent rà XSS 4 web). Kho `spBuoi/*/tongLoi` ai cũng ghi được
+(chưa có vé — việc R6), nên mọi trường trong đó là "chữ của người lạ".
+
+### Lỗ đã vá (`js/app.js`)
+- `typeLabel = (t) => t` (1517) nối thẳng `e.type` vào innerHTML ở `renderErrors` (1817), **`renderErrorsPb` (2680)** và **`trNhanLoai` (4025)** —
+  `e.type` đọc từ `tongLoi.errors[]` của HS KHÁC (`chuanLoi` chỉ `String()`), ⇒ **stored XSS chéo học sinh** (một em ghi
+  `type: "<img src=x onerror=…>"` là chạy JS trên máy cả đội chấm). Nay `typeLabel` = `escapeHtml(String(t))`. Mọi trường khác
+  (who/sentence/detail/explain/lyDo/voter/student/team…) vốn đã qua `escapeHtml`.
+- `vidKhung` (3276): clip lạ (không YouTube/Drive) hiện `<a href=escapeHtml(url)>` — escape không chặn SCHEME, url có thể tới từ tham số
+  `?goi=` trên URL ⇒ `javascript:` chạy khi bấm. Nay chỉ render nút khi `^https?://`, còn lại hiện "Video link is not valid.".
+- `index.html` `app.js?v=66`.
+
+### Kiểm
+`node --check` sạch; regex/escape thử tay. Không đụng đăng nhập/điểm (web này không có). ⬜ Thầy mở lại màn CHẤM một buổi thật xem
+nhãn G/P/I vẫn hiện đúng (chuỗi hợp lệ 'Grammar'/'Pronunciation'/'Information' không có ký tự cần escape ⇒ không đổi gì).

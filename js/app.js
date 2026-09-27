@@ -1515,7 +1515,9 @@
     'Pronunciation': { badge: 'bg-emerald-100 text-emerald-700', short: 'P' },
     'Information': { badge: 'bg-amber-100 text-amber-700', short: 'I' },
   };
-  const typeLabel = (t) => t;   // giá trị lưu đã là tiếng Anh → hiển thị nguyên
+  // ?v=66 (27/09/2026, rà XSS sau tấn công Tr0ngX): `type` đọc từ `tongLoi` của HS KHÁC (kho ghi không cần đăng nhập)
+  // rồi nối thẳng vào innerHTML ở renderErrors/renderErrorsPb/trNhanLoai ⇒ stored XSS chéo học sinh. Nay escape luôn.
+  const typeLabel = (t) => escapeHtml(t == null ? '' : String(t));
   function renderTypeBtns() {
     document.querySelectorAll('.errType').forEach((b) => {
       b.className = 'errType rounded-lg border-2 px-0.5 sm:px-1 py-2 text-[10px] sm:text-xs font-bold leading-tight transition flex flex-row items-center justify-center gap-1.5 ' +
@@ -3272,6 +3274,11 @@
     if (p && p.type === 'drive') {
       return '<iframe class="w-full h-full" src="https://drive.google.com/file/d/' + p.id +
         '/preview" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+    }
+    // ?v=66 (27/09/2026, rà XSS): url có thể tới từ tham số `?goi=` trên URL hoặc kho ⇒ chỉ cho bấm khi là http(s),
+    // chặn `javascript:` (escapeHtml không chặn được scheme).
+    if (!/^https?:\/\//i.test(String(url || ''))) {
+      return '<div class="w-full h-full flex items-center justify-center text-white/70 text-sm font-bold">Video link is not valid.</div>';
     }
     return '<div class="w-full h-full flex items-center justify-center">' +
       '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener" ' +
